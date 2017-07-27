@@ -1,0 +1,53 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_INSOURCE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"apocalypse"
+
+$Include "$SRCDIR\game\client\client_insource.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\ap;$SRCDIR\game\shared\ap"
+		$PreprocessorDefinitions		"$BASE;APOCALYPSE"
+	}
+}
+
+$Project "Client (Apocalypse)"
+{	
+	$Folder	"Source Files"
+	{
+		$Folder "Apocalypse"
+		{
+			$Folder "Game"
+			{
+				$Folder "Players"
+				{
+					$File	"ap\c_ap_player.cpp"
+					$File	"ap\c_ap_player.h"
+				}
+			}
+
+			$Folder	"Shared"
+			{
+				$Folder "Gamerules"
+				{
+					$File	"$SRCDIR\game\shared\ap\assault_gamerules.cpp"
+					$File	"$SRCDIR\game\shared\ap\assault_gamerules.h"
+					$File	"$SRCDIR\game\shared\ap\survival_gamerules.cpp"
+					$File	"$SRCDIR\game\shared\ap\survival_gamerules.h"
+				}
+
+				$Folder "Players"
+				{
+					$File	"$SRCDIR\game\shared\ap\ap_player_shared.cpp"
+				}
+			}
+		}	
+	}
+}

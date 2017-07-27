@@ -1,0 +1,60 @@
+//-----------------------------------------------------------------------------
+//	SERVER_SCP.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"scp"
+
+$Include "$SRCDIR\game\server\server_insource.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\scp;$SRCDIR\game\shared\scp"
+		$PreprocessorDefinitions		"$BASE;SCP"
+	}
+}
+
+$Project "Server (SCP)"
+{
+	$Folder	"Source Files"
+	{		
+		$Folder	"SCP"
+		{
+			$Folder "Game"
+			{
+				$Folder "Player"
+				{
+					$Folder "Features"
+					{
+						$File	"scp\scp_player_features.cpp"
+						$File	"scp\scp_player_features.h"
+					}
+
+					$File	"scp\scp_player.cpp"
+					$File	"scp\scp_player.h"
+				}
+
+				$File	"scp\scp_game.cpp"
+			}
+
+			$Folder	"Shared"
+			{
+				$Folder "Gamerules"
+				{
+					$File	"$SRCDIR\game\shared\scp\facilities_gamerules.cpp"
+					$File	"$SRCDIR\game\shared\scp\scp_gamerules.cpp"	
+					$File	"$SRCDIR\game\shared\scp\scp_gamerules.h"
+				}
+
+				$Folder "Player"
+				{
+					$File	"$SRCDIR\game\shared\scp\scp_player_shared.cpp"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,292 @@
+//-----------------------------------------------------------------------------
+//	SERVER_INSOURCE.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+
+$Include "$SRCDIR\game\server\server_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\hl2;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\multiplayer;.\in;$SRCDIR\game\shared\in"
+		$PreprocessorDefinitions		"$BASE;INSOURCE_DLL"
+	}
+
+	$Linker
+	{
+		$AdditionalDependencies			"$BASE sqlite3.lib"
+	}
+}
+
+$Project
+{
+	$Folder	"Source Files"
+	{
+		$File	"ai_relationship.cpp"
+		$File	"EntityFlame.h"
+		$File	"hl2\Func_Monitor.cpp"
+		$File	"grenadethrown.cpp"
+		$File	"grenadethrown.h"
+		$File	"monstermaker.cpp"
+		$File	"monstermaker.h"
+		$File	"physics_bone_follower.h"
+		$File	"$SRCDIR\game\shared\ragdoll_shared.h"
+		$File	"$SRCDIR\game\shared\solidsetdefaults.h"
+		$File	"$SRCDIR\game\shared\touchlink.h"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.h"
+		-$File	"fire.cpp"
+		-$File	"fire.h"
+		
+		$Folder	"From HL2"
+		{
+			$File	"hl2\ai_behavior_actbusy.cpp"
+			$File	"hl2\ai_behavior_actbusy.h"
+			$File	"hl2\AI_Interactions.h"
+			$File	"hl2\ai_spotlight.cpp"
+			$File	"hl2\ai_spotlight.h"
+			$File	"hl2\antlion_dust.cpp"
+			$File	"hl2\antlion_dust.h"
+			$File	"hl2\ar2_explosion.cpp"
+			$File	"hl2\ar2_explosion.h"
+			$File	"hl2\cbasehelicopter.cpp"
+			$File	"hl2\cbasehelicopter.h"
+			$File	"hl2\cbasespriteprojectile.cpp"
+			$File	"hl2\cbasespriteprojectile.h"
+			$File	"hl2\energy_wave.h"
+			$File	"hl2\env_speaker.cpp"
+			$File	"hl2\env_speaker.h"
+			$File	"hl2\hl2_eventlog.cpp"
+			$File	"hl2\look_door.cpp"
+			$File	"hl2\monster_dummy.cpp"
+			$File	"hl2\npc_attackchopper.cpp"
+			$File	"hl2\npc_attackchopper.h"
+			$File	"hl2\npc_bullseye.cpp"
+			$File	"hl2\npc_bullseye.h"
+			$File	"hl2\npc_combinegunship.cpp"
+			$File	"hl2\npc_enemyfinder.cpp"
+			$File	"hl2\rotorwash.cpp"
+			$File	"hl2\rotorwash.h"
+		}
+		
+		$Folder	"InSource"
+		{
+			$Folder "Game"
+			{
+				$Folder "Environment"
+				{
+					$Folder "DayCycle"
+					{
+						$File	"in\env_daynight_cycle.cpp"
+						$File	"in\env_daynight_cycle.h"
+					}
+
+					$File	"in\sun.h"
+					$File	"in\in_fire.cpp"
+				}
+
+				$Folder "Bots"
+				{
+					$Folder "Components"
+					{
+						$File	"in\aim_component.cpp"
+						$File	"in\attack_component.cpp"
+						$File	"in\follow_component.cpp"
+						$File	"in\friends_component.cpp"
+						$File	"in\movement_component.cpp"
+						$File	"in\navigation_teleport_component.cpp"
+						$File	"in\bot_components.h"
+					}
+
+					$Folder "Entities"
+					{
+						$File	"in\bot_maker.cpp"
+						$File	"in\bot_maker.h"
+						$File	"in\bot_squad.cpp"
+						$File	"in\bot_squad.h"
+					}
+
+					$Folder "Navigation"
+					{
+						$File	"in\improv_locomotor.h"
+						$File	"in\nav_path.cpp"
+						$File	"in\nav_path.h"
+					}
+
+					$Folder "Schedules"
+					{
+						$File	"in\call_backup_schedule.cpp"
+						$File	"in\change_weapon_schedule.cpp"
+						$File	"in\cover_schedule.cpp"
+						$File	"in\defend_spawn_schedule.cpp"
+						$File	"in\help_dejected_friend_schedule.cpp"
+						$File	"in\hide_and_heal_schedule.cpp"
+						$File	"in\hide_and_reload_schedule.cpp"
+						$File	"in\hunt_enemy_schedule.cpp"
+						$File	"in\investigate_location_schedule.cpp"
+						$File	"in\investigate_sound_schedule.cpp"
+						$File	"in\move_aside_schedule.cpp"
+						$File	"in\reload_schedule.cpp"
+						$File	"in\bot_schedules.h"
+					}
+
+					$Folder "Squad"
+					{
+						$File	"in\squad.cpp"
+						$File	"in\squad.h"
+						$File	"in\squad_manager.cpp"
+					}
+
+					$File	"in\bot.cpp"
+					$File	"in\bot.h"
+					$File	"in\bot_ai.cpp"
+					$File	"in\bot_aim.cpp"
+					$File	"in\bot_attack.cpp"
+					$File	"in\bot_debug.cpp"
+					$File	"in\bot_enemy.cpp"
+					$File	"in\bot_follow.cpp"
+					$File	"in\bot_manager.cpp"
+					$File	"in\bot_manager.h"
+					$File	"in\bot_navigation.cpp"
+					$File	"in\bot_schedule.cpp"
+					$File	"in\bot_senses.cpp"
+					$File	"in\bot_skill.cpp"
+					$File	"in\bot_state.cpp"
+					$File	"in\bot_defs.h"
+				}
+
+				$Folder "NPC"
+				{
+					$File	"in\ai_behavior_climb.cpp"
+					$File	"in\ai_behavior_climb.h"
+					$File	"in\npc_basein.cpp"
+					$File	"in\npc_basein.h"
+					$File	"in\npc_infected.cpp"
+					$File	"in\npc_infected.h"
+					$File	"in\npc_base_infected.cpp"
+					$File	"in\npc_base_infected.h"
+				}
+
+				$Folder "Player"
+				{
+					$Folder "Attributes"
+					{
+						$File	"in\env_attribute.cpp"
+						$File	"in\env_attribute.h"
+						$File	"in\in_attribute.cpp"
+						$File	"in\in_attribute.h"
+						$File	"in\in_attribute_system.cpp"
+						$File	"in\in_attribute_system.h"
+					}
+
+					$Folder "Components"
+					{
+						$File	"in\in_player_component.cpp"
+						$File	"in\in_player_component.h"
+						$File	"in\in_player_components_basic.cpp"
+						$File	"in\in_player_components_basic.h"
+					}
+
+					$File	"in\in_player.cpp"
+					$File	"in\in_player.h"
+					$File	"in\in_playermove.cpp"
+					$File	"in\players_system.cpp"
+					$File	"in\players_system.h"
+				}
+
+				$Folder "A.I. Director"
+				{
+					$File	"in\director.cpp"
+					$File	"in\director.h"
+					$File	"in\info_director.cpp"
+					$File	"in\info_director.h"
+					$File	"in\director_manager.cpp"
+					$File	"in\director_manager.h"	
+					$File	"in\directordefs.h"	
+				}
+
+				$File	"in\in_game.cpp"
+			}
+
+			$Folder "Engine and Utils"
+			{
+				$Folder "SQLite"
+				{
+					$File	"in\dbhandler.cpp"
+					$File	"in\dbhandler.h"
+				}
+
+				$File	"in\nodes_generation.cpp"
+				$File	"in\nodes_generation.h"
+				$File	"in\in_gameinterface.cpp"
+				$File	"in\in_utils.cpp"
+				$File	"in\in_utils.h"	
+			}
+
+			$Folder	"Shared"
+			{
+				$Folder "Gamerules"
+				{
+					$File	"$SRCDIR\game\shared\in\in_gamerules.cpp"
+					$File	"$SRCDIR\game\shared\in\in_gamerules.h"		
+				}
+
+				$Folder "Player"
+				{
+					$Folder "Animation"
+					{
+						$File	"$SRCDIR\game\shared\in\multiplayer_animstate.cpp"
+						$File	"$SRCDIR\game\shared\in\multiplayer_animstate.h"
+						$File	"$SRCDIR\game\shared\in\in_playeranimstate_proxy.cpp"
+						$File	"$SRCDIR\game\shared\in\in_playeranimstate_proxy.h"
+						$File	"$SRCDIR\game\shared\in\in_playeranimsystem.cpp"
+						$File	"$SRCDIR\game\shared\in\in_playeranimsystem.h"
+					}
+
+					$File	"$SRCDIR\game\shared\in\in_movedata.h"
+					$File	"$SRCDIR\game\shared\in\in_view_vectors.h"
+					$File	"$SRCDIR\game\shared\in\in_gamemovement.cpp"
+					$File	"$SRCDIR\game\shared\in\in_player_shared.cpp"
+					$File	"$SRCDIR\game\shared\in\in_player_shared.h"
+				}
+				
+
+				$Folder "Weapons"
+				{
+					$File	"$SRCDIR\game\shared\in\bullet.cpp"
+					$File	"$SRCDIR\game\shared\in\bullet.h"
+					$File	"$SRCDIR\game\shared\in\bullet_manager.cpp"
+					$File	"$SRCDIR\game\shared\in\bullet_manager.h"
+					$File	"$SRCDIR\game\shared\in\in_ammodef.cpp"
+					$File	"$SRCDIR\game\shared\in\in_ammodef.h"
+					$File	"$SRCDIR\game\shared\in\weapon_base.cpp"
+					$File	"$SRCDIR\game\shared\in\weapon_base.h"
+					$File	"$SRCDIR\game\shared\in\weapon_base_shotgun.cpp"
+					$File	"$SRCDIR\game\shared\in\weapon_base_sniper.cpp"
+					$File	"$SRCDIR\game\shared\in\weapon_info.cpp"
+					$File	"$SRCDIR\game\shared\in\weapon_info.h"
+					$File	"$SRCDIR\game\shared\in\weapons_macro.cpp"
+				}
+
+				$Folder "Sound"
+				{
+					$File "$SRCDIR\game\shared\in\env_sound.cpp"
+					$File "$SRCDIR\game\shared\in\env_sound.h"
+					$File "$SRCDIR\game\shared\in\sound_instance.cpp"
+					$File "$SRCDIR\game\shared\in\sound_instance.h"
+					$File "$SRCDIR\game\shared\in\sound_manager.cpp"
+					$File "$SRCDIR\game\shared\in\sound_manager.h"
+					$File "$SRCDIR\game\shared\in\sound_instance_manager.cpp"
+					$File "$SRCDIR\game\shared\in\sound_instance_manager.h"
+				}
+				
+				$File	"$SRCDIR\game\shared\in\in_shareddefs.h"
+				$File	"$SRCDIR\game\shared\in\in_usermessages.cpp"
+			}
+		}
+	}
+}

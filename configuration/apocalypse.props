@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <GameDir>apocalypse</GameDir>
+    <DebugParams>-console -window -dev -override_vpk +cl_threaded_init 1 +sv_threaded_init 1</DebugParams>
+    <SourceDir>E:\Documentos\Proyectos\Woots\Juegos\Source\insource</SourceDir>
+    <GameBaseDir>E:\Documentos\Proyectos\Woots\Juegos\Source\game</GameBaseDir>
+    <EngineExeDir>E:\Steam\steamapps\common\Alien Swarm</EngineExeDir>
+    <EngineExe>swarm.exe</EngineExe>
+    <GameName>Apocalypse</GameName>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_PropertySheetDisplayName>Apocalypse</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="GameDir">
+      <Value>$(GameDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="DebugParams">
+      <Value>$(DebugParams)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GameBaseDir">
+      <Value>$(GameBaseDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EngineExeDir">
+      <Value>$(EngineExeDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EngineExe">
+      <Value>$(EngineExe)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GameName">
+      <Value>$(GameName)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

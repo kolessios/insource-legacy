@@ -1,0 +1,26 @@
+$Project "client"
+{
+	"game\client\client_apocalypse.vpc"	[$APOCALYPSE]
+	"game\client\client_scp.vpc"		[$SCP]
+}
+
+$Project "server"
+{
+	"game\server\server_apocalypse.vpc"	[$APOCALYPSE]
+	"game\server\server_scp.vpc"		[$SCP]
+}
+
+$Project "missionchooser"
+{
+	"game\missionchooser\missionchooser_swarm.vpc"	[$SWARM]
+}
+
+$Project "shaderlib"
+{
+	"materialsystem\shaderlib\shaderlib.vpc"
+}
+
+$Project "game_shader"
+{
+	"materialsystem\stdshaders\game_shader_dx9.vpc"
+}

@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <GameDir>scp</GameDir>
+    <DebugParams>-console -window -dev -override_vpk -language english</DebugParams>
+    <GameBaseDir>C:\Users\Kolesias123\Documents\Proyectos\Woots\Juegos\Source\game\scp</GameBaseDir>
+    <SourceDir>C:\Users\Kolesias123\Documents\Proyectos\Woots\Juegos\Source\insource</SourceDir>
+    <EngineExeDir>C:\Program Files (x86)\Steam\SteamApps\common\Alien Swarm</EngineExeDir>
+    <EngineExe>swarm.exe</EngineExe>
+    <GameName>SCP</GameName>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_PropertySheetDisplayName>SCP</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="GameDir">
+      <Value>$(GameDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="DebugParams">
+      <Value>$(DebugParams)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GameBaseDir">
+      <Value>$(GameBaseDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EngineExeDir">
+      <Value>$(EngineExeDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="EngineExe">
+      <Value>$(EngineExe)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GameName">
+      <Value>$(GameName)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
