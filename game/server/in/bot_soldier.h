@@ -32,8 +32,8 @@ public:
 	virtual bool ShouldFollow();
 
 	// I.A.
-	virtual void SetupComponents();
-	virtual void SetupSchedules();
+	virtual void SetUpComponents();
+	virtual void SetUpSchedules();
 
 protected:
 	Vector m_vecCover;

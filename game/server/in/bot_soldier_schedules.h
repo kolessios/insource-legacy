@@ -13,7 +13,7 @@
 // Cubrirse [Modo Soldado]
 //================================================================================
 /*
-class CSoldierCoverSchedule : public CBotSchedule
+class CSoldierCoverSchedule : public IBotSchedule
 {
 public:
     DECLARE_SCHEDULE( SCHEDULE_SOLDIER_COVER );

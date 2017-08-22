@@ -59,11 +59,17 @@ class CAP_Bot : public CBot
     DECLARE_CLASS_GAMEROOT( CAP_Bot, CBot );
 
 public:
+
+    CAP_Bot( CBasePlayer *parent ) : BaseClass( parent )
+    {
+
+    }
+
 	virtual CAP_Player *GetPlayer() { return ToApPlayer(m_pParent); }
     virtual CAP_Player *GetPlayer() const { return ToApPlayer(m_pParent); }
 
     // Principales
-	virtual void SetupSchedules();
+	virtual void SetUpSchedules();
 
     // Aim Component
     virtual bool ShouldAimOnlyVisibleInterestingSpots();
@@ -79,7 +85,7 @@ class CAP_BotSoldier : public CAP_Bot
 public:
     DECLARE_CLASS_GAMEROOT( CAP_BotSoldier, CAP_Bot );
 
-    CAP_BotSoldier();
+    CAP_BotSoldier( CBasePlayer *parent );
 
     virtual void Spawn();
 

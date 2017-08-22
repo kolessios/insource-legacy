@@ -237,7 +237,6 @@ public:
 
 	virtual CBotCmd GetLastUserCommand();
 
-protected:
 	CBasePlayer *m_pParent; 
 };
 

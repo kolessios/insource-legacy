@@ -508,7 +508,8 @@ bool DirectorManager::SetupMinion( CBotSpawn * pSpawner, CMinionInfo * minion, V
     string_t name = AllocPooledString(pName);
     pPlayer->SetName( name );
 
-    pPlayer->GetAI()->m_vecSpawnSpot = *vecPosition;
+    //pPlayer->GetAI()->m_vecSpawnSpot = *vecPosition;
+
     pPlayer->Teleport( vecPosition, &angles, NULL );
     return true;
 }
@@ -873,16 +874,16 @@ void DirectorManager::ReportEnemy( CBaseEntity *pMinion )
 
         CBot *pAI = pPlayer->GetAI();
 
-        if ( !pAI->Friends() )
+        if ( !pAI->GetMemory() )
             return;
 
         if ( pAI->GetEnemy() && pAI->GetEnemy()->IsPlayer() ) {
-            pAI->UpdateEnemyMemory( pAI->GetEnemy(), pAI->GetEnemy()->GetAbsOrigin() );
+            pAI->GetMemory()->UpdateEntityMemory( pAI->GetEnemy(), pAI->GetEnemy()->GetAbsOrigin() );
             return;
         }
 
         if ( pEnemy ) {
-            pAI->UpdateEnemyMemory( pEnemy, pEnemy->GetAbsOrigin() );
+            pAI->GetMemory()->UpdateEntityMemory( pEnemy, pEnemy->GetAbsOrigin() );
             pAI->SetEnemy( pEnemy );
             return;
         }

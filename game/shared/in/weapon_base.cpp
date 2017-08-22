@@ -363,7 +363,7 @@ float CBaseWeapon::GetSpreadPerShot()
 #endif
 
         // Saltando
-        if ( !pPlayer->IsInGround() ) {
+        if ( !pPlayer->IsOnGround() ) {
             spread *= GetWeaponInfo().m_flJumpSpread;
         }
 

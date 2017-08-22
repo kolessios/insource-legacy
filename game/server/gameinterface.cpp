@@ -1332,7 +1332,6 @@ void CServerGameDLL::GameFrame( bool simulating )
 	extern void GameStartFrame( void );
 	extern void ServiceEventQueue( void );
 	extern void Physics_RunThinkFunctions( bool simulating );
-    extern void BotThink();
 
 	// Delete anything that was marked for deletion
 	//  outside of server frameloop (e.g., in response to concommand)
@@ -1342,9 +1341,6 @@ void CServerGameDLL::GameFrame( bool simulating )
 	IGameSystem::FrameUpdatePreEntityThinkAllSystems();
 
 	GameStartFrame();
-    BotThink();
-
-
 	TheNavMesh->Update();
 
 	{

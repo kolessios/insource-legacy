@@ -6,7 +6,7 @@
 //===========================================================================//
 
 // Navigation ladders
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 #ifndef _NAV_LADDER_H_
 #define _NAV_LADDER_H_

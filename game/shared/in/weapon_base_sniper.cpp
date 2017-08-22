@@ -74,7 +74,7 @@ float CBaseWeaponSniper::GetSpreadPerShot()
         }
 
         // Saltando
-        if ( !pPlayer->IsInGround() ) 
+        if ( !pPlayer->IsOnGround() ) 
         {
             flSpread *= 1.5f;
         }

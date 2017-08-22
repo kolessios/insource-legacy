@@ -32,7 +32,7 @@
 #define IS_SKILL_VERY_HARD TheGameRules->IsSkillLevel(SKILL_VERY_HARD)
 #define IS_SKILL_ULTRA_HARD TheGameRules->IsSkillLevel(SKILL_ULTRA_HARD)
 #define IS_SKILL_HARDEST TheGameRules->IsSkillLevel(SKILL_HARDEST)
-#define GetDifficulty() TheGameRules->GetSkillLevel()
+#define GetGameDifficulty() TheGameRules->GetSkillLevel()
 
 #ifndef CLIENT_DLL
 //================================================================================

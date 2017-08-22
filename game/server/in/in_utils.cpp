@@ -19,7 +19,6 @@
 
 #include "players_system.h"
 #include "in_player.h"
-#include "bot.h"
 
 #include "in_attribute_system.h"
 #include "util_shared.h"
@@ -425,25 +424,25 @@ bool Utils::GetEntityBones( CBaseEntity *pEntity, HitboxBones &bones )
 {
     // Inválido
     bones.head = -1;
-    bones.gut = -1;
-    bones.leftFoot = -1;
-    bones.rightFoot = -1;
+    bones.chest = -1;
+    bones.leftLeg = -1;
+    bones.rightLeg = -1;
 
     // Un Infectado
     if ( pEntity->ClassMatches("npc_infected") ) {
         bones.head = 16;
-        bones.gut = 10;
-        bones.leftFoot = 4;
-        bones.rightFoot = 7;
+        bones.chest = 10;
+        bones.leftLeg = 4;
+        bones.rightLeg = 7;
         return true;
     }
 
     if ( pEntity->IsPlayer() ) {
 #ifdef APOCALYPSE
-        bones.head = 0;
-        bones.gut = 16;
-        bones.leftFoot = 7;
-        bones.rightFoot = 11;
+        bones.head = 12;
+        bones.chest = 9;
+        bones.leftLeg = 1;
+        bones.rightLeg = 4;
         return true;
 #endif
     }
@@ -474,15 +473,15 @@ bool Utils::GetHitboxPosition( CBaseEntity *pEntity, Vector &vecPosition, Hitbox
         break;
 
         case HITGROUP_CHEST:
-            vecPosition = positions.gut;
+            vecPosition = positions.chest;
         break;
 
         case HITGROUP_LEFTLEG:
-            vecPosition = positions.leftFoot;
+            vecPosition = positions.leftLeg;
         break;
 
         case HITGROUP_RIGHTLEG:
-            vecPosition = positions.rightFoot;
+            vecPosition = positions.rightLeg;
         break;
     }
     
@@ -499,8 +498,6 @@ bool Utils::GetHitboxPosition( CBaseEntity *pEntity, Vector &vecPosition, Hitbox
 //================================================================================
 bool Utils::GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions )
 {
-	VPROF_BUDGET( "Utils::GetHitboxPositions", VPROF_BUDGETGROUP_BOTS );
-
     CBaseAnimating *pModel = pEntity->GetBaseAnimating();
 
     // Sin modelo
@@ -536,24 +533,24 @@ bool Utils::GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions
     }
 
     // GUT
-    if ( bones.gut >= 0 )
+    if ( bones.chest >= 0 )
     {
-        box = set->pHitbox( bones.gut );
-        pModel->GetBonePosition( box->bone, positions.gut, angles );
+        box = set->pHitbox( bones.chest );
+        pModel->GetBonePosition( box->bone, positions.chest, angles );
     }
 
     // LEFT_FOOT
-    if ( bones.leftFoot >= 0 )
+    if ( bones.leftLeg >= 0 )
     {
-        box = set->pHitbox( bones.leftFoot );
-        pModel->GetBonePosition( box->bone, positions.leftFoot, angles );
+        box = set->pHitbox( bones.leftLeg );
+        pModel->GetBonePosition( box->bone, positions.leftLeg, angles );
     }
 
     // RIGHT_FOOT
-    if ( bones.rightFoot >= 0 )
+    if ( bones.rightLeg >= 0 )
     {
-        box = set->pHitbox( bones.rightFoot );
-        pModel->GetBonePosition( box->bone, positions.rightFoot, angles );
+        box = set->pHitbox( bones.rightLeg );
+        pModel->GetBonePosition( box->bone, positions.rightLeg, angles );
     }
 
     return true;
@@ -1105,8 +1102,9 @@ bool Utils::FindCoverPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotC
     CAI_Hint *pHint = FindHintSpot( vecOrigin, hintCriteria, criteria, pPlayer );
 
     if ( pHint ) {
-        if ( vecResult )
+        if ( vecResult ) {
             pHint->GetPosition( pPlayer, vecResult );
+        }
 
         return true;
     }

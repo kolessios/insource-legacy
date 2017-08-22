@@ -80,13 +80,13 @@ void CAssaultGameRules::PlayerThink( CBasePlayer *pBasePlayer )
         }
     }
 
-    if ( pPlayer->IsBot() && pPlayer->IsSurvivor() ) {
-        CPlayer *pLeader = ToInPlayer( pPlayer->GetAI()->GetFollowing() );
+    if ( pPlayer->IsBot() && pPlayer->IsSurvivor() && pPlayer->GetAI()->GetFollow() ) {
+        CPlayer *pLeader = ToInPlayer( pPlayer->GetAI()->GetFollow()->GetEntity() );
 
         if ( !pLeader || pLeader->IsBot() ) {
             if ( TheDirector->GetStatus() == STATUS_FINALE || TheDirector->GetStatus() == STATUS_PANIC ) {
                 CPlayer *pNear = ThePlayersSystem->GetNear( pPlayer->GetAbsOrigin(), pPlayer, TEAM_HUMANS, true );
-                pPlayer->GetAI()->StartFollow( pNear );
+                pPlayer->GetAI()->GetFollow()->Start( pNear );
             }
         }
     }

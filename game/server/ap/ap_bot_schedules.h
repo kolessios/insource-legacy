@@ -4,6 +4,7 @@
 //
 //=============================================================================//
 
+/*
 #ifndef AP_BOT_SCHEDULES_H
 #define AP_BOT_SCHEDULES_H
 
@@ -16,9 +17,9 @@ class CAI_Hint;
 //================================================================================
 // Busca recursos por el mapa
 //================================================================================
-class CSearchResourcesSchedule : public CBotSchedule
+class CSearchResourcesSchedule : public IBotSchedule
 {
-	DECLARE_CLASS_GAMEROOT( CSearchResourcesSchedule, CBotSchedule );
+	DECLARE_CLASS_GAMEROOT( CSearchResourcesSchedule, IBotSchedule );
     DECLARE_SCHEDULE( SCHEDULE_SEARCH_RESOURCES );
 
 	enum
@@ -29,7 +30,7 @@ class CSearchResourcesSchedule : public CBotSchedule
 public:
 	CSearchResourcesSchedule();
 
-	virtual bool ShouldForceFinish() { return true; }
+	virtual bool ItsImportant() { return true; }
 
 	virtual float GetDesire();
 	virtual void OnEnd();
@@ -48,10 +49,10 @@ protected:
 //================================================================================
 // Limpia un edificio (Busca enemigos dentro de el)
 //================================================================================
-class CCleanBuildingSchedule : public CBotSchedule
+class CCleanBuildingSchedule : public IBotSchedule
 {
 public:
-    DECLARE_CLASS_GAMEROOT( CCleanBuildingSchedule, CBotSchedule );
+    DECLARE_CLASS_GAMEROOT( CCleanBuildingSchedule, IBotSchedule );
     DECLARE_SCHEDULE( SCHEDULE_CLEAN_BUILDING );
 
     enum
@@ -64,14 +65,14 @@ public:
 
     CCleanBuildingSchedule();
 
-    virtual bool ShouldForceFinish()
+    virtual bool ItsImportant()
     {
         return true;
     }
 
     virtual float GetDesire();
 
-    virtual void OnStart();
+    virtual void Start();
     virtual void OnEnd();
 
     virtual void Think();
@@ -86,3 +87,4 @@ protected:
 };
 
 #endif // AP_BOT_SCHEDULES_H
+*/

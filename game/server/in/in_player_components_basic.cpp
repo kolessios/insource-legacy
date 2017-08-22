@@ -143,7 +143,7 @@ void CPlayerDejectedComponent::UpdateDejected()
     // Estamos cayendo...
     // Solo restauramos todo y la gravedad se ocupara de hacer el daño.
     if ( pPlayer->GetPlayerStatus() == PLAYER_STATUS_FALLING ) {
-        if ( pPlayer->IsInGround() ) {
+        if ( pPlayer->IsOnGround() ) {
             pPlayer->SetPlayerStatus( PLAYER_STATUS_NONE );
         }
     }
@@ -176,7 +176,7 @@ void CPlayerDejectedComponent::UpdateFall()
     if ( pPlayer->GetPlayerStatus() == PLAYER_STATUS_CLIMBING || pPlayer->GetPlayerStatus() == PLAYER_STATUS_FALLING )
         return;
 
-    if ( pPlayer->IsInGround() )
+    if ( pPlayer->IsOnGround() )
         return;
 
     if ( pPlayer->InGodMode() || pPlayer->GetMoveType() != MOVETYPE_WALK )

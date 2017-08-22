@@ -252,8 +252,8 @@ public:
 	// -----------------------
 	// Footsteps
 	// -----------------------
-	void PlayFootstepSound( const Vector& origin, bool leftFoot, bool feetInWater, bool kneesInWater, bool jumping = false );
-	virtual void OnFootstep( const Vector& origin, bool leftFoot, bool feetInWater, bool kneesInWater, bool jumping ) {}
+	void PlayFootstepSound( const Vector& origin, bool leftLeg, bool feetInWater, bool kneesInWater, bool jumping = false );
+	virtual void OnFootstep( const Vector& origin, bool leftLeg, bool feetInWater, bool kneesInWater, bool jumping ) {}
 
 	// -----------------------
 	// Ammo
