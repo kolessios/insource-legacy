@@ -57,7 +57,9 @@ public:
     virtual bool IsCrouching() { return (GetFlags() & FL_DUCKING) ? true : false; }
     virtual bool IsCrouching() const { return (GetFlags() & FL_DUCKING) ? true : false; }
 
-    virtual bool IsInGround() { return (GetFlags() & FL_ONGROUND) ? true : false; }
+    virtual bool IsOnGround() {
+        return (GetFlags() & FL_ONGROUND) ? true : false;
+    }
     virtual bool IsGod() { return (GetFlags() & FL_GODMODE) ? true : false; }
 
     virtual bool IsUnderAttack() { return m_bIsUnderAttack; }

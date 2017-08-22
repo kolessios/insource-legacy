@@ -9,7 +9,7 @@
 
 #include "nav.h"
 #include "nav_area.h"
-#include "bot_defs.h"
+#include "bots\bot_defs.h"
 #include "in_shareddefs.h"
 
 #include "alienfx\LFXDecl.h"
@@ -33,7 +33,7 @@ public:
     CSpotCriteria()
     {
         m_flMaxRange = 1000.0f;
-        m_flMinDistanceFromEnemy = 450.0f;
+        m_flMinDistanceFromEnemy = 500.0f;
         m_bIsSniper = false;
         m_bUseNearest = false;
         m_bUseRandom = false;

@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav_pathfind.h
 // Path-finding mechanisms using the Navigation Mesh
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 #ifndef _NAV_PATHFIND_H_
 #define _NAV_PATHFIND_H_

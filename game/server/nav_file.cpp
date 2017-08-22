@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav_file.cpp
 // Reading and writing nav files
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January-September 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January-September 2003
 
 #include "cbase.h"
 #include "nav_mesh.h"

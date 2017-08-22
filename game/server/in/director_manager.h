@@ -8,7 +8,7 @@
 #endif
 
 #include "directordefs.h"
-#include "bot_maker.h"
+#include "bots\bot_maker.h"
 
 //================================================================================
 // El ayudante del Director

@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav.h
 // Data structures and constants for the Navigation Mesh system
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 #ifndef _NAV_H_
 #define _NAV_H_

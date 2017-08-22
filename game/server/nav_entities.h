@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav_entities.h
 // Navigation entities
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 #ifndef NAV_ENTITIES_H
 #define NAV_ENTITIES_H

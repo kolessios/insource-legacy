@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav_generate.cpp
 // Auto-generate a Navigation Mesh by sampling the current map
-// Author: Michael S. Booth (mike@turtlerockstudios.com), 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), 2003
 
 #include "cbase.h"
 #include "util_shared.h"

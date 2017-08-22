@@ -9,7 +9,7 @@
 
 #ifndef CLIENT_DLL
     #include "in_player.h"
-    #include "squad.h"
+    #include "bots\squad.h"
     #include "team.h"
     #include "globalstate.h"
     #include "sound_manager.h"
@@ -706,11 +706,9 @@ int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTar
     CPlayer *pPlayer = ToInPlayer( pCharacter );
     Assert( pPlayer );
 
-    // Enemigo (Puede ser forzado)
     if ( pPlayer->GetEnemy() == pTarget )
         return GR_ENEMY;
 
-    // Es una partida con equipos, si son del mismo equipo, son aliados
     if ( IsTeamplay() ) {
         if ( pCharacter->InSameTeam( pTarget ) )
             return GR_ALLY;
@@ -730,7 +728,7 @@ int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTar
         return GR_ALLY;
 
     // Enemigo
-    if ( pPlayer->IRelationType( pTarget ) == D_HT )
+    if ( pPlayer->IRelationType( pTarget ) == D_HT || pPlayer->IRelationType( pTarget ) == D_FR )
         return GR_ENEMY;
 
     return GR_NEUTRAL;

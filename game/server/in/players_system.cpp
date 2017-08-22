@@ -265,7 +265,7 @@ int CPlayersSystem::GetFireWeaponsCount( int team )
         if ( !pPlayer->IsAlive() )
             continue;
 
-        CBaseWeapon *pWeapon = pPlayer->GetBaseWeapon();
+        CBaseWeapon *pWeapon = pPlayer->GetActiveBaseWeapon();
 
         // No tiene arma
         if ( !pWeapon )
@@ -425,7 +425,7 @@ StatType CPlayersSystem::GetAmmoStats( int team )
         if ( !pPlayer->IsAlive() )
             continue;
 
-        CBaseWeapon *pWeapon = pPlayer->GetBaseWeapon();
+        CBaseWeapon *pWeapon = pPlayer->GetActiveBaseWeapon();
 
         // No tiene arma
         if ( !pWeapon )

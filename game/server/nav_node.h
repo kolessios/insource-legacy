@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav_node.h
 // Navigation Nodes are used when generating a Navigation Mesh by point sampling the map
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 #ifndef _NAV_NODE_H_
 #define _NAV_NODE_H_

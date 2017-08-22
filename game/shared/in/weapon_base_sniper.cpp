@@ -13,7 +13,7 @@
     #include "in_player.h"
     #include "player_lagcompensation.h"
     #include "soundent.h"
-    #include "squad.h"
+    #include "bots\squad.h"
 #else
     #include "fx_impact.h"
     #include "c_in_player.h"
@@ -74,7 +74,7 @@ float CBaseWeaponSniper::GetSpreadPerShot()
         }
 
         // Saltando
-        if ( !pPlayer->IsInGround() ) 
+        if ( !pPlayer->IsOnGround() ) 
         {
             flSpread *= 1.5f;
         }

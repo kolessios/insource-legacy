@@ -7,10 +7,10 @@
 //=============================================================================//
 // nav_mesh.h
 // The Navigation Mesh interface
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 //
-// Author: Michael S. Booth (mike@turtlerockstudios.com), 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), 2003
 //
 // NOTE: The Navigation code uses Doxygen-style comments. If you run Doxygen over this code, it will 
 // auto-generate documentation.  Visit www.doxygen.org to download the system for free.

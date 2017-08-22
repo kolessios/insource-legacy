@@ -52,6 +52,9 @@ typedef CBitVec<MAX_CONDITIONS> CFlagsBits;
 #define AE_PLAYER_FOOTSTEP_RIGHT 63
 
 #define PLAYER_SOUND_RADIUS 832.0f
+#define GET_COVER_RADIUS 1500.0f
+
+#define DEFAULT_FORGET_TIME 60.0f
 
 //================================================================================
 // Funciones de utlidad
@@ -394,6 +397,135 @@ struct DebugMessage
 {
     char m_string[1024];
     IntervalTimer m_age;
+};
+
+//================================================================================
+// Allows you to save various types of information.
+//================================================================================
+class CMultidata
+{
+public:
+    DECLARE_CLASS_NOBASE( CMultidata );
+
+    CMultidata()
+    {
+        Reset();
+    }
+
+    CMultidata( int value )
+    {
+        Reset();
+        SetInt( value );
+    }
+
+    CMultidata( Vector value )
+    {
+        Reset();
+        SetVector( value );
+    }
+
+    CMultidata( float value )
+    {
+        Reset();
+        SetFloat( value );
+    }
+
+    CMultidata( const char *value )
+    {
+        Reset();
+#ifndef CLIENT_DLL
+        SetString( value );
+#endif
+    }
+
+    CMultidata( CBaseEntity *value )
+    {
+        Reset();
+        SetEntity( value );
+    }
+
+    virtual void Reset() {
+        vecValue.Invalidate();
+        flValue = 0;
+        iValue = 0;
+        iszValue = NULL_STRING;
+        pszValue = NULL;
+        Purge();
+    }
+
+    void SetInt( int value ) {
+        iValue = value;
+        flValue = (float)value;
+        OnSet();
+    }
+
+    void SetFloat( float value ) {
+        iValue = (int)value;
+        flValue = value;
+        OnSet();
+    }
+
+    void SetVector( const Vector &value ) {
+        vecValue = value;
+        OnSet();
+    }
+
+#ifndef CLIENT_DLL
+    void SetString( const char *value ) {
+        iszValue = AllocPooledString( value );
+        OnSet();
+    }
+#endif
+
+    void SetEntity( CBaseEntity *value ) {
+        pszValue = value;
+        OnSet();
+    }
+
+    virtual void OnSet() { }
+
+    const Vector &GetVector() const {
+        return vecValue;
+    }
+
+    float GetFloat() const {
+        return flValue;
+    }
+
+    int GetInt() const {
+        return iValue;
+    }
+
+#ifndef CLIENT_DLL
+    const char *GetString() const {
+        return STRING( iszValue );
+    }
+#endif
+
+    CBaseEntity *GetEntity() const {
+        return pszValue.Get();
+    }
+
+    int Add( CMultidata *data ) {
+        int index = list.AddToTail( data );
+        OnSet();
+        return index;
+    }
+
+    bool Remove( CMultidata *data ) {
+        return list.FindAndRemove( data );
+    }
+
+    void Purge() {
+        list.PurgeAndDeleteElements();
+    }
+
+    Vector vecValue;
+    float flValue;
+    int iValue;
+    string_t iszValue;
+    EHANDLE pszValue;
+    CUtlVector<CMultidata *> list;
 };
 
 //================================================================================

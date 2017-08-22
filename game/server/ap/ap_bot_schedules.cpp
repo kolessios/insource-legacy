@@ -1,7 +1,9 @@
 //==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
 
+
 #include "cbase.h"
 
+/*
 #include "ap_bot.h"
 #include "ap_bot_schedules.h"
 #include "in_utils.h"
@@ -221,9 +223,9 @@ BEGIN_SCHEDULE( CCleanBuildingSchedule )
     AssertOnce( pSoldierAI );
 
     if ( pSoldierAI->IsMinionCleaningBuilding() ) {
-        ADD_TASK( BTASK_WALK_NORMAL, NULL )
-        ADD_TASK( BTASK_WAIT_LEADER, NULL )
         ADD_TASK( BTASK_WALK, NULL )
+        ADD_TASK( BTASK_WAIT_LEADER, NULL )
+        ADD_TASK( BTASK_SNEAK, NULL )
         ADD_TASK( BTASK_TACTICAL_COVER, NULL )
     }
     else {
@@ -231,7 +233,7 @@ BEGIN_SCHEDULE( CCleanBuildingSchedule )
             ADD_TASK( BTASK_SET_TOLERANCE, RandomFloat( 400.0f, 480.0f ) )
             ADD_TASK( BTASK_MOVE_DESTINATION, m_pHint )
 
-            ADD_TASK( BTASK_WALK, NULL )
+            ADD_TASK( BTASK_SNEAK, NULL )
             ADD_TASK( BTASK_SET_TOLERANCE, RandomFloat( 250.0f, 380.0f ) )
             ADD_TASK( BTASK_MOVE_DESTINATION, m_pHint )
 
@@ -321,9 +323,9 @@ float CCleanBuildingSchedule::GetDesire()
     return BOT_DESIRE_NONE;
 }
 
-void CCleanBuildingSchedule::OnStart()
+void CCleanBuildingSchedule::Start()
 {
-    BaseClass::OnStart();
+    BaseClass::Start();
 
     m_vecSpot.Invalidate();
 
@@ -496,7 +498,7 @@ void CCleanBuildingSchedule::TaskStart()
             info->areas.Remove( key );
             pSoldierBot->SetScanningArea( pArea );
 
-            ADD_TASK( BTASK_WALK, NULL )
+            ADD_TASK( BTASK_SNEAK, NULL )
             ADD_TASK( BTASK_PLAY_GESTURE, ACT_SIGNAL_FORWARD )
             ADD_TASK( BTASK_MOVE_DESTINATION, pArea->GetCenter() )
             ADD_TASK( BTASK_CROUCH, NULL )
@@ -621,3 +623,4 @@ void CCleanBuildingSchedule::TaskRun()
         }
     }
 }
+*/

@@ -7,7 +7,7 @@
 //=============================================================================//
 // nav_area.h
 // Navigation areas
-// Author: Michael S. Booth (mike@turtlerockstudios.com), January 2003
+// Author: Michael S. Booth (linkedin.com/in/michaelbooth), January 2003
 
 #ifndef _NAV_AREA_H_
 #define _NAV_AREA_H_
