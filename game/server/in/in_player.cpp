@@ -6,7 +6,8 @@
 #include "nav.h"
 #include "nav_area.h"
 
-#include "bot.h"
+#include "bots\bot.h"
+#include "bots\squad_manager.h"
 
 #include "in_playeranimstate_proxy.h"
 #include "in_gamerules.h"
@@ -19,7 +20,6 @@
 #include "in_attribute_system.h"
 
 #include "director.h"
-#include "squad_manager.h"
 
 #include "obstacle_pushaway.h"
 #include "predicted_viewmodel.h"

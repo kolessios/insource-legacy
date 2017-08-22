@@ -10,14 +10,13 @@
 #pragma once
 #endif
 
-#include "ibotcomponent.h"
-
-#include "ibotvision.h"
-#include "ibotlocomotion.h"
-#include "ibotfollow.h"
-#include "ibotmemory.h"
-#include "ibotattack.h"
-#include "ibotdecision.h"
+#include "bots\interfaces\ibotcomponent.h"
+#include "bots\interfaces\ibotvision.h"
+#include "bots\interfaces\ibotlocomotion.h"
+#include "bots\interfaces\ibotfollow.h"
+#include "bots\interfaces\ibotmemory.h"
+#include "bots\interfaces\ibotattack.h"
+#include "bots\interfaces\ibotdecision.h"
 
 //================================================================================
 // Macros
@@ -268,7 +267,7 @@ public:
 public:
     virtual void FiregunAttack();
     virtual void MeleeWeaponAttack();
-    virtual void OnAttack( int type );
+    //virtual void OnAttack( int type );
 };
 
 //================================================================================
@@ -326,7 +325,7 @@ public:
 
     virtual bool CanAttack() const;
     virtual bool CanCrouchAttack() const;
-    virtual bool ShouldCrouchAttack() const;
+    //virtual bool ShouldCrouchAttack() const;
 
     virtual bool IsEnemyLowPriority() const;
     virtual bool IsBetterEnemy( CBaseEntity *pEnemy, CBaseEntity *pPrevious ) const;

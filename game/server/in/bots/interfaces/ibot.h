@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "bot_defs.h"
+#include "bots\bot_defs.h"
 #include "in_utils.h"
 #include "in_player.h"
 

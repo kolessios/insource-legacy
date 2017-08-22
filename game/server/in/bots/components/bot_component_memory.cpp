@@ -3,11 +3,11 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "in_utils.h"
 #include "in_player.h"
-#include "bot_manager.h"
+#include "bots\bot_manager.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -56,6 +56,8 @@ void CBotMemory::UpdateMemory()
 
         if ( memory->IsExpired() ) {
             m_DataMemory.RemoveAt( it );
+            delete memory;
+
             --it;
             continue;
         }
@@ -72,6 +74,8 @@ void CBotMemory::UpdateMemory()
         // The entity has been deleted.
         if ( !memory->GetEntity() ) {
             m_Memory.RemoveAt( it );
+            delete memory;
+
             --it;
             continue;
         }
@@ -181,7 +185,7 @@ void CBotMemory::MaintainThreat()
 {
     CEntityMemory *memory = GetPrimaryThreat();
 
-    if ( !memory ) {
+    if ( memory != NULL ) {
         memory->Maintain();
     }
 }
@@ -320,8 +324,10 @@ CEntityMemory * CBotMemory::GetEntityMemory( CBaseEntity * pEnt ) const
 
 //================================================================================
 //================================================================================
-CEntityMemory * CBotMemory::GetEntityMemory( int index ) const
+CEntityMemory * CBotMemory::GetEntityMemory( int entindex ) const
 {
+    int index = m_Memory.Find( entindex );
+
     if ( !m_Memory.IsValidIndex( index ) )
         return NULL;
 

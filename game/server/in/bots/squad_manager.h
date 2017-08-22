@@ -7,7 +7,7 @@
 #pragma once
 #endif
 
-#include "squad.h"
+#include "bots\squad.h"
 
 //================================================================================
 // Administrador de escuadrones

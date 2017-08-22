@@ -32,7 +32,7 @@ public:
 public:
     virtual void FiregunAttack() = 0;
     virtual void MeleeWeaponAttack() = 0;
-    virtual void OnAttack( int type ) = 0;
+    //virtual void OnAttack( int type ) = 0;
 };
 
 #endif // IBOT_ATTACK_H

@@ -4,8 +4,8 @@
 
 #include "cbase.h"
 
-#include "bot.h"
-#include "ibotschedule.h"
+#include "bots\bot.h"
+#include "bots\interfaces\ibotschedule.h"
 
 #include "in_utils.h"
 #include "in_buttons.h"
@@ -34,6 +34,8 @@ void IBotSchedule::Start()
     Assert( m_Tasks.Count() == 0 );
 
     Reset();
+
+    m_bStarted = true;
     m_StartTimer.Start();
 
     if ( GetLocomotion() ) {

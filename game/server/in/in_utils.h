@@ -9,7 +9,7 @@
 
 #include "nav.h"
 #include "nav_area.h"
-#include "bot_defs.h"
+#include "bots\bot_defs.h"
 #include "in_shareddefs.h"
 
 #include "alienfx\LFXDecl.h"

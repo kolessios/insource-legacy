@@ -9,7 +9,7 @@
 
 #ifndef CLIENT_DLL
     #include "in_player.h"
-    #include "squad.h"
+    #include "bots\squad.h"
     #include "team.h"
     #include "globalstate.h"
     #include "sound_manager.h"

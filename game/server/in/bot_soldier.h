@@ -7,7 +7,7 @@
 #pragma once
 #endif
 
-#include "bot.h"
+#include "bots\bot.h"
 #include "bot_soldier_schedules.h"
 
 //================================================================================

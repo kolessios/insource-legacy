@@ -3,9 +3,9 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot_manager.h"
+#include "bots\bot_manager.h"
 
-#include "bot.h"
+#include "bots\bot.h"
 #include "in_utils.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -66,7 +66,7 @@ void CBotManager::FrameUpdatePreEntityThink()
     for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
         CPlayer *pPlayer = ToInPlayer( it );
 
-        if ( !pPlayer || !pPlayer->IsAlive() )
+        if ( !pPlayer )
             continue;
 
         if ( !pPlayer->IsBot() )

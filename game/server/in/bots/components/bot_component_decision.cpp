@@ -3,7 +3,7 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "players_system.h"
 
@@ -988,7 +988,7 @@ BCOND CBotDecision::ShouldRangeAttack1()
     UTIL_TraceLine( vecOrigin, vecOrigin + vecForward * pWeapon->GetWeaponInfo().m_flMaxDistance, MASK_SHOT, &traceFilter, &tr );
 
     // We have hit an entity
-    if ( tr.DidHitNonWorldEntity() ) {
+    if ( tr.m_pEnt ) {
         // Friend!
         if ( TheGameRules->PlayerRelationship( GetHost(), tr.m_pEnt ) == GR_ALLY )
             return BCOND_BLOCKED_BY_FRIEND;

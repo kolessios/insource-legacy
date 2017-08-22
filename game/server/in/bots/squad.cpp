@@ -3,12 +3,12 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "squad.h"
+#include "bots\squad.h"
 
-#include "squad_manager.h"
+#include "bots\squad_manager.h"
 
-#include "bot.h"
-#include "bot_squad.h"
+#include "bots\bot.h"
+#include "bots\bot_squad.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

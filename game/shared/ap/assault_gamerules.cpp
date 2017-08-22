@@ -6,7 +6,7 @@
 #ifndef CLIENT_DLL
     #include "ap_player.h"
     #include "in_utils.h"
-    #include "bot.h"
+    #include "bots\bot.h"
     #include "players_system.h"
     #include "director.h"
 #endif

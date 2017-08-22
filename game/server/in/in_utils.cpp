@@ -498,6 +498,9 @@ bool Utils::GetHitboxPosition( CBaseEntity *pEntity, Vector &vecPosition, Hitbox
 //================================================================================
 bool Utils::GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions )
 {
+    if ( !pEntity )
+        return false;
+
     CBaseAnimating *pModel = pEntity->GetBaseAnimating();
 
     // Sin modelo

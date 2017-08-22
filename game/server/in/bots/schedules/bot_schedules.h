@@ -23,7 +23,7 @@
 #pragma once
 #endif
 
-#include "ibotschedule.h"
+#include "bots\interfaces\ibotschedule.h"
 
 //================================================================================
 // Investigar un sonido y regresar a donde estabamos si no había nada

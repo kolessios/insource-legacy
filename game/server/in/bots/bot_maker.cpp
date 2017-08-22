@@ -3,7 +3,8 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot_maker.h"
+#include "bots\bot_maker.h"
+#include "bots\bot.h"
 
 #include "in_player.h"
 #include "in_utils.h"
@@ -11,7 +12,6 @@
 
 #include "in_gamerules.h"
 #include "eventqueue.h"
-#include "bot.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

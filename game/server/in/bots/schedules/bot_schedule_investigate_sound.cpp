@@ -3,7 +3,7 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "in_utils.h"
 

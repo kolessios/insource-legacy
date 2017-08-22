@@ -38,10 +38,10 @@ typedef CBaseCombatWeapon CBaseWeapon;
 
 #include "utlflags.h."
 
-#include "bot_defs.h"
-#include "ibot.h"
-#include "bot_components.h"
-#include "bot_schedules.h"
+#include "bots\bot_defs.h"
+#include "bots\interfaces\ibot.h"
+#include "bots\components\bot_components.h"
+#include "bots\schedules\bot_schedules.h"
 
 #include "squad.h"
 

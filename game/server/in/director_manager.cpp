@@ -4,7 +4,7 @@
 #include "director_manager.h"
 
 #include "director.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "dbhandler.h"
 

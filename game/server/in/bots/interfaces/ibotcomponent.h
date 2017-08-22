@@ -9,7 +9,7 @@
 #pragma once
 #endif
 
-#include "ibot.h"
+#include "bots\interfaces\ibot.h"
 
 class IBotVision;
 class IBotAttack;
@@ -29,13 +29,11 @@ class IBotDecision;
 // Artificial Intelligence Component.
 // Base for creating components and schedules.
 //================================================================================
-abstract_class IBotComponent : public CPlayerInfo
+class IBotComponent : public CPlayerInfo
 {
 public:
     IBotComponent( IBot *bot )
     {
-        this->Reset();
-
         m_nBot = bot;
         m_pParent = m_nBot->m_pParent;
     }

@@ -3,9 +3,9 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
-#include "bot_manager.h"
+#include "bots\bot_manager.h"
 
 #include "in_utils.h"
 #include "in_buttons.h"
@@ -41,15 +41,12 @@ void CBotAttack::FiregunAttack()
     CBaseWeapon *pWeapon = GetHost()->GetActiveBaseWeapon();
     Assert( pWeapon );
 
-    
-
-
-    if ( GetDecision()->CanCrouchShot() ) {
+    if ( GetDecision()->CanCrouchAttack() ) {
         float flDistance = GetMemory()->GetPrimaryThreatDistance();
 
         // Check to see if we can crouch for accuracy
         if ( GetLocomotion() ) {
-            if ( GetDecision()->ShouldCrouchShot() && flDistance >= 140.0f ) {
+            if ( GetDecision()->CanCrouchAttack() && flDistance >= 140.0f ) {
                 GetLocomotion()->Crouch();
             }
             else {
@@ -58,11 +55,8 @@ void CBotAttack::FiregunAttack()
         }
     }
 
-    // Podemos disparar
-    if ( HasCondition( BCOND_CAN_RANGE_ATTACK1 ) && CanShot() ) {
+    if ( HasCondition( BCOND_CAN_RANGE_ATTACK1 ) ) {
         GetBot()->Combat();
-
-        // Atacamos
         InjectButton( IN_ATTACK );
         
     }

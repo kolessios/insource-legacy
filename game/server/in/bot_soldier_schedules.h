@@ -7,7 +7,7 @@
 #pragma once
 #endif
 
-#include "bot_schedules.h"
+#include "bots\schedules\bot_schedules.h"
 
 //================================================================================
 // Cubrirse [Modo Soldado]

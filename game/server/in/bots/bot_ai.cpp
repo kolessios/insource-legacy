@@ -3,7 +3,7 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "in_utils.h"
 
@@ -45,6 +45,11 @@ bool CBot::HasCondition( BCOND condition ) const
 //================================================================================
 void CBot::AddComponent( IBotComponent *pComponent )
 {
+    if ( !pComponent )
+        return;
+
+    pComponent->Reset();
+
     if ( pComponent->IsSchedule() ) {
         IBotSchedule *pSchedule = dynamic_cast<IBotSchedule *>(pComponent);
         Assert( pSchedule );

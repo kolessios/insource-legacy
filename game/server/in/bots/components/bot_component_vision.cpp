@@ -4,7 +4,7 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "in_utils.h"
 
@@ -341,7 +341,9 @@ void CBotVision::LookAtThreat()
     if ( !GetMemory() )
         return;
 
-    if ( !GetMemory()->GetPrimaryThreat() )
+    CEntityMemory *memory = GetMemory()->GetPrimaryThreat();
+
+    if ( !memory || !memory->GetEntity() )
         return;
 
     if ( !GetDecision()->ShouldLookThreat() ) {
@@ -351,8 +353,6 @@ void CBotVision::LookAtThreat()
 
         return;
     }
-
-    CEntityMemory *memory = GetMemory()->GetPrimaryThreat();
 
     // We look at the last position of our threat in case it is visible again.
     if ( GetDecision()->IsPrimaryThreatLost() ) {

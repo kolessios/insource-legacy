@@ -66,7 +66,7 @@ public:
 
     virtual bool CanAttack() const = 0;
     virtual bool CanCrouchAttack() const = 0;
-    virtual bool ShouldCrouchAttack() const = 0;
+    //virtual bool ShouldCrouchAttack() const = 0;
 
     virtual bool IsEnemyLowPriority() const = 0;
     virtual bool IsBetterEnemy( CBaseEntity *pEnemy, CBaseEntity *pPrevious ) const = 0;

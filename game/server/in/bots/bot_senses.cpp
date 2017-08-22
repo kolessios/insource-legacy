@@ -4,7 +4,7 @@
 
 #include "cbase.h"
 
-#include "bot.h"
+#include "bots\bot.h"
 #include "in_utils.h"
 #include "in_gamerules.h"
 

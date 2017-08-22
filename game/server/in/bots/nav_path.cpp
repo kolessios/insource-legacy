@@ -16,7 +16,7 @@
 #include "nav_mesh.h"
 #include "nav_path.h"
 //#include "bot_util.h"
-#include "improv_locomotor.h"
+#include "bots\interfaces\improv_locomotor.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

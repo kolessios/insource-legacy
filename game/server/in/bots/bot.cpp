@@ -3,7 +3,7 @@
 // Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
-#include "bot.h"
+#include "bots\bot.h"
 
 #include "in_player.h"
 #include "in_shareddefs.h"
@@ -11,7 +11,8 @@
 #include "in_gamerules.h"
 #include "players_system.h"
 
-#include "bot_manager.h"
+#include "bots\squad_manager.h"
+#include "bots\bot_manager.h"
 
 #include "nav.h"
 #include "nav_mesh.h"
@@ -22,7 +23,6 @@
 
 #include "ai_hint.h"
 #include "movehelper_server.h"
-#include "squad_manager.h"
 
 #include "datacache/imdlcache.h"
 
