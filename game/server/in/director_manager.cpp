@@ -872,19 +872,19 @@ void DirectorManager::ReportEnemy( CBaseEntity *pMinion )
         if ( !pPlayer->IsBot() )
             return;
 
-        CBot *pAI = pPlayer->GetAI();
+        IBot *pBot = pPlayer->GetBotController();
 
-        if ( !pAI->GetMemory() )
+        if ( !pBot->GetMemory() )
             return;
 
-        if ( pAI->GetEnemy() && pAI->GetEnemy()->IsPlayer() ) {
-            pAI->GetMemory()->UpdateEntityMemory( pAI->GetEnemy(), pAI->GetEnemy()->GetAbsOrigin() );
+        if ( pBot->GetEnemy() && pBot->GetEnemy()->IsPlayer() ) {
+            pBot->GetMemory()->UpdateEntityMemory( pBot->GetEnemy(), pBot->GetEnemy()->GetAbsOrigin() );
             return;
         }
 
         if ( pEnemy ) {
-            pAI->GetMemory()->UpdateEntityMemory( pEnemy, pEnemy->GetAbsOrigin() );
-            pAI->SetEnemy( pEnemy );
+            pBot->GetMemory()->UpdateEntityMemory( pEnemy, pEnemy->GetAbsOrigin() );
+            pBot->SetEnemy( pEnemy );
             return;
         }
     }

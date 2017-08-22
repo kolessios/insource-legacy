@@ -25,16 +25,9 @@
 //================================================================================
 void CBotVision::Update()
 {
-    // This is an attempt to make bots consume less resources.
-    //if ( GetBot()->OptimizeThisFrame() ) {
-    //    return;
-    //}
+    LookNavigation();
 
-    /*if ( GetBot()->HasDestination() ) {
-        LookNavigation();
-    }
-
-    LookAround();*/
+    LookAround();
 
     LookAtThreat();
 
@@ -173,6 +166,10 @@ void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLook
             // We do not have a hitbox visible
             vecLookAt = memory->GetLastKnownPosition();
         }
+        else {
+            // We update the last position known as the last position of the hitbox
+            memory->UpdatePosition( vecLookAt );
+        }
     }
     // If it is a character, we try to aim to a hitbox
     else if ( pEntity->MyCombatCharacterPointer() ) {
@@ -190,18 +187,22 @@ void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLook
         vecLookAt = pEntity->WorldSpaceCenter();
     }
 
+    // No margin of error is required if we do not have visibility
+    if ( memory && !memory->IsVisible() )
+        return;
+
     // We added a margin of error when aiming.
     if ( GetSkill()->GetLevel() < SKILL_HARDEST ) {
         float errorRange = 0.0f;
 
         if ( GetSkill()->GetLevel() >= SKILL_HARD ) {
-            errorRange = RandomFloat( 0.0f, 5.0f );
+            errorRange = RandomFloat( 0.0f, 3.5f );
         }
         if ( GetSkill()->IsMedium() ) {
-            errorRange = RandomFloat( 1.0f, 10.0f );
+            errorRange = RandomFloat( 2.0f, 8.0f );
         }
         else {
-            errorRange = RandomFloat( 5.0f, 20.0f );
+            errorRange = RandomFloat( 5.0f, 10.0f );
         }
 
         vecLookAt.x += RandomFloat( -errorRange, errorRange );
@@ -329,9 +330,9 @@ bool CBotVision::LookAt( const char *pDesc, const Vector &vecGoal, int priority,
     SetPriority( priority );
 
     // We avoid spam...
-    if ( !FStrEq( "Aiming Navigation", pDesc ) && !FStrEq( "Threat Hitbox", pDesc ) && !FStrEq( "Last Known Threat Position", pDesc ) ) {
+    /*if ( !FStrEq( "Looking Forward", pDesc ) && !FStrEq( "Threat", pDesc ) ) {
         GetBot()->DebugAddMessage( "LookAt(%s, %.2f %.2f, %i, %.2f)", m_pDescription, m_vecLookGoal.x, m_vecLookGoal.y, priority, duration );
-    }
+    }*/
 }
 
 //================================================================================
@@ -343,61 +344,46 @@ void CBotVision::LookAtThreat()
 
     CEntityMemory *memory = GetMemory()->GetPrimaryThreat();
 
-    if ( !memory || !memory->GetEntity() )
+    if ( memory == NULL )
         return;
 
-    if ( !GetDecision()->ShouldLookThreat() ) {
-        if ( GetAimTarget() == GetBot()->GetEnemy() ) {
-            Reset();
-        }
-
+    if ( memory->IsLost() )
         return;
-    }
 
-    // We look at the last position of our threat in case it is visible again.
-    if ( GetDecision()->IsPrimaryThreatLost() ) {
-        LookAt( "Last Known Threat Position", memory->GetLastKnownPosition(), PRIORITY_HIGH, 0.5f );
+    if ( !GetDecision()->ShouldLookThreat() )
         return;
-    }
 
     // It's very close! We look directly at its center.
     // This solves several problems when attempting to aim to a hitbox when it is too close.
-    if ( memory->GetDistance() <= 120.0f ) {
-        LookAt( "Threat Center", memory->GetEntity()->WorldSpaceCenter(), PRIORITY_HIGH, 0.5f );
+    if ( memory->GetDistance() <= 80.0f ) {
+        LookAt( "Threat Center", memory->GetEntity()->WorldSpaceCenter(), PRIORITY_HIGH, 0.2f );
         return;
     }    
 
-    LookAt( "Threat Hitbox", memory->GetEntity(), PRIORITY_HIGH, 0.5f );
+    LookAt( "Threat", memory->GetEntity(), PRIORITY_HIGH, 0.2f );
 }
 
-/*
 //================================================================================
 // Look to the next position on the route
 //================================================================================
 void CBotVision::LookNavigation()
 {
-    Vector lookAt( GetBot()->GetNextSpot() );
+    if ( !GetLocomotion() )
+        return;
+
+    if ( !GetLocomotion()->HasDestination() )
+        return;
+
+    Vector lookAt( GetLocomotion()->GetNextSpot() );
     lookAt.z = GetHost()->EyePosition().z;
 
     int priority = PRIORITY_LOW;
 
-    if ( GetBot()->IsFollowingSomeone() )
+    if ( GetFollow() && GetFollow()->IsFollowingActive() ) {
         priority = PRIORITY_NORMAL;
-
-    LookAt( "Aiming Route", lookAt, priority, 0.5f );
-}
-
-//================================================================================
-// Blocks being able to look around for the amount of seconds
-//================================================================================
-void CBotVision::BlockLookAround( float duration )
-{
-    if ( duration <= 0 ) {
-        m_nBlockLookAroundTimer.Invalidate();
-        return;
     }
 
-    m_nBlockLookAroundTimer.Start( duration );
+    LookAt( "Looking Forward", lookAt, priority, 0.5f );
 }
 
 //================================================================================
@@ -405,52 +391,58 @@ void CBotVision::BlockLookAround( float duration )
 //================================================================================
 void CBotVision::LookAround()
 {
-    VPROF_BUDGET( "CBotVision::LookAround", VPROF_BUDGETGROUP_BOTS );
+    if ( GetMemory() ) {
+        int blocked = GetDataMemoryInt( "BlockLookAround" );
 
-    if ( GetPriority() > PRIORITY_NORMAL )
-        return;
-
-    if ( IsLookAroundBlocked() )
-        return;
+        if ( blocked == 1 )
+            return;
+    }
 
     // We heard a sound that represents danger
     if ( HasCondition( BCOND_HEAR_COMBAT ) || HasCondition( BCOND_HEAR_DANGER ) || HasCondition( BCOND_HEAR_ENEMY ) ) {
-        if ( GetBot()->ShouldAimDangerSpot() ) {
+        if ( GetDecision()->ShouldLookDangerSpot() ) {
             LookDanger();
             return;
         }
     }
 
+    if ( GetPriority() > PRIORITY_NORMAL )
+        return;
+
     // An interesting place:
     // Places where enemies can be covered or revealed.
-    if ( GetBot()->ShouldLookInterestingSpot() ) {
+    if ( GetDecision()->ShouldLookInterestingSpot() ) {
         LookInterestingSpot();
         return;
     }
 
     // Random place
-    if ( GetBot()->ShouldLookRandomSpot() ) {
+    if ( GetDecision()->ShouldLookRandomSpot() ) {
         LookRandomSpot();
         return;
     }
 
     // We are in a squadron, look at a friend :)
-    if ( GetBot()->GetSquad() && GetBot()->ShouldLookSquadMember() ) {
+    if ( GetDecision()->ShouldLookSquadMember() ) {
         LookSquadMember();
         return;
     }
 }
+
 
 //================================================================================
 // Find an interesting place and look at that place
 //================================================================================
 void CBotVision::LookInterestingSpot()
 {
-    m_nIntestingAimTimer.Start( LOOK_INTERESTING_INTERVAL );
+    CBotDecision *pDecision = dynamic_cast<CBotDecision *>(GetBot()->GetDecision());
+    Assert( pDecision );
+
+    pDecision->m_IntestingAimTimer.Start( LOOK_INTERESTING_INTERVAL );
 
     CSpotCriteria criteria;
     criteria.SetMaxRange( 1000.0f );
-    criteria.OnlyVisible( GetBot()->ShouldAimOnlyVisibleInterestingSpots() );
+    criteria.OnlyVisible( !GetDecision()->CanLookNoVisibleSpots() );
     criteria.UseRandom( true );
     criteria.SetTacticalMode( GetBot()->GetTacticalMode() );
 
@@ -467,7 +459,10 @@ void CBotVision::LookInterestingSpot()
 //================================================================================
 void CBotVision::LookRandomSpot()
 {
-    m_RandomTimer.Start( LOOK_RANDOM_INTERVAL );
+    CBotDecision *pDecision = dynamic_cast<CBotDecision *>( GetBot()->GetDecision() );
+    Assert( pDecision );
+
+    pDecision->m_RandomAimTimer.Start( LOOK_RANDOM_INTERVAL );
 
     QAngle viewAngles = GetBot()->GetUserCommand()->viewangles;
     viewAngles.x += RandomInt( -10, 10 );
@@ -501,18 +496,11 @@ void CBotVision::LookDanger()
 {
     CSound *pSound = GetHost()->GetBestSound( SOUND_COMBAT | SOUND_PLAYER | SOUND_DANGER );
 
-    if ( !pSound ) {
+    if ( !pSound )
         return;
-    }
 
     Vector vecLookAt = pSound->GetSoundReactOrigin();
-    vecLookAt.z += HalfHumanHeight;
+    vecLookAt.z = GetHost()->EyePosition().z;
 
-    float distance = GetAbsOrigin().DistTo( vecLookAt );
-
-    if ( distance < 600.0f )
-        return;
-
-    LookAt( "Danger Sound", vecLookAt, PRIORITY_LOW, GetSkill()->GetAlertDuration() );
+    LookAt( "Danger Sound", vecLookAt, PRIORITY_HIGH, RandomFloat( 1.0f, 3.5f ) );
 }
-*/

@@ -709,6 +709,9 @@ int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTar
     if ( pPlayer->GetEnemy() == pTarget )
         return GR_ENEMY;
 
+    if ( !pTarget->MyCombatCharacterPointer() )
+        return GR_NEUTRAL;
+
     if ( IsTeamplay() ) {
         if ( pCharacter->InSameTeam( pTarget ) )
             return GR_ALLY;

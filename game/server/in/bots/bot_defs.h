@@ -15,9 +15,6 @@
 #include "nav_area.h"
 #include "nav_mesh.h"
 #include "bots\interfaces\improv_locomotor.h"
-#include "in_gamerules.h"
-
-class CBot;
 
 //================================================================================
 //================================================================================
@@ -471,90 +468,13 @@ static const char *g_Conditions[LAST_BCONDITION] = {
 
     "HEAR_COMBAT",
     "HEAR_WORLD",
-    "HEAR_PLAYER",
-    "HEAR_PLAYER_FOOTSTEP",
+    "HEAR_ENEMY",
+    "HEAR_ENEMY_FOOTSTEP",
     "HEAR_BULLET_IMPACT",
 	"HEAR_BULLET_IMPACT_SNIPER",
     "HEAR_DANGER",
     "HEAR_MOVE_AWAY",
     "HEAR_SPOOKY",
-};
-
-//================================================================================
-// Información acerca de una tarea, se conforma de la tarea que se debe ejecutar
-// y un valor que puede ser un Vector, un flotante, un string, etc.
-//================================================================================
-struct BotTaskInfo_t
-{
-    BotTaskInfo_t( int iTask )
-    {
-        task = iTask;
-
-        vecValue.Invalidate();
-        flValue = 0;
-        iszValue = NULL_STRING;
-        pszValue = NULL;
-    }
-
-    BotTaskInfo_t( int iTask, int value )
-    {
-        task = iTask;
-        iValue = value;
-        flValue = (float)value;
-
-        vecValue.Invalidate();
-        iszValue = NULL_STRING;
-        pszValue = NULL;
-    }
-
-    BotTaskInfo_t( int iTask, Vector value )
-    {
-        task = iTask;
-        vecValue = value;
-
-        flValue = 0;
-        iszValue = NULL_STRING;
-        pszValue = NULL;
-    }
-
-    BotTaskInfo_t( int iTask, float value )
-    {
-        task = iTask;
-        flValue = value;
-        iValue = (int)value;
-
-        vecValue.Invalidate();
-        iszValue = NULL_STRING;
-        pszValue = NULL;
-    }
-
-    BotTaskInfo_t( int iTask, const char *value )
-    {
-        task = iTask;
-        iszValue = MAKE_STRING( value );
-
-        vecValue.Invalidate();
-        flValue = 0;
-        pszValue = NULL;
-    }
-
-    BotTaskInfo_t( int iTask, CBaseEntity *value )
-    {
-        task = iTask;
-        pszValue = value;
-
-        vecValue.Invalidate();
-        flValue = 0;
-        iszValue = NULL_STRING;
-    }
-
-    int task;
-
-    Vector vecValue;
-    float flValue;
-    int iValue;
-    string_t iszValue;
-    EHANDLE pszValue;
 };
 
 #endif // BOT_CONDITIONS_H

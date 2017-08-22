@@ -49,7 +49,7 @@ public:
 
     virtual bool IsMember( CPlayer *pMember );
     virtual void AddMember( CPlayer *pMember );
-    virtual void PrepareBot( CBot *pBot );
+    virtual void PrepareBot( IBot *pBot );
 
     virtual void RemoveMember( CPlayer *pMember );
     virtual void RemoveMember( int index );

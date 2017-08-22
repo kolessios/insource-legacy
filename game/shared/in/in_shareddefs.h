@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include "cbase.h"
-
 #ifndef CLIENT_DLL
-    #include "nav.h"
+#include "nav.h"
+#include "recipientfilter.h"
 #endif
 
 #ifndef MAX_CONDITIONS

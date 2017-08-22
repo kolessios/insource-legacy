@@ -119,8 +119,8 @@ void CSquad::SetLeader( CPlayer *member )
         {
             pMember->OnNewLeader( member );
 
-            if ( pMember->GetAI() && ShouldFollowLeader() ) {
-                pMember->GetAI()->GetFollow()->Start( member );
+            if ( pMember->GetBotController() && ShouldFollowLeader() ) {
+                pMember->GetBotController()->GetFollow()->Start( member );
             }
         });
 
@@ -213,14 +213,15 @@ void CSquad::AddMember( CPlayer *pMember )
     if ( GetCount() == 1 )
         SetLeader( pMember );
 
-    if ( pMember->GetAI() )
-        PrepareBot( pMember->GetAI() );
+    if ( pMember->GetBotController() ) {
+        PrepareBot( pMember->GetBotController() );
+    }
 }
 
 //================================================================================
 // Prepara al Bot para ser parte del escuadron
 //================================================================================
-void CSquad::PrepareBot( CBot *pBot ) 
+void CSquad::PrepareBot( IBot *pBot ) 
 {
     // Modo táctico
     if ( GetTacticalMode() != 99 )
@@ -292,8 +293,8 @@ bool CSquad::IsSomeoneLooking( CBaseEntity * pTarget, CPlayer *pIgnore )
         if ( pMember == pIgnore )
             continue;
 
-        if ( pMember->GetAI() && pMember->GetAI()->GetVision() && pMember->GetAI()->GetVision()->GetAimTarget() ) {
-            if ( pMember->GetAI()->GetVision()->GetAimTarget() == pTarget )
+        if ( pMember->GetBotController() && pMember->GetBotController()->GetVision() && pMember->GetBotController()->GetVision()->GetAimTarget() ) {
+            if ( pMember->GetBotController()->GetVision()->GetAimTarget() == pTarget )
                 return true;
 
             continue;
@@ -333,8 +334,8 @@ bool CSquad::IsSomeoneLooking( const Vector & vecTarget, CPlayer *pIgnore )
         if ( pMember == pIgnore )
             continue;
 
-        if ( pMember->GetAI() && pMember->GetAI()->GetVision() && pMember->GetAI()->GetVision()->HasAimGoal() ) {
-            if ( pMember->GetAI()->GetVision()->GetAimGoal() == vecTarget )
+        if ( pMember->GetBotController() && pMember->GetBotController()->GetVision() && pMember->GetBotController()->GetVision()->HasAimGoal() ) {
+            if ( pMember->GetBotController()->GetVision()->GetAimGoal() == vecTarget )
                 return true;
 
             continue;
@@ -383,10 +384,10 @@ bool CSquad::IsSomeoneGoing( const Vector & vecDestination, CPlayer *pIgnore )
         if ( !pMember->IsBot() )
             continue;
 
-        if ( !pMember->GetAI()->GetLocomotion() )
+        if ( !pMember->GetBotController()->GetLocomotion() )
             continue;
 
-        if ( pMember->GetAI()->GetLocomotion()->GetDestination() == vecDestination )
+        if ( pMember->GetBotController()->GetLocomotion()->GetDestination() == vecDestination )
             return true;
     }
 

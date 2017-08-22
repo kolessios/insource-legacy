@@ -118,7 +118,7 @@ bool CBotLocomotion::DriveTo( const char * pDesc, const Vector & vecGoal, int pr
     SetPriority( priority );
     SetTolerance( tolerance );
 
-    GetBot()->DebugAddMessage( "DriveTo: %s (%i) (tolerance: %.2f)", pDesc, priority, tolerance );
+    //GetBot()->DebugAddMessage( "DriveTo: %s (%i) (tolerance: %.2f)", pDesc, priority, tolerance );
     return true;
 }
 
@@ -493,7 +493,7 @@ bool CBotLocomotion::GetSimpleGroundHeightWithFloor( const Vector &pos, float *h
 void CBotLocomotion::Crouch()
 {
     m_bCrouching = true;
-    GetBot()->DebugAddMessage( "Crouch" );
+    //GetBot()->DebugAddMessage( "Crouch" );
 }
 
 //================================================================================
@@ -501,7 +501,7 @@ void CBotLocomotion::Crouch()
 void CBotLocomotion::StandUp()
 {
     m_bCrouching = false;
-    GetBot()->DebugAddMessage( "StandUp" );
+    //GetBot()->DebugAddMessage( "StandUp" );
 }
 
 //================================================================================
@@ -517,7 +517,7 @@ void CBotLocomotion::Jump()
 {
     InjectButton( IN_JUMP );
     m_bJumping = true;
-    GetBot()->DebugAddMessage( "Jump" );
+    //GetBot()->DebugAddMessage( "Jump" );
 }
 
 //================================================================================
@@ -533,7 +533,7 @@ void CBotLocomotion::Run()
 {
     m_bRunning = true;
     m_bSneaking = false;
-    GetBot()->DebugAddMessage( "Run" );
+    //GetBot()->DebugAddMessage( "Run" );
 }
 
 //================================================================================
@@ -542,7 +542,7 @@ void CBotLocomotion::Walk()
 {
     m_bRunning = false;
     m_bSneaking = false;
-    GetBot()->DebugAddMessage( "Walk" );
+    //GetBot()->DebugAddMessage( "Walk" );
 }
 
 //================================================================================
@@ -551,7 +551,7 @@ void CBotLocomotion::Sneak()
 {
     m_bRunning = false;
     m_bSneaking = true;
-    GetBot()->DebugAddMessage( "Sneak" );
+    //GetBot()->DebugAddMessage( "Sneak" );
 }
 
 //================================================================================

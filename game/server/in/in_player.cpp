@@ -168,8 +168,8 @@ CPlayer::~CPlayer()
 //================================================================================
 bool CPlayer::IsIdle() 
 {
-    if ( GetAI() ) {
-        return GetAI()->IsIdle();
+    if ( GetBotController() ) {
+        return GetBotController()->IsIdle();
     }
 
 	// Si no nos estan atacando ni estamos en combate
@@ -181,8 +181,8 @@ bool CPlayer::IsIdle()
 //================================================================================
 bool CPlayer::IsAlerted() 
 {
-    if ( GetAI() ) {
-        return GetAI()->IsAlerted();
+    if ( GetBotController() ) {
+        return GetBotController()->IsAlerted();
     }
 
 	// Nos estan atacando o estamos en combate!
@@ -190,27 +190,23 @@ bool CPlayer::IsAlerted()
 }
 
 //================================================================================
-// Prepara el jugador para ser controlado por la I.A.
+// Establece la I.A. que controlara al Jugador
 //================================================================================
-void CPlayer::SetUpAI()
+void CPlayer::SetBotController( IBot *pBot )
 {
-    SetAI( new CBot(this) );
+    if ( m_pBotController ) {
+        delete m_pBotController;
+    }
+
+    m_pBotController = pBot;
 }
 
 //================================================================================
-// Establece la I.A. que controlara al Jugador
+// Prepara el jugador para ser controlado por la I.A.
 //================================================================================
-void CPlayer::SetAI( CBot *pBot )
+void CPlayer::SetUpBot()
 {
-    if ( m_nAIController ) {
-        delete m_nAIController;
-    }
-
-    m_nAIController = pBot;
-
-    if ( m_nAIController ) {
-        m_nAIController->SetParent( this );
-    }
+    SetBotController( new CBot(this) );
 }
 
 //================================================================================
@@ -281,8 +277,8 @@ void CPlayer::Spawn()
     CreateComponents();
     CreateAttributes();
 
-    if ( GetAI() ) {
-        GetAI()->Spawn();
+    if ( GetBotController() ) {
+        GetBotController()->Spawn();
     }
 
     SetSquad( (CSquad *)NULL );
@@ -394,7 +390,7 @@ void CPlayer::PostThink()
 
     // ¿Estamos siendo controlados por la I.A.?
     // Esto servirá al cliente para no permitir los inputs del jugador
-    m_bIsBot = (GetAI() ) ? true : false;
+    m_bIsBot = (GetBotController() ) ? true : false;
 
     if ( IsAlive() && IsActive() )
     {
@@ -404,8 +400,8 @@ void CPlayer::PostThink()
         m_bIsInCombat = ( m_nIsInCombatTimer.HasStarted() && m_nIsInCombatTimer.IsLessThen(10.0f) );
         m_bIsUnderAttack = ( m_nIsUnderAttackTimer.HasStarted() && m_nIsUnderAttackTimer.IsLessThen(5.0f) ) ;
 
-        if ( GetAI() && !m_bIsInCombat ) {
-            m_bIsInCombat = GetAI()->IsAlerted() || GetAI()->IsCombating();
+        if ( m_bIsBot && !m_bIsInCombat ) {
+            m_bIsInCombat = GetBotController()->IsAlerted() || GetBotController()->IsCombating();
         }
 
         ProcessSceneEvents();
@@ -432,8 +428,8 @@ void CPlayer::PushawayThink()
 //================================================================================
 CBaseEntity *CPlayer::GetEnemy()
 {
-    if ( GetAI() ) {
-        return GetAI()->GetEnemy();
+    if ( GetBotController() ) {
+        return GetBotController()->GetEnemy();
     }
     
     return BaseClass::GetEnemy();
@@ -443,8 +439,8 @@ CBaseEntity *CPlayer::GetEnemy()
 //================================================================================
 CBaseEntity *CPlayer::GetEnemy() const
 {
-    if ( GetAI() ) {
-        return GetAI()->GetEnemy();
+    if ( GetBotController() ) {
+        return GetBotController()->GetEnemy();
     }
     
     return BaseClass::GetEnemy();
@@ -897,6 +893,13 @@ bool CPlayer::QueryHearSound( CSound *pSound )
 {
     CBaseEntity *pOwner = pSound->m_hOwner.Get();
 
+    if ( pOwner == this )
+        return false;
+
+    if ( pSound->IsSoundType( SOUND_PLAYER ) && !pOwner ) {
+        return false;
+    }
+
     if ( pSound->IsSoundType(SOUND_CONTEXT_PLAYER_ALLIES_ONLY) ) {
         if ( Classify() != CLASS_PLAYER_ALLY && Classify() != CLASS_PLAYER_ALLY_VITAL ) {
             return false;
@@ -939,8 +942,8 @@ bool CPlayer::QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFear )
 //================================================================================
 void CPlayer::OnLooked( int iDistance )
 {
-    if ( GetAI() ) {
-        GetAI()->OnLooked( iDistance );
+    if ( GetBotController() ) {
+        GetBotController()->OnLooked( iDistance );
     }
 }
 
@@ -949,8 +952,8 @@ void CPlayer::OnLooked( int iDistance )
 //================================================================================
 void CPlayer::OnListened()
 {
-    if ( GetAI() ) {
-        GetAI()->OnListened();
+    if ( GetBotController() ) {
+        GetBotController()->OnListened();
     }
 }
 
@@ -1395,8 +1398,8 @@ int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 //================================================================================
 int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
 {
-    if ( GetAI() ) {
-        GetAI()->OnTakeDamage( info );
+    if ( GetBotController() ) {
+        GetBotController()->OnTakeDamage( info );
     }
 
     if ( GetSquad() ) {
@@ -1636,8 +1639,8 @@ void CPlayer::Event_Killed( const CTakeDamageInfo &info )
     TheGameRules->PlayerKilled( this, info );
     SendOnKilledGameEvent( info );
 
-    if ( GetAI() ) {
-        GetAI()->OnDeath( info );
+    if ( GetBotController() ) {
+        GetBotController()->OnDeath( info );
     }
 
     if ( GetSquad() ) {
@@ -2147,8 +2150,8 @@ void CPlayer::OnNewLeader( CPlayer *pMember )
 //================================================================================
 void CPlayer::OnMemberTakeDamage( CPlayer *pMember, const CTakeDamageInfo & info ) 
 {
-    if ( GetAI() ) {
-        GetAI()->OnMemberTakeDamage( pMember, info );
+    if ( GetBotController() ) {
+        GetBotController()->OnMemberTakeDamage( pMember, info );
     }
 }
 
@@ -2157,8 +2160,8 @@ void CPlayer::OnMemberTakeDamage( CPlayer *pMember, const CTakeDamageInfo & info
 //================================================================================
 void CPlayer::OnMemberDeath( CPlayer * pMember, const CTakeDamageInfo & info ) 
 {
-    if ( GetAI() ) {
-        GetAI()->OnMemberDeath( pMember, info );
+    if ( GetBotController() ) {
+        GetBotController()->OnMemberDeath( pMember, info );
     }
 
     // Estrés por muerte
@@ -2171,8 +2174,8 @@ void CPlayer::OnMemberDeath( CPlayer * pMember, const CTakeDamageInfo & info )
 //================================================================================
 void CPlayer::OnMemberReportEnemy( CPlayer *pMember, CBaseEntity *pEnemy ) 
 {
-    if ( GetAI() ) {
-        GetAI()->OnMemberReportEnemy( pMember, pEnemy );
+    if ( GetBotController() ) {
+        GetBotController()->OnMemberReportEnemy( pMember, pEnemy );
     }
 }
 
@@ -2260,7 +2263,7 @@ bool CPlayer::ShouldAutoaim()
 int CPlayer::GetDifficultyLevel()
 {
     if ( IsBot() ) {
-        return GetAI()->GetSkill()->GetLevel();
+        return GetBotController()->GetSkill()->GetLevel();
     }
 
     if ( TheGameRules->HasDirector() && NameMatches( "director_*" ) ) {
@@ -2323,11 +2326,11 @@ bool CPlayer::Possess( CPlayer *pOther )
         AddFlag( FL_FAKECLIENT );
 
     // Intercambiamos la I.A.
-    CBot *pOtherBot = pOther->GetAI();
-    CBot *pMyBot    = GetAI();
+    IBot *pOtherBot = pOther->GetBotController();
+    IBot *pMyBot    = GetBotController();
 
-    SetAI( pOtherBot );
-    pOther->SetAI( pMyBot );
+    SetBotController( pOtherBot );
+    pOther->SetBotController( pMyBot );
 
     // Backup
     //edict_t oldPlayerEdict    = *playerSoul;
@@ -2547,10 +2550,10 @@ bool CPlayer::ClientCommand( const CCommand &args )
 
     // Hacer que la I.A. controle a mi personaje
     if ( FStrEq( args[0], "control_bot" ) ) {
-        SetUpAI();
+        SetUpBot();
 
-        if ( GetAI() ) {
-            GetAI()->Spawn();
+        if ( GetBotController() ) {
+            GetBotController()->Spawn();
         }
         else {
             Warning("There has been a problem creating the AI to control the player.\n");
@@ -2561,7 +2564,7 @@ bool CPlayer::ClientCommand( const CCommand &args )
 
     // Volver a tomar el control del personaje
     if ( FStrEq( args[0], "control_human" ) ) {
-        SetAI( NULL );
+        SetBotController( NULL );
         return true;
     }
     
@@ -2713,8 +2716,8 @@ void CPlayer::Touch( CBaseEntity *pOther )
 //================================================================================
 void CPlayer::InjectMovement( NavRelativeDirType direction )
 {
-    if ( GetAI() ) {
-        GetAI()->InjectMovement( direction );
+    if ( GetBotController() ) {
+        GetBotController()->InjectMovement( direction );
         return;
     }
 
@@ -2760,9 +2763,9 @@ void CPlayer::InjectMovement( NavRelativeDirType direction )
 //================================================================================
 void CPlayer::InjectButton( int btn ) 
 {
-    if ( GetAI() )
+    if ( GetBotController() )
     {
-        GetAI()->InjectButton( btn );
+        GetBotController()->InjectButton( btn );
         return;
     }
 
@@ -2780,8 +2783,8 @@ void CPlayer::InjectButton( int btn )
 void CPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
 {
     // Un humano dejando que la I.A. controle su personaje
-    if ( !IsBot() && GetAI() ) {
-        CBotCmd *cmd = GetAI()->GetLastCmd();
+    if ( !IsBot() && GetBotController() ) {
+        CBotCmd *cmd = GetBotController()->GetLastCmd();
 
         if ( ucmd && cmd ) {
             ucmd->buttons = cmd->buttons;
@@ -2895,7 +2898,7 @@ void CPlayer::DebugDisplay()
     DebugScreenText("");
 
     DebugScreenText( UTIL_VarArgs("Is Bot: %i", IsBot()) );
-    DebugScreenText( UTIL_VarArgs("Has AI: %s", (GetAI()) ? "Yes" : "No" ) );
+    DebugScreenText( UTIL_VarArgs("Has Bot Controller: %s", (GetBotController()) ? "Yes" : "No" ) );
     DebugScreenText( UTIL_VarArgs("Climbing Hold: %.2f", m_flClimbingHold.Get()) );
     DebugScreenText( UTIL_VarArgs("Help Progress: %.2f", m_flHelpProgress.Get()) );
 

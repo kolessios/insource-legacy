@@ -81,9 +81,12 @@ void ClientGamePrecache()
     Warning("[ClientGamePrecache] \n");
 }
 
+extern void BotThink();
+
 //================================================================================
 //================================================================================
 void GameStartFrame()
 {
     VPROF("GameStartFrame()");
+    BotThink();
 }

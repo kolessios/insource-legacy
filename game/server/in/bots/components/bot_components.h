@@ -51,8 +51,15 @@ public:
     virtual bool LookAt( const char *pDesc, const Vector &vecGoal, int priority = PRIORITY_VERY_LOW, float duration = 1.0f );
 
     virtual void LookAtThreat();
-protected:
-    
+
+public:
+    virtual void LookNavigation();
+    virtual void LookAround();
+
+    virtual void LookDanger();
+    virtual void LookInterestingSpot();
+    virtual void LookRandomSpot();
+    virtual void LookSquadMember();
 };
 
 //================================================================================
@@ -214,6 +221,7 @@ public:
 
     virtual CEntityMemory *UpdateEntityMemory( CBaseEntity *pEnt, const Vector &vecPosition, CBaseEntity *pInformer = NULL );
     virtual void ForgetEntity( CBaseEntity *pEnt );
+    virtual void ForgetEntity( int index );
     virtual void ForgetAllEntities();
 
     virtual CEntityMemory *GetEntityMemory( CBaseEntity *pEnt = NULL ) const;
@@ -223,9 +231,11 @@ public:
 
     virtual CEntityMemory *GetClosestThreat( float *distance = NULL ) const;
     virtual int GetThreatCount( float range ) const;
+    virtual int GetThreatCount() const;
 
     virtual CEntityMemory *GetClosestFriend( float *distance = NULL ) const;
     virtual int GetFriendCount( float range ) const;
+    virtual int GetFriendCount() const;
 
     virtual CEntityMemory *GetClosestKnown( int teamnum, float *distance = NULL ) const;
     virtual int GetKnownCount( int teamnum, float range = MAX_TRACE_LENGTH ) const;
@@ -289,6 +299,7 @@ public:
     }
 
 public:
+    virtual bool ShouldLookDangerSpot() const;
     virtual bool ShouldLookInterestingSpot() const;
     virtual bool ShouldLookRandomSpot() const;
     virtual bool ShouldLookSquadMember() const;
@@ -346,7 +357,7 @@ public:
     virtual BCOND ShouldMeleeAttack1();
     virtual BCOND ShouldMeleeAttack2();
 
-protected:
+public:
     CountdownTimer m_RandomAimTimer;
     CountdownTimer m_IntestingAimTimer;
     CountdownTimer m_BlockLookAroundTimer;

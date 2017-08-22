@@ -30,10 +30,7 @@ public:
         return true;
     }
 
-    virtual bool ShouldLookDangerSpot() const {
-        return true;
-    }
-
+    virtual bool ShouldLookDangerSpot() const = 0;
     virtual bool ShouldLookInterestingSpot() const = 0;
     virtual bool ShouldLookRandomSpot() const = 0;
     virtual bool ShouldLookSquadMember() const = 0;

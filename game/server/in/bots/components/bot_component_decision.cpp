@@ -5,6 +5,8 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#include "in_gamerules.h"
+#include "in_utils.h"
 #include "players_system.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -16,6 +18,22 @@ extern ConVar bot_locomotion_allow_wiggle;
 extern ConVar bot_debug_jump;
 extern ConVar bot_primary_attack;
 extern ConVar bot_dont_attack;
+
+//================================================================================
+//================================================================================
+bool CBotDecision::ShouldLookDangerSpot() const
+{
+    if ( IsCombating() )
+        return false;
+
+    CEntityMemory *memory = GetBot()->GetPrimaryThreat();
+
+    // Not while we have vision of our enemy
+    if ( memory && memory->IsVisibleRecently(2.0f) )
+        return false;
+
+    return true;
+}
 
 //================================================================================
 //================================================================================
@@ -35,6 +53,9 @@ bool CBotDecision::ShouldLookRandomSpot() const
 //================================================================================
 bool CBotDecision::ShouldLookSquadMember() const
 {
+    if ( !GetBot()->GetSquad() )
+        return false;
+
     if ( !GetVision()->IsVisionTimeExpired() )
         return false;
 
@@ -63,7 +84,7 @@ bool CBotDecision::ShouldLookThreat() const
 
     // We have lost sight of our enemy for a while, let us look elsewhere
     if ( !GetSkill()->IsEasy() ) {
-        if ( HasCondition( BCOND_ENEMY_OCCLUDED ) && HasCondition( BCOND_ENEMY_LOST ) ) {
+        if ( HasCondition( BCOND_ENEMY_OCCLUDED ) && HasCondition( BCOND_ENEMY_LOST ) && memory->GetDistance() >= 1000.0f ) {
             return false;
         }
     }
@@ -732,10 +753,10 @@ bool CBotDecision::IsDangerousEnemy( CBaseEntity *pEnemy ) const
             return false;
 
         if ( pPlayer->IsBot() ) {
-            if ( pPlayer->GetAI()->HasCondition( BCOND_HELPLESS ) )
+            if ( pPlayer->GetBotController()->HasCondition( BCOND_HELPLESS ) )
                 return false;
 
-            if ( !pPlayer->GetAI()->GetDecision()->CanMove() )
+            if ( !pPlayer->GetBotController()->GetDecision()->CanMove() )
                 return false;
         }
 
@@ -933,6 +954,9 @@ BCOND CBotDecision::ShouldRangeAttack1()
 
     // TODO: A way to support attacks without an active enemy
     if ( !memory )
+        return BCOND_NONE;
+
+    if ( IsPrimaryThreatLost() )
         return BCOND_NONE;
 
     CBaseWeapon *pWeapon = GetHost()->GetActiveBaseWeapon();

@@ -160,38 +160,38 @@ void CBotSpawn::PreparePlayer()
     GetBot()->SetPlayerClass( m_iBotClass );
 
     // Creamos la I.A. por primera vez
-    if ( !GetBot()->GetAI() ) {
-        GetBot()->SetUpAI();
-        GetBot()->GetAI()->Spawn();
+    if ( !GetBot()->GetBotController() ) {
+        GetBot()->SetUpBot();
+        GetBot()->GetBotController()->Spawn();
     }
 
-    CBot *pAI = GetBot()->GetAI();
-    Assert( pAI );
+    IBot *pBot = GetBot()->GetBotController();
+    Assert( pBot );
 
-    pAI->SetSkill( m_iBotSkill );
-    pAI->SetTacticalMode( m_iBotTacticalMode );
-    pAI->SetPerformance( (BotPerformance)m_iPerformance );
+    pBot->SetSkill( m_iBotSkill );
+    pBot->SetTacticalMode( m_iBotTacticalMode );
+    pBot->SetPerformance( (BotPerformance)m_iPerformance );
 
     if ( m_bDisabledMovement ) {
-        if ( pAI->GetLocomotion() ) {
-            pAI->GetLocomotion()->SetDisabled( m_bDisabledMovement );
+        if ( pBot->GetLocomotion() ) {
+            pBot->GetLocomotion()->SetDisabled( m_bDisabledMovement );
         }
     }
 
     if ( m_iBlockLookAround > 0 ) {
-        if ( pAI->GetVision() ) {
-            pAI->GetMemory()->UpdateDataMemory( "BlockLookAround", m_iBlockLookAround, m_iBlockLookAround );
+        if ( pBot->GetVision() ) {
+            pBot->GetMemory()->UpdateDataMemory( "BlockLookAround", m_iBlockLookAround, m_iBlockLookAround );
         }
     }
 
     if ( m_nFollowEntity != NULL_STRING ) {
-        if ( pAI->GetFollow() ) {
-            pAI->GetFollow()->Start( STRING( m_nFollowEntity ) );
+        if ( pBot->GetFollow() ) {
+            pBot->GetFollow()->Start( STRING( m_nFollowEntity ) );
         }
     }
 
     if ( HasSpawnFlags( SF_PEACEFUL ) ) {
-        pAI->SetPeaceful( true );
+        pBot->SetPeaceful( true );
     }
 
     GetBot()->SetOwnerEntity( this );
@@ -208,8 +208,8 @@ void CBotSpawn::PreparePlayer()
     }
 
     if ( HasSpawnFlags( SF_USE_SPAWNER_POSITION ) ) {
-        if ( pAI->GetMemory() ) {
-            pAI->GetMemory()->UpdateDataMemory( "SpawnPosition", GetAbsOrigin(), -1.0f );
+        if ( pBot->GetMemory() ) {
+            pBot->GetMemory()->UpdateDataMemory( "SpawnPosition", GetAbsOrigin(), -1.0f );
         }
 
         GetBot()->Teleport( &GetAbsOrigin(), &GetAbsAngles(), NULL );
@@ -276,9 +276,9 @@ void CBotSpawn::InputSetSkill( inputdata_t &inputdata )
 {
     m_iBotSkill = inputdata.value.Int();
 
-    if ( GetBot() && GetBot()->GetAI() )
+    if ( GetBot() && GetBot()->GetBotController() )
     {
-        GetBot()->GetAI()->SetSkill( m_iBotSkill );
+        GetBot()->GetBotController()->SetSkill( m_iBotSkill );
     }
 }
 
@@ -288,8 +288,8 @@ void CBotSpawn::InputSetTacticalMode( inputdata_t & inputdata )
 {
     m_iBotTacticalMode = inputdata.value.Int();
 
-    if ( GetBot() && GetBot()->GetAI() )
-        GetBot()->GetAI()->SetTacticalMode( m_iBotTacticalMode );
+    if ( GetBot() && GetBot()->GetBotController() )
+        GetBot()->GetBotController()->SetTacticalMode( m_iBotTacticalMode );
 }
 
 //================================================================================
@@ -298,8 +298,8 @@ void CBotSpawn::InputBlockLook( inputdata_t &inputdata )
 {
     m_iBlockLookAround = inputdata.value.Int();
 
-    if ( GetBot() && GetBot()->GetAI() && GetBot()->GetAI()->GetMemory() ) {
-        GetBot()->GetAI()->GetMemory()->UpdateDataMemory( "BlockLookAround", m_iBlockLookAround, -1.0f );
+    if ( GetBot() && GetBot()->GetBotController() && GetBot()->GetBotController()->GetMemory() ) {
+        GetBot()->GetBotController()->GetMemory()->UpdateDataMemory( "BlockLookAround", m_iBlockLookAround, -1.0f );
     }
 }
 
@@ -309,9 +309,9 @@ void CBotSpawn::InputSetSquad( inputdata_t &inputdata )
 {
     m_nBotSquadname = MAKE_STRING( inputdata.value.String() );
 
-    if ( GetBot() && GetBot()->GetAI() ) {
-        GetBot()->GetAI()->SetSquad( inputdata.value.String() );
-        GetBot()->GetAI()->SetSkill( m_iBotSkill );
+    if ( GetBot() && GetBot()->GetBotController() ) {
+        GetBot()->GetBotController()->SetSquad( inputdata.value.String() );
+        GetBot()->GetBotController()->SetSkill( m_iBotSkill );
     }
 }
 
@@ -321,8 +321,8 @@ void CBotSpawn::InputDisableMovement( inputdata_t &inputdata )
 {
     m_bDisabledMovement = true;
 
-    if ( GetBot() && GetBot()->GetAI() && GetBot()->GetAI()->GetLocomotion() ) {
-        GetBot()->GetAI()->GetLocomotion()->SetDisabled( m_bDisabledMovement );
+    if ( GetBot() && GetBot()->GetBotController() && GetBot()->GetBotController()->GetLocomotion() ) {
+        GetBot()->GetBotController()->GetLocomotion()->SetDisabled( m_bDisabledMovement );
     }
 }
 
@@ -332,8 +332,8 @@ void CBotSpawn::InputEnableMovement( inputdata_t &inputdata )
 {
     m_bDisabledMovement = false;
 
-    if ( GetBot() && GetBot()->GetAI() && GetBot()->GetAI()->GetLocomotion() ) {
-        GetBot()->GetAI()->GetLocomotion()->SetDisabled( m_bDisabledMovement );
+    if ( GetBot() && GetBot()->GetBotController() && GetBot()->GetBotController()->GetLocomotion() ) {
+        GetBot()->GetBotController()->GetLocomotion()->SetDisabled( m_bDisabledMovement );
     }
 }
 
@@ -342,7 +342,7 @@ void CBotSpawn::InputStartPeaceful( inputdata_t & inputdata )
     if ( !GetBot() )
         return;
 
-    GetBot()->GetAI()->SetPeaceful( true );
+    GetBot()->GetBotController()->SetPeaceful( true );
 }
 
 void CBotSpawn::InputStopPeaceful( inputdata_t & inputdata )
@@ -350,7 +350,7 @@ void CBotSpawn::InputStopPeaceful( inputdata_t & inputdata )
     if ( !GetBot() )
         return;
 
-    GetBot()->GetAI()->SetPeaceful( false );
+    GetBot()->GetBotController()->SetPeaceful( false );
 }
 
 void CBotSpawn::InputDriveTo( inputdata_t & inputdata )
@@ -358,10 +358,10 @@ void CBotSpawn::InputDriveTo( inputdata_t & inputdata )
     if( !GetBot() )
         return;
 
-    if ( !GetBot()->GetAI()->GetLocomotion() )
+    if ( !GetBot()->GetBotController()->GetLocomotion() )
         return;
 
     CBaseEntity *pTarget = inputdata.value.Entity().Get();
 
-    GetBot()->GetAI()->GetLocomotion()->DriveTo( "Input DriveTo", pTarget );
+    GetBot()->GetBotController()->GetLocomotion()->DriveTo( "Input DriveTo", pTarget, PRIORITY_CRITICAL );
 }

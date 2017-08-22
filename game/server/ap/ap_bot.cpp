@@ -113,7 +113,7 @@ bool CAP_BotSoldier::IsMinionCleaningBuilding()
     if ( !pLeader->IsBot() )
         return false;
 
-    return (pLeader->GetAI()->GetActiveScheduleID() == SCHEDULE_CLEAN_BUILDING);
+    return (pLeader->GetBotController()->GetActiveScheduleID() == SCHEDULE_CLEAN_BUILDING);
 }
 
 //================================================================================

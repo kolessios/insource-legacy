@@ -20,6 +20,10 @@
 #include "simtimer.h"
 #include "vprof.h"
 
+// Bot
+//#include "bots/interfaces/ibot.h"
+class IBot;
+
 class CLogicPlayerProxy;
 
 // For queuing and processing usercmds
@@ -267,7 +271,12 @@ public:
 	
 	// IPlayerInfo passthrough (because we can't do multiple inheritance)
 	IPlayerInfo *GetPlayerInfo() { return &m_PlayerInfo; }
-	virtual IBotController *GetBotController() { return NULL; }
+	
+    //virtual IBotController *GetBotController() { return NULL; }
+
+    virtual IBot *GetBotController() const {
+        return NULL;
+    }
 
 	virtual void			SetModel( const char *szModelName );
 	void					SetBodyPitch( float flPitch );

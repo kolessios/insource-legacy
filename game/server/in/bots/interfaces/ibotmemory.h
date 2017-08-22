@@ -36,6 +36,8 @@ public:
     {
         SetDefLessFunc( m_Memory );
         SetDefLessFunc( m_DataMemory );
+        //SetDefLessFunc( m_Threats );
+        //SetDefLessFunc( m_Friends );
     }
 
 public:
@@ -50,6 +52,7 @@ public:
     virtual CEntityMemory *UpdateEntityMemory( CBaseEntity *pEnt, const Vector &vecPosition, CBaseEntity *pInformer = NULL ) = 0;
 
     virtual void ForgetEntity( CBaseEntity *pEnt ) = 0;
+    virtual void ForgetEntity( int index ) = 0;
     virtual void ForgetAllEntities() = 0;
     
     virtual CEntityMemory *GetEntityMemory( CBaseEntity *pEnt = NULL ) const = 0;
@@ -59,17 +62,11 @@ public:
 
     virtual CEntityMemory *GetClosestThreat( float *distance = NULL ) const = 0;
     virtual int GetThreatCount( float range ) const = 0;
-
-    virtual int GetThreatCount() {
-        return m_Threats.Count();
-    }
+    virtual int GetThreatCount() const = 0;
 
     virtual CEntityMemory *GetClosestFriend( float *distance = NULL ) const = 0;
     virtual int GetFriendCount( float range ) const = 0;
-
-    virtual int GetFriendCount() const {
-        return m_Friends.Count();
-    }
+    virtual int GetFriendCount() const = 0;
 
     virtual CEntityMemory *GetClosestKnown( int teamnum, float *distance = NULL ) const = 0;
     virtual int GetKnownCount( int teamnum, float range = MAX_TRACE_LENGTH ) const = 0;
@@ -103,14 +100,13 @@ public:
         m_bEnabled = true;
         m_pPrimaryThreat = NULL;
         m_pIdealThreat = NULL;
-        //m_iNearbyThreats = 0;
-        //m_iNearbyDangerousThreats = 0;
-        //m_iNearbyFriends = 0;
         m_flNearbyDistance = 1000.0;
 
-        m_Threats.Purge();
-        m_Friends.Purge();
+        //m_Threats.Purge();
+        //m_Friends.Purge();
+
         m_Memory.Purge();
+        m_DataMemory.Purge();
     }
 
     virtual bool IsEnabled() const {
@@ -140,18 +136,6 @@ public:
         return m_pIdealThreat;
     }
 
-    /*virtual int GetNearbyThreats() const {
-        return m_iNearbyThreats;
-    }
-
-    virtual int GetNearbyDangerousThreats() const {
-        return m_iNearbyDangerousThreats;
-    }
-
-    virtual int GetNearbyFriends() const {
-        return m_iNearbyFriends;
-    }*/
-
     virtual void SetNearbyDistance( float distance ) {
         m_flNearbyDistance = distance;
     }
@@ -161,16 +145,13 @@ protected:
     CEntityMemory *m_pPrimaryThreat;
     CEntityMemory *m_pIdealThreat;
 
-    //int m_iNearbyThreats;
-    //int m_iNearbyDangerousThreats;
-    //int m_iNearbyFriends;
     float m_flNearbyDistance;
 
     CUtlMap<int, CEntityMemory *> m_Memory;
     CUtlMap<string_t, CDataMemory *> m_DataMemory;
 
-    CUtlVector<CEntityMemory *> m_Threats;
-    CUtlVector<CEntityMemory *> m_Friends;
+    //CUtlMap<int, CEntityMemory *> m_Threats;
+    //CUtlMap<int, CEntityMemory *> m_Friends;
 
     friend class CBot;
 };

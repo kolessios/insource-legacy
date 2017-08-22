@@ -147,8 +147,6 @@ void CBot::Think()
         CleanState();
     }
 
-    ApplyDebugCommands();
-
     // TODO: FIXME
     if ( bot_mimic.GetInt() > 0 ) {
         MimicThink( bot_mimic.GetInt() );
@@ -159,10 +157,11 @@ void CBot::Think()
     m_cmd->viewangles = GetHost()->pl.v_angle;
 
     if ( ShouldProcess() ) {
+        ApplyDebugCommands();
         Process( m_cmd );
+        DebugDisplay();
     }
-
-	DebugDisplay();
+	
 	PlayerMove( m_cmd );
 }
 
@@ -263,6 +262,9 @@ bool CBot::ShouldProcess()
     if ( !GetHost()->IsAlive() )
         return false;
 
+    if ( GetHost()->IsMarkedForDeletion() )
+        return false;
+
     if ( IsPanicked() )
         return false;
 
@@ -280,8 +282,8 @@ bool CBot::ShouldProcess()
     if ( GetFollow() && GetFollow()->IsFollowingBot() ) {
         CPlayer *pLeader = ToInPlayer(GetFollow()->GetEntity());
 
-        if ( pLeader && pLeader->GetAI() ) {
-            return pLeader->GetAI()->ShouldProcess();
+        if ( pLeader && pLeader->GetBotController() ) {
+            return pLeader->GetBotController()->ShouldProcess();
         }
     }
 
@@ -482,7 +484,7 @@ CON_COMMAND_F( bot_debug_follow, "It causes all Bots to start following the host
         if ( !pPlayer->IsBot() )
             continue;
 
-        CBot *pBot = pPlayer->GetAI();
+        IBot *pBot = pPlayer->GetBotController();
 
         if ( pBot->GetFollow() ) {
             pBot->GetFollow()->Start( pOwner );
@@ -501,7 +503,7 @@ CON_COMMAND_F( bot_debug_stop_follow, "Causes all Bots to stop following", FCVAR
         if ( !pPlayer->IsBot() )
             continue;
 
-        CBot *pBot = pPlayer->GetAI();
+        IBot *pBot = pPlayer->GetBotController();
 
         if ( pBot->GetFollow() ) {
             pBot->GetFollow()->Stop();
@@ -523,7 +525,7 @@ CON_COMMAND_F( bot_debug_drive_random, "Orders all bots to move at random sites"
         if ( !pPlayer->IsBot() )
             continue;
 
-        CBot *pBot = pPlayer->GetAI();
+        IBot *pBot = pPlayer->GetBotController();
 
         if ( !pBot->GetLocomotion() )
             continue;
@@ -569,7 +571,7 @@ CON_COMMAND_F( bot_debug_drive_player, "Command all bots to move to host locatio
         if ( !pPlayer->IsBot() )
             continue;
 
-        CBot *pBot = pPlayer->GetAI();
+        IBot *pBot = pPlayer->GetBotController();
 
         if ( !pBot->GetLocomotion() )
             continue;

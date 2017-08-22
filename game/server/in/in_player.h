@@ -19,7 +19,6 @@
 #include "weapon_base.h"
 #include "in_attribute.h"
 
-class CBot;
 class CSquad;
 class CPlayerComponent;
 class CBaseProp;
@@ -80,17 +79,12 @@ public:
     virtual bool IsButtonReleased( int btn ) { return ((m_afButtonReleased & btn)) ? true : false; }
 
     // Principales
-	//virtual IBotController *GetBotController() { return m_nAIController; }
-    template <typename AI>
-    AI *GetAIController();
-    template <typename AI>
-    AI *GetAIController() const;
-
-    virtual CBot *GetAI() { return m_nAIController; }
-    virtual CBot *GetAI() const { return m_nAIController; }
-
-    virtual void SetUpAI();
-    virtual void SetAI( CBot *pBot );
+    virtual IBot *GetBotController() const {
+        return m_pBotController;
+    }
+    
+    virtual void SetBotController( IBot *pBot );
+    virtual void SetUpBot();
 
     virtual int UpdateTransmitState();
 
@@ -419,7 +413,7 @@ protected:
     CMultiplayer_Expresser *m_pExpresser;
     EHANDLE m_nRagdoll;
 
-    CBot *m_nAIController;
+    IBot *m_pBotController;
 
     IntervalTimer m_nSlowDamageTimer;
     IntervalTimer m_nIsUnderAttackTimer;
@@ -487,6 +481,7 @@ inline COMPONENT *CPlayer::GetComponent()
     return NULL;
 }
 
+/*
 template<typename AI>
 inline AI * CPlayer::GetAIController()
 {
@@ -504,5 +499,6 @@ inline AI * CPlayer::GetAIController() const
 
     return dynamic_cast<AI *>(m_nAIController);
 }
+*/
 
 #endif // IN_PLAYER_H

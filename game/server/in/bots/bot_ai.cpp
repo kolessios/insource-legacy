@@ -543,7 +543,7 @@ CPlayer * CBot::GetSquadLeader()
 
 //================================================================================
 //================================================================================
-CBot * CBot::GetSquadLeaderAI()
+IBot * CBot::GetSquadLeaderAI()
 {
     if ( !GetSquad() )
         return NULL;
@@ -551,7 +551,7 @@ CBot * CBot::GetSquadLeaderAI()
     if ( !GetSquad()->GetLeader() )
         return NULL;
 
-    return GetSquad()->GetLeader()->GetAI();
+    return GetSquad()->GetLeader()->GetBotController();
 }
 
 //================================================================================

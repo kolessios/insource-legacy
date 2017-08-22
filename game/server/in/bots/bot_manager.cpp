@@ -14,6 +14,20 @@
 CBotManager g_BotManager;
 CBotManager *TheBots = &g_BotManager;
 
+void BotThink() {
+    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
+        CPlayer *pPlayer = ToInPlayer( it );
+
+        if ( !pPlayer )
+            continue;
+
+        if ( !pPlayer->IsBot() )
+            continue;
+
+        pPlayer->GetBotController()->Think();
+    }
+}
+
 //================================================================================
 // Comandos
 //================================================================================
@@ -63,17 +77,7 @@ void CBotManager::LevelShutdownPreEntity()
 //================================================================================
 void CBotManager::FrameUpdatePreEntityThink()
 {
-    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( it );
-
-        if ( !pPlayer )
-            continue;
-
-        if ( !pPlayer->IsBot() )
-            continue;
-
-        pPlayer->GetAI()->Think();
-    }
+    
 }
 
 //================================================================================

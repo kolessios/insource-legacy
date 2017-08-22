@@ -129,7 +129,10 @@ public:
     virtual void AddComponent( IBotComponent *pComponent );
 
     template<typename COMPONENT>
-    COMPONENT *GetComponent( int id ) const;
+    COMPONENT GetComponent( int id ) const;
+
+    template<typename COMPONENT>
+    COMPONENT GetComponent( int id );
 
     virtual void SetUpComponents();
     virtual void SetUpSchedules();
@@ -166,7 +169,7 @@ public:
 
     virtual bool IsSquadLeader();
     virtual CPlayer *GetSquadLeader();
-    virtual CBot *GetSquadLeaderAI();
+    virtual IBot *GetSquadLeaderAI();
 
     virtual void OnMemberTakeDamage( CPlayer *pMember, const CTakeDamageInfo &info );
     virtual void OnMemberDeath( CPlayer *pMember, const CTakeDamageInfo &info );
@@ -178,27 +181,27 @@ public:
     virtual void DebugAddMessage( char *format, ... );
 
     virtual IBotVision *GetVision() const {
-        return GetComponent<IBotVision>( BOT_COMPONENT_VISION );
+        return GetComponent<IBotVision *>( BOT_COMPONENT_VISION );
     }
 
     virtual IBotAttack *GetAttack() const {
-        return GetComponent<IBotAttack>( BOT_COMPONENT_ATTACK );
+        return GetComponent<IBotAttack *>( BOT_COMPONENT_ATTACK );
     }
 
     virtual IBotMemory *GetMemory() const {
-        return GetComponent<IBotMemory>( BOT_COMPONENT_MEMORY );
+        return GetComponent<IBotMemory *>( BOT_COMPONENT_MEMORY );
     }
 
     virtual IBotLocomotion *GetLocomotion() const {
-        return GetComponent<IBotLocomotion>( BOT_COMPONENT_LOCOMOTION );
+        return GetComponent<IBotLocomotion *>( BOT_COMPONENT_LOCOMOTION );
     }
 
     virtual IBotFollow *GetFollow() const {
-        return GetComponent<IBotFollow>( BOT_COMPONENT_FOLLOW );
+        return GetComponent<IBotFollow *>( BOT_COMPONENT_FOLLOW );
     }
 
     virtual IBotDecision *GetDecision() const {
-        return GetComponent<IBotDecision>( BOT_COMPONENT_DECISION );
+        return GetComponent<IBotDecision *>( BOT_COMPONENT_DECISION );
     }
 
 public:
@@ -345,14 +348,25 @@ protected:
 extern CPlayer *CreateBot( const char *pPlayername, const Vector *vecPosition, const QAngle *angles );
 
 template<typename COMPONENT>
-inline COMPONENT * CBot::GetComponent( int id ) const
+inline COMPONENT CBot::GetComponent( int id ) const
 {
     int index = m_nComponents.Find( id );
 
     if ( !m_nComponents.IsValidIndex( index ) )
         return NULL;
 
-    return dynamic_cast<COMPONENT *>( m_nComponents.Element( index ) );
+    return dynamic_cast<COMPONENT>( m_nComponents.Element( index ) );
+}
+
+template<typename COMPONENT>
+inline COMPONENT CBot::GetComponent( int id )
+{
+    int index = m_nComponents.Find( id );
+
+    if ( !m_nComponents.IsValidIndex( index ) )
+        return NULL;
+
+    return dynamic_cast<COMPONENT>(m_nComponents.Element( index ));
 }
 
 

@@ -170,7 +170,7 @@ void CBot::DebugDisplay()
             }
 
             DebugScreenText( msg.sprintf( "    Primary Threat: %s (%s)", pThreat->GetEntity()->GetClassname(), STRING( pThreat->GetEntity()->GetEntityName() ) ), red );
-            DebugScreenText( msg.sprintf( "        Duration: %.2fs", (GetMemory()->GetMemoryDuration() - pThreat->GetElapsedTimeSinceVisible()) ), red );
+            DebugScreenText( msg.sprintf( "        Time Left: %.2fs", pThreat->GetTimeLeft() ), red );
             DebugScreenText( msg.sprintf( "        Visible: %i (%.2f since visible)", pThreat->IsVisible(), pThreat->GetElapsedTimeSinceVisible() ), red );
             DebugScreenText( msg.sprintf( "        Distance: %.2f", pThreat->GetDistance() ), red );
             DebugScreenText( msg.sprintf( "        Hitbox: (H: %i) (C: %i) (LL: %i) (RL: %i)", 
