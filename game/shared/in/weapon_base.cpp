@@ -15,8 +15,8 @@
     #include "in_player.h"
     #include "player_lagcompensation.h"
     #include "soundent.h"
-    #include "squad.h"
-    #include "bot.h"
+    #include "bots\squad.h"
+    #include "bots\bot.h"
 #else
     #include "fx_impact.h"
     #include "c_in_player.h"
@@ -363,7 +363,7 @@ float CBaseWeapon::GetSpreadPerShot()
 #endif
 
         // Saltando
-        if ( !pPlayer->IsInGround() ) {
+        if ( !pPlayer->IsOnGround() ) {
             spread *= GetWeaponInfo().m_flJumpSpread;
         }
 

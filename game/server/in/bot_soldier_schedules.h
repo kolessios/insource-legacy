@@ -7,13 +7,13 @@
 #pragma once
 #endif
 
-#include "bot_schedules.h"
+#include "bots\schedules\bot_schedules.h"
 
 //================================================================================
 // Cubrirse [Modo Soldado]
 //================================================================================
 /*
-class CSoldierCoverSchedule : public CBotSchedule
+class CSoldierCoverSchedule : public IBotSchedule
 {
 public:
     DECLARE_SCHEDULE( SCHEDULE_SOLDIER_COVER );

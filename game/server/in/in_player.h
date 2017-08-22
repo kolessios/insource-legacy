@@ -64,7 +64,7 @@ public:
     virtual bool IsCrouching()  { return (GetFlags() & FL_DUCKING ) ? true : false; }
     virtual bool IsCrouching() const  { return (GetFlags() & FL_DUCKING ) ? true : false; }
 
-    virtual bool IsInGround() { return (GetFlags() & FL_ONGROUND) ? true : false; }
+    virtual bool IsOnGround() { return (GetFlags() & FL_ONGROUND) ? true : false; }
     virtual bool InGodMode() { return (GetFlags() & FL_GODMODE) ? true : false; }
     virtual bool InBuddhaMode() { return (m_debugOverlays & OVERLAY_BUDDHA_MODE) ? true : false; }
 
@@ -148,7 +148,7 @@ public:
 	virtual void AddAttributeModifier( const char *name );
 
     // Armas
-    CBaseWeapon *GetBaseWeapon();
+    CBaseWeapon *GetActiveBaseWeapon();
 
 	virtual CBaseEntity	*GiveNamedItem( const char *szName, int iSubType = 0, bool removeIfNotCarried = true );
 

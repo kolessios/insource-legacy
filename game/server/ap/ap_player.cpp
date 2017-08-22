@@ -151,12 +151,15 @@ Class_T CAP_Player::Classify()
 //================================================================================
 void CAP_Player::SetUpAI()
 {
+    SetAI( new CBot(this) );
+
+    /*
     if ( IsSoldier() ) {
         SetAI( new CAP_BotSoldier() );
     }
     else {
         SetAI( new CAP_Bot() );
-    }
+    }*/
 }
 
 //================================================================================

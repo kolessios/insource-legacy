@@ -14,8 +14,9 @@
 //================================================================================
 // Crea los componentes que tendrá el Bot
 //================================================================================
-void CAP_Bot::SetupSchedules()
+void CAP_Bot::SetUpSchedules()
 {
+    /*
 	ADD_SCHEDULE( CInvestigateSoundSchedule );
     ADD_SCHEDULE( CInvestigateLocationSchedule );
     ADD_SCHEDULE( CHuntEnemySchedule );
@@ -39,6 +40,7 @@ void CAP_Bot::SetupSchedules()
         if ( GetHost()->GetTeamNumber() == TEAM_SOLDIERS )
             ADD_SCHEDULE( CCleanBuildingSchedule );
     }
+    */
 }
 
 //================================================================================
@@ -57,7 +59,8 @@ bool CAP_Bot::ShouldLookSquadMember()
     if ( TheGameRules->IsGameMode(GAME_MODE_SURVIVAL) )
         return false;
 
-    return BaseClass::ShouldLookSquadMember();
+    return false;
+    //return BaseClass::ShouldLookSquadMember();
 }
 
 //----------------------------------------------------------------------------------------
@@ -65,7 +68,7 @@ bool CAP_Bot::ShouldLookSquadMember()
 //================================================================================
 // Constructor
 //================================================================================
-CAP_BotSoldier::CAP_BotSoldier()
+CAP_BotSoldier::CAP_BotSoldier( CBasePlayer *parent ) : BaseClass( parent )
 {
     m_BuildingList.EnsureCapacity( 32 );
 }

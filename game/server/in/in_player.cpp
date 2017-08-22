@@ -6,7 +6,8 @@
 #include "nav.h"
 #include "nav_area.h"
 
-#include "bot.h"
+#include "bots\bot.h"
+#include "bots\squad_manager.h"
 
 #include "in_playeranimstate_proxy.h"
 #include "in_gamerules.h"
@@ -19,7 +20,6 @@
 #include "in_attribute_system.h"
 
 #include "director.h"
-#include "squad_manager.h"
 
 #include "obstacle_pushaway.h"
 #include "predicted_viewmodel.h"
@@ -194,7 +194,7 @@ bool CPlayer::IsAlerted()
 //================================================================================
 void CPlayer::SetUpAI()
 {
-    SetAI( new CBot() );
+    SetAI( new CBot(this) );
 }
 
 //================================================================================
@@ -740,7 +740,7 @@ CAttribute *CPlayer::GetAttribute( const char *name )
 //================================================================================
 // Devuelve el arma actual del jugador
 //================================================================================
-CBaseWeapon *CPlayer::GetBaseWeapon() 
+CBaseWeapon *CPlayer::GetActiveBaseWeapon() 
 {
     return ToBaseWeapon( GetActiveWeapon() );
 }
@@ -2281,10 +2281,16 @@ void CPlayer::Kick()
     RemoveAllItems( true );
 
     // Lo matamos para eliminar linternas y otras cosas
-    //if ( IsAlive() )
-      //  CommitSuicide();
+    if ( IsAlive() ) {
+        CommitSuicide();
+    }
 
-    engine->ServerCommand( UTIL_VarArgs("kickid %d\n", engine->GetPlayerUserId(edict())) );
+    //GetPlayerInfo()->GetUserID();
+    //GetPlayerInfo()->GetNetworkIDString();
+
+    //engine->ServerCommand( UTIL_VarArgs( "kick %s\n", GetPlayerName() ) );
+    engine->ServerCommand( UTIL_VarArgs("kickid %i\n", GetPlayerInfo()->GetUserID() ) );
+    Msg( "Kicking Player (%i) %s (%s)\n", GetPlayerInfo()->GetUserID(), GetPlayerName(), GetPlayerInfo()->GetNetworkIDString() );
 }
 
 //================================================================================
