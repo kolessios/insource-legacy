@@ -5,8 +5,14 @@
 #include "cbase.h"
 
 #include "bots\bot.h"
+
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
 #include "in_gamerules.h"
+#else
+#include "bots\in_utils.h"
+#include "basecombatweapon.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -15,30 +21,20 @@ extern ConVar bot_optimize;
 extern ConVar bot_far_distance;
 
 //================================================================================
-// Procesa lo que esta mirando el Bot ahora mismo
+// It is called when we already have information about Bot vision.
 //================================================================================
 void CBot::OnLooked( int iDistance )
 {
     VPROF_BUDGET( "OnLooked", VPROF_BUDGETGROUP_BOTS );
 
-    // Limpiamos las condiciones
-    ClearCondition( BCOND_SEE_HATE );
-    ClearCondition( BCOND_SEE_FEAR );
-    ClearCondition( BCOND_SEE_DISLIKE );
-    ClearCondition( BCOND_BETTER_WEAPON_AVAILABLE );
-    ClearCondition( BCOND_SEE_DEJECTED_FRIEND );
-
     AISightIter_t iter;
     CBaseEntity *pSightEnt = GetSenses()->GetFirstSeenEntity( &iter );
 
-	if ( !pSightEnt )
-		return;
+    if ( !pSightEnt )
+        return;
 
-	int limit = 25;
-
-    if ( ShouldOptimize() ) {
-        limit = 5;
-    }
+    // TODO: This "optimization" works?
+    int limit = 25;
 
     while ( pSightEnt ) {
         OnLooked( pSightEnt );
@@ -52,89 +48,63 @@ void CBot::OnLooked( int iDistance )
 }
 
 //================================================================================
-// El Bot tiene visión de la entidad
+// We can see the specified entity
 //================================================================================
 void CBot::OnLooked( CBaseEntity *pSightEnt )
 {
     if ( !GetMemory() )
         return;
 
-    BCOND condition = BCOND_NONE;
-    int relation = TheGameRules->PlayerRelationship( GetHost(), pSightEnt );
+    CEntityMemory *memory = GetMemory()->UpdateEntityMemory( pSightEnt, pSightEnt->WorldSpaceCenter() );
+    Assert( memory );
 
-    CEntityMemory *memory = GetMemory()->UpdateEntityMemory( pSightEnt, pSightEnt->GetAbsOrigin() );
+    if ( !memory )
+        return;
+
     memory->UpdateVisibility( true );
 
-    switch ( relation ) {
-        case GR_ENEMY:
-        {
-            int priority = GetHost()->IRelationPriority( pSightEnt );
+    if ( memory->IsEnemy() ) {
+        int priority = GetHost()->IRelationPriority( pSightEnt );
 
-            if ( priority < 0 ) {
-                condition = BCOND_SEE_DISLIKE;
-            }
-            else {
-                condition = BCOND_SEE_HATE;
-            }
-
-            break;
+        if ( priority < 0 ) {
+            SetCondition( BCOND_SEE_DISLIKE );
         }
-
-        case GR_NEUTRAL:
-        {
-            if ( pSightEnt->IsBaseCombatWeapon() ) {
-                CBaseWeapon *pWeapon = ToBaseWeapon( pSightEnt );
-                Assert( pWeapon );
-
-                if ( GetDecision()->ShouldGrabWeapon( pWeapon ) ) {
-                    GetMemory()->UpdateDataMemory( "BestWeapon", pSightEnt, 30.0f );
-                    SetCondition( BCOND_BETTER_WEAPON_AVAILABLE );
-                }
-            }
-
-            break;
-        }
-
-        case GR_ALLY:
-        {
-            if ( pSightEnt->IsPlayer() ) {
-                CPlayer *pSightPlayer = ToInPlayer( pSightEnt );
-
-                if ( GetDecision()->ShouldHelpDejectedFriend( pSightPlayer ) ) {
-                    GetMemory()->UpdateDataMemory( "DejectedFriend", pSightEnt, 30.0f );
-                    SetCondition( BCOND_SEE_DEJECTED_FRIEND );
-                }
-            }
-
-            break;
+        else {
+            SetCondition( BCOND_SEE_HATE );
         }
     }
+    else if ( memory->IsFriend() ) {
+        SetCondition( BCOND_SEE_FRIEND );
 
-    if ( condition != BCOND_NONE ) {
-        SetCondition( condition );
+        if ( pSightEnt->IsPlayer() ) {
+            CPlayer *pSightPlayer = ToInPlayer( pSightEnt );
+
+            if ( GetDecision()->ShouldHelpDejectedFriend( pSightPlayer ) ) {
+                GetMemory()->UpdateDataMemory( "DejectedFriend", pSightEnt, 30.0f );
+                SetCondition( BCOND_SEE_DEJECTED_FRIEND );
+            }
+        }
+    }
+    else {
+        // A weapon, maybe we can use it...
+        if ( pSightEnt->IsBaseCombatWeapon() ) {
+            CBaseWeapon *pWeapon = ToBaseWeapon( pSightEnt );
+            Assert( pWeapon );
+
+            if ( GetDecision()->ShouldGrabWeapon( pWeapon ) ) {
+                GetMemory()->UpdateDataMemory( "BestWeapon", pSightEnt, 30.0f );
+                SetCondition( BCOND_BETTER_WEAPON_AVAILABLE );
+            }
+        }
     }
 }
 
 //================================================================================
-// Procesa lo que esta escuchando el Bot ahora mismo
+// It is called when we already have information about Bot hearing
 //================================================================================
 void CBot::OnListened()
 {
     VPROF_BUDGET( "OnListened", VPROF_BUDGETGROUP_BOTS );
-
-    // Limpiamos las condiciones
-    ClearCondition( BCOND_HEAR_COMBAT );
-    ClearCondition( BCOND_HEAR_WORLD );
-    ClearCondition( BCOND_HEAR_ENEMY );
-    ClearCondition( BCOND_HEAR_ENEMY_FOOTSTEP );
-    ClearCondition( BCOND_HEAR_BULLET_IMPACT );
-    ClearCondition( BCOND_HEAR_BULLET_IMPACT_SNIPER );
-    ClearCondition( BCOND_HEAR_DANGER );
-    ClearCondition( BCOND_HEAR_MOVE_AWAY );
-    ClearCondition( BCOND_HEAR_SPOOKY );
-    ClearCondition( BCOND_SMELL_MEAT );
-    ClearCondition( BCOND_SMELL_CARCASS );
-    ClearCondition( BCOND_SMELL_GARBAGE );
 
     AISoundIter_t iter;
     CSound *pCurrentSound = GetSenses()->GetFirstHeardSound( &iter );
@@ -172,6 +142,7 @@ void CBot::OnListened()
             SetCondition( BCOND_HEAR_WORLD );
         }
 
+#ifdef INSOURCE_DLL
         if ( pCurrentSound->IsSoundType( SOUND_PLAYER ) ) {
             if ( pCurrentSound->IsSoundType( SOUND_CONTEXT_FOOTSTEP ) ) {
                 SetCondition( BCOND_HEAR_ENEMY_FOOTSTEP );
@@ -179,6 +150,7 @@ void CBot::OnListened()
 
             SetCondition( BCOND_HEAR_ENEMY );
         }
+#endif
 
         if ( pCurrentSound->IsSoundType( SOUND_CARCASS ) ) {
             SetCondition( BCOND_SMELL_CARCASS );
@@ -197,81 +169,70 @@ void CBot::OnListened()
 }
 
 //================================================================================
-// Hemos recibido daño
+// We have received damage
 //================================================================================
 void CBot::OnTakeDamage( const CTakeDamageInfo &info )
 {
     CBaseEntity *pAttacker = info.GetAttacker();
     float farDistance = bot_far_distance.GetFloat();
 
-    // El atacante es un personaje enemigo
-    if ( pAttacker && pAttacker->MyCombatCharacterPointer() && TheGameRules->PlayerRelationship( GetHost(), pAttacker ) != GR_ALLY ) {
-        float distance = GetAbsOrigin().DistTo( pAttacker->GetAbsOrigin() );
+    // The attacker is a character
+    if ( pAttacker && pAttacker->MyCombatCharacterPointer() ) {
+        if ( pAttacker == GetEnemy() )
+            return;
 
-        // Posición estimada del atacante
-        Vector vecEstimatedPosition = pAttacker->WorldSpaceCenter();
+        if ( GetDecision()->IsEnemy( pAttacker ) ) {
+            float distance = GetAbsOrigin().DistTo( pAttacker->GetAbsOrigin() );
+            bool visible = GetDecision()->IsAbleToSee( pAttacker );
+            Vector vecPosition = pAttacker->WorldSpaceCenter();
 
-        // ¡Esta muy lejos! No podemos saber el punto exacto
-        if ( distance >= farDistance ) {
-            float errorDistance = 200.0f;
+            // We have no vision of the attacker! We can not know the exact position
+            if ( !visible ) {
+                float errorRange = 200.0f;
 
-            // Somos novatos, calculamos mal
-            if ( GetSkill()->GetLevel() <= SKILL_MEDIUM )
-                errorDistance = 500.0f;
-
-            vecEstimatedPosition.x += RandomFloat( -errorDistance, errorDistance );
-            vecEstimatedPosition.y += RandomFloat( -errorDistance, errorDistance );
-        }
-
-        // Estamos calmados...
-        if ( GetState() == STATE_IDLE ) {
-            // No podemos verlo, entramos en pánico!!
-            if ( !GetHost()->IsAbleToSee( pAttacker ) ) {
-                Panic();
-            }
-
-            // Miramos al lugar de ataque
-            GetVision()->LookAt( "Unknown Enemy Spot", vecEstimatedPosition, PRIORITY_HIGH, GetSkill()->GetAlertDuration() );
-        }
-        else {
-            bool setAsEnemy = true;
-
-            // Si esta muy lejos (como un francotirador oculto)
-            // entonces solo actualizamos su posición apróximada
-            if ( distance >= farDistance ) {
-                setAsEnemy = false;
-            }
-
-            // Nuestro nuevo enemigo
-            if ( setAsEnemy && GetEnemy() != pAttacker ) {
-                // Noob: ¡Otro enemigo! ¡Panico total!
-                if ( GetSkill()->IsEasy() ) {
-                    Panic( RandomFloat( 0.2f, 0.6f ) );
+                // It is very far!
+                if ( distance >= farDistance ) {
+                    errorRange = 500.0f;
                 }
 
-                SetEnemy( pAttacker, true );
+                vecPosition.x += RandomFloat( -errorRange, errorRange );
+                vecPosition.y += RandomFloat( -errorRange, errorRange );
             }
-            else {
-                GetMemory()->UpdateEntityMemory( pAttacker, vecEstimatedPosition );
+
+            // We were calm, without hurting anyone...
+            if ( GetState() == STATE_IDLE ) {
+                // We can not see it! We panicked!
+                if ( !GetDecision()->IsAbleToSee( pAttacker ) ) {
+                    Panic();
+                }
+            }
+
+            GetMemory()->UpdateEntityMemory( pAttacker, vecPosition );
+
+            if ( !visible ) {
+                // We try to look at where we've been hurt
+                GetVision()->LookAt( "Unknown Threat Spot", vecPosition, PRIORITY_VERY_HIGH, 0.2f );
             }
         }
     }
-    
+
+#ifdef INSOURCE_DLL
     // El último daño recibido fue hace menos de 2s
     // Al parecer estamos recibiendo daño continuo
     if ( GetHost()->GetLastDamageTimer().IsLessThen( 2.0f ) ) {
         ++m_iRepeatedDamageTimes;
         m_flDamageAccumulated += info.GetDamage();
     }
+#endif
 }
 
 //================================================================================
-// Hemos muerto
+// Dead x(
 //================================================================================
 void CBot::OnDeath( const CTakeDamageInfo &info ) 
 {
     if ( GetActiveSchedule() ) {
-        GetActiveSchedule()->Fail("Player Death");
+        GetActiveSchedule()->Fail( "Player Death" );
         GetActiveSchedule()->Finish();
         m_nActiveSchedule = NULL;
     }

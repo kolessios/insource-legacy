@@ -181,7 +181,7 @@ public:
 
 
 	// Walking
-	void StartWalking( void );
+	void StartSneaking( void );
 	void StopWalking( void );
 	bool IsWalking( void ) { return m_fIsWalking; }
 

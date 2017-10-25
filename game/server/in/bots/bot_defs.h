@@ -17,6 +17,225 @@
 #include "bots\interfaces\improv_locomotor.h"
 
 //================================================================================
+// Source Engine
+//================================================================================
+
+#ifndef INSOURCE_DLL
+
+#include "player.h"
+
+// The Bots were developed for Source Engine modification codename "InSource". (INSOURCE_DLL)
+// https://github.com/WootsMX/InSource
+// Below are alternative code to the InSource code, 
+// modify them according to your mod.
+
+#ifndef MAX_CONDITIONS
+#define MAX_CONDITIONS 32*8
+#endif
+
+typedef CBitVec<MAX_CONDITIONS> CFlagsBits;
+
+// Derived classes
+typedef CBasePlayer CPlayer;
+typedef CBaseCombatWeapon CBaseWeapon;
+
+// Similar functions
+#define ToInPlayer ToBasePlayer
+#define ToBaseWeapon dynamic_cast<CBaseWeapon *>
+#define TheGameRules GameRules()
+#define GetGameDifficulty() TheGameRules->GetSkillLevel()
+#define GetActiveBaseWeapon GetActiveWeapon
+
+// Applied to a [CBaseCombatWeapon] to detect the type of weapon.
+#ifdef HL2MP
+#define IsSniper() ClassMatches( "crossbow" )
+#else
+#define IsSniper() ClassMatches( "sniper" )
+#endif
+#define IsShotgun() ClassMatches( "shotgun" )
+#define GetWeaponInfo GetWpnData
+
+// Skill Levels
+#define SKILL_VERY_HARD SKILL_HARD
+#define SKILL_ULTRA_HARD SKILL_HARD
+#define SKILL_IMPOSIBLE SKILL_HARD
+#define SKILL_EASIEST SKILL_EASY
+#define SKILL_HARDEST SKILL_HARD
+
+// Sounds
+#define SOUND_CONTEXT_BULLET_IMPACT SOUND_BULLET_IMPACT
+
+// Command Macros
+#define FCVAR_SERVER            FCVAR_REPLICATED | FCVAR_DEMO
+#define FCVAR_ADMIN_ONLY        FCVAR_SERVER_CAN_EXECUTE | FCVAR_SERVER
+
+#undef DECLARE_COMMAND
+#define DECLARE_COMMAND( name, value, description, flags )				ConVar name( #name, value, flags, description );
+#define DECLARE_ADMIN_COMMAND( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY )
+#define DECLARE_REPLICATED_CHEAT_COMMAND( name, value, description )	DECLARE_COMMAND( name, value, description, FCVAR_REPLICATED | FCVAR_CHEAT )
+#define DECLARE_REPLICATED_COMMAND( name, value, description )			DECLARE_COMMAND( name, value, description, FCVAR_SERVER )
+#define DECLARE_DEBUG_COMMAND( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY | FCVAR_CHEAT | FCVAR_NOTIFY )
+
+#define DECLARE_CHEAT_COMMAND DECLARE_REPLICATED_CHEAT_COMMAND
+#define DECLARE_NOTIFY_COMMAND( name, value, description ) DECLARE_COMMAND( name, value, description, FCVAR_SERVER | FCVAR_NOTIFY )
+
+//================================================================================
+//================================================================================
+struct DebugMessage
+{
+    char m_string[1024];
+    IntervalTimer m_age;
+};
+
+//================================================================================
+//================================================================================
+class CBulletsTraceFilter : public CTraceFilterSimpleList
+{
+public:
+    CBulletsTraceFilter( int collisionGroup ) : CTraceFilterSimpleList( collisionGroup ) {}
+
+    bool ShouldHitEntity( IHandleEntity *pHandleEntity, int contentsMask )
+    {
+        if ( m_PassEntities.Count() ) {
+            CBaseEntity *pEntity = EntityFromEntityHandle( pHandleEntity );
+            CBaseEntity *pPassEntity = EntityFromEntityHandle( m_PassEntities[0] );
+            if ( pEntity && pPassEntity && pEntity->GetOwnerEntity() == pPassEntity &&
+                 pPassEntity->IsSolidFlagSet( FSOLID_NOT_SOLID ) && pPassEntity->IsSolidFlagSet( FSOLID_CUSTOMBOXTEST ) &&
+                 pPassEntity->IsSolidFlagSet( FSOLID_CUSTOMRAYTEST ) ) {
+                // It's a bone follower of the entity to ignore (toml 8/3/2007)
+                return false;
+            }
+        }
+        return CTraceFilterSimpleList::ShouldHitEntity( pHandleEntity, contentsMask );
+    }
+
+};
+
+//================================================================================
+// Allows you to save various types of information.
+//================================================================================
+class CMultidata
+{
+public:
+    DECLARE_CLASS_NOBASE( CMultidata );
+
+    CMultidata()
+    {
+        Reset();
+    }
+
+    CMultidata( int value )
+    {
+        Reset();
+        SetInt( value );
+    }
+
+    CMultidata( Vector value )
+    {
+        Reset();
+        SetVector( value );
+    }
+
+    CMultidata( float value )
+    {
+        Reset();
+        SetFloat( value );
+    }
+
+    CMultidata( const char *value )
+    {
+        Reset();
+        SetString( value );
+    }
+
+    CMultidata( CBaseEntity *value )
+    {
+        Reset();
+        SetEntity( value );
+    }
+
+    virtual void Reset() {
+        vecValue.Invalidate();
+        flValue = 0;
+        iValue = 0;
+        iszValue = NULL_STRING;
+        pszValue = NULL;
+        Purge();
+    }
+
+    void SetInt( int value ) {
+        iValue = value;
+        flValue = (float)value;
+        OnSet();
+    }
+
+    void SetFloat( float value ) {
+        iValue = (int)value;
+        flValue = value;
+        OnSet();
+    }
+
+    void SetVector( const Vector &value ) {
+        vecValue = value;
+        OnSet();
+    }
+
+    void SetString( const char *value ) {
+        iszValue = AllocPooledString( value );
+        OnSet();
+    }
+
+    void SetEntity( CBaseEntity *value ) {
+        pszValue = value;
+        OnSet();
+    }
+
+    virtual void OnSet() { }
+
+    const Vector &GetVector() const {
+        return vecValue;
+    }
+
+    float GetFloat() const {
+        return flValue;
+    }
+
+    int GetInt() const {
+        return iValue;
+    }
+
+    const char *GetString() const {
+        return STRING( iszValue );
+    }
+
+    CBaseEntity *GetEntity() const {
+        return pszValue.Get();
+    }
+
+    int Add( CMultidata *data ) {
+        int index = list.AddToTail( data );
+        OnSet();
+        return index;
+    }
+
+    bool Remove( CMultidata *data ) {
+        return list.FindAndRemove( data );
+    }
+
+    void Purge() {
+        list.PurgeAndDeleteElements();
+    }
+
+    Vector vecValue;
+    float flValue;
+    int iValue;
+    string_t iszValue;
+    EHANDLE pszValue;
+    CUtlVector<CMultidata *> list;
+};
+#endif
+
+//================================================================================
 //================================================================================
 
 #define MEMORY_BLOCK_LOOK_AROUND "BlockLookAround"
@@ -24,8 +243,53 @@
 #define MEMORY_BEST_WEAPON "BestWeapon"
 #define MEMORY_DEJECTED_FRIEND "DejectedFriend"
 
+#define GET_COVER_RADIUS 1500.0f
+
 //================================================================================
-// Prioridades
+// Bot Names
+// TODO: One way to change these names without editing the code. (Script file for example)
+//================================================================================
+
+#ifdef INSOURCE_DLL
+static const char *m_botNames[] =
+{
+    "Abigail",
+    "Mariana",
+    "Alfonso",
+    "Chell",
+    "Adan",
+    "Gordon",
+    "Freeman",
+    "Kolesias",
+    "Jennifer",
+    "Valeria",
+    "Alejandra",
+    "Andrea",
+    "Mario",
+    "Maria",
+    "Steam",
+    "Hoxton",
+    "Alex",
+    "Sing"
+};
+#else
+// http://www.behindthename.com/random/random.php?number=1&gender=both&surname=&norare=yes&nodiminutives=yes&all=no&usage_eng=1
+static const char *m_botNames[] =
+{
+    "Elias",
+    "Ronda",
+    "Theodora",
+    "Alger",
+    "Barbara",
+    "Shelley",
+    "Crystal",
+    "Gordon",
+    "Alyx"
+};
+#endif
+
+//================================================================================
+// Priorities
 //================================================================================
 enum
 {
@@ -56,7 +320,7 @@ static const char *g_PriorityNames[LAST_PRIORITY] =
 };
 
 //================================================================================
-// Velocidades para apuntar
+// Speeds when aiming
 //================================================================================
 enum 
 {
@@ -71,7 +335,7 @@ enum
 };
 
 //================================================================================
-// Componentes
+// ID Components
 //================================================================================
 enum
 {
@@ -81,11 +345,12 @@ enum
     BOT_COMPONENT_MEMORY,
     BOT_COMPONENT_ATTACK,
     BOT_COMPONENT_DECISION,
-    LAST_COMPONENT,
+
+    LAST_COMPONENT
 };
 
 //================================================================================
-// Desire
+// Levels of desire
 //================================================================================
 
 #define BOT_DESIRE_NONE		0.0f
@@ -94,6 +359,7 @@ enum
 #define BOT_DESIRE_MODERATE 0.5f
 #define BOT_DESIRE_HIGH		0.7f
 #define BOT_DESIRE_VERYHIGH 0.9f
+#define BOT_DESIRE_FORCED   0.99f
 #define BOT_DESIRE_ABSOLUTE 1.0f
 
 //================================================================================
@@ -120,13 +386,14 @@ enum
     SCHEDULE_CALL_FOR_BACKUP,
     SCHEDULE_DEFEND_SPAWN,
 
-	SCHEDULE_SOLDIER_COVER,
-
-	#ifdef APOCALYPSE
+#ifdef APOCALYPSE
+    SCHEDULE_SOLDIER_COVER,
 	SCHEDULE_SEARCH_RESOURCES,
 	SCHEDULE_WANDER,
     SCHEDULE_CLEAN_BUILDING,
-	#endif
+#elif HL2MP
+    SCHEDULE_WANDER,
+#endif
 
     LAST_BOT_SCHEDULE
 };
@@ -138,7 +405,7 @@ static const char *g_BotSchedules[LAST_BOT_SCHEDULE] =
     "INVESTIGATE_SOUND",
     "HUNT_ENEMY",
     
-    "BOT_COMPONENT_ATTACK",
+    "ATTACK",
     "RELOAD",
     "COVER",
     "HIDE",
@@ -151,13 +418,15 @@ static const char *g_BotSchedules[LAST_BOT_SCHEDULE] =
     "MOVE_ASIDE",
     "CALL_FOR_BACKUP",
     "DEFEND_SPAWN",
-	"SOLDIER_COVER",
 
-	#ifdef APOCALYPSE
+#ifdef APOCALYPSE
+    "SOLDIER_COVER",
 	"SEARCH_RESOURCES",
 	"WANDER",
-    "CLEAN_BUILDING"
-	#endif
+    "CLEAN_BUILDING",
+#elif HL2MP
+    "WANDER",
+#endif
 };
 
 //================================================================================
@@ -167,41 +436,44 @@ static const char *g_BotSchedules[LAST_BOT_SCHEDULE] =
 enum
 {
 	BTASK_INVALID = 0,
-	BTASK_WAIT,                         // Esperar una determinada cantidad de segundos
-    BTASK_SET_TOLERANCE,                // Establece la tolerancia en distancia para las tareas de moverse a un destino.
+	BTASK_WAIT,                         // Wait a certain amount of seconds
+    BTASK_SET_TOLERANCE,                // Sets the tolerance in distance for the tasks of moving to a destination.
 
     BTASK_PLAY_ANIMATION,
     BTASK_PLAY_GESTURE,
     BTASK_PLAY_SEQUENCE,
 
-	BTASK_SAVE_POSITION,                // Guardar nuestra posición actual
-	BTASK_RESTORE_POSITION,             // Restaurar la posición guardada
+	BTASK_SAVE_POSITION,                // Save our current position
+	BTASK_RESTORE_POSITION,             // Move to the saved position
 
-	BTASK_MOVE_DESTINATION,             // Movernos al destino especificado
-    BTASK_MOVE_SPAWN,                   // Movernos al lugar donde hemos aparecido
-	BTASK_MOVE_LIVE_DESTINATION,        // Seguir un destino, aunque se mueva
+	BTASK_MOVE_DESTINATION,             // Move to specified destination
+	BTASK_MOVE_LIVE_DESTINATION,        // Move to a destination/entity even if it is moving continuously.
 
-	BTASK_HUNT_ENEMY,                   // Perseguir al enemigo
-	BTASK_GET_SPOT_ASIDE,               // Encontrar y guardar un lugar cerca donde movernos
+	BTASK_HUNT_ENEMY,                   // Hunt our enemy
 
-	BTASK_GET_COVER,                    // Encontrar y guardar un lugar de cobertura
-	BTASK_GET_FAR_COVER,                // Encontrar y guardar un lugar lejano de cobertura
+    BTASK_SAVE_SPAWN_POSITION,          // Save the position where we spawn
+	BTASK_SAVE_ASIDE_SPOT,              // Find and save a random near position. (In the same NavArea where we are)
+	BTASK_SAVE_COVER_SPOT,              // Find and save a cover position.
+	BTASK_SAVE_FAR_COVER_SPOT,          // Finding and storing a distant cover position.
 
-	BTASK_AIM,                          // Apuntar a un destino especifico
+	BTASK_AIM,                          // Aim to a specific spot
 
-	BTASK_USE,                          // Usar
-	BTASK_JUMP,                         // Saltar
-	BTASK_CROUCH,                       // Agacharse
-	BTASK_STANDUP,                      // Levantarse
-	BTASK_RUN,                          // Correr
-    BTASK_SNEAK,                         // Caminar (lento) No funciona si esta corriendo
-	BTASK_WALK,                  // Dejar de correr y caminar
-	BTASK_RELOAD,                       // Recargar y esperar a que termine.
-    BTASK_RELOAD_SAFE,                  // Recargar si el enemigo esta lejos
-	BTASK_RELOAD_ASYNC,                 // Recargar sin esperar
-	BTASK_HEAL,                         // Curarse
+	BTASK_USE,                          // +use
+	BTASK_JUMP,                         // +jump
+	BTASK_CROUCH,                       // +duck
+	BTASK_STANDUP,                      // -duck
+	BTASK_RUN,                          // +speed
+    BTASK_SNEAK,                        // +walk
+	BTASK_WALK,                         // -walk & -speed
+	BTASK_RELOAD,                       // Reload our weapon and wait for it to end.
+    BTASK_RELOAD_SAFE,                  // Reload our weapon and wait for it to end. (Only if there are no enemies nearby)
+	BTASK_HEAL,                         // Heal (TODO: Only gives health to itself)
 
-	BTASK_CALL_FOR_BACKUP,              // Llamar refuerzos
+	BTASK_CALL_FOR_BACKUP,              // Request reinforcements (TODO)
+
+    BTASK_SET_FAIL_SCHEDULE,            // If the schedule fails, the indicated schedule will run
+    BTASK_SET_SCHEDULE,                 // Running the specified schedule at the end of the active
+
 	BLAST_TASK,
 
 	BCUSTOM_TASK = 999
@@ -217,38 +489,37 @@ static const char *g_BotTasks[BLAST_TASK] =
     "PLAY_GESTURE",
     "PLAY_SEQUENCE",
 
-	"SAVE_LOCATION",
-	"RESTORE_LOCATION",
+	"SAVE_POSITION",
+	"RESTORE_POSITION",
 
 	"MOVE_DESTINATION",
-    "MOVE_SPAWN",
 	"MOVE_LIVE_DESTINATION",
 
 	"HUNT_ENEMY",
-	"GET_SPOT_ASIDE",
 
+    "GET_SPAWN",
+	"GET_SPOT_ASIDE",
 	"GET_COVER",
 	"GET_FAR_COVER",
 
-    "BOT_COMPONENT_VISION",
+    "AIM",
 
     "USE",
     "JUMP",
     "CROUCH",
     "STANDUP",
     "RUN",
+    "SNEAK",
     "WALK",
-    "WALK_NORMAL",
     "RELOAD",
     "RELOAD_SAFE",
-    "RELOAD_ASYNC",
     "HEAL",
 
     "CALL_FOR_BACKUP"
 };
 
 //================================================================================
-// Estados
+// State
 //================================================================================
 enum BotState
 {
@@ -261,13 +532,13 @@ enum BotState
 };
 
 //================================================================================
-// Estrategia
+// Team strategy
 //================================================================================
 enum BotStrategie
 {
-    ENDURE_UNTIL_DEATH = 0,
-    COWARDS,
-    LAST_CALL_FOR_BACKUP,
+    ENDURE_UNTIL_DEATH = 0,   // Fight to death
+    COWARDS,                  // Coward but safe
+    LAST_CALL_FOR_BACKUP,     // The last remaining member of the team must leave and request reinforcements
 
     LAST_STRATEGIE
 };
@@ -285,16 +556,13 @@ static const char *g_BotStrategie[LAST_STRATEGIE] =
 enum BotPerformance
 {
     BOT_PERFORMANCE_AWAKE = 0,
-    BOT_PERFORMANCE_VISIBILITY,
     BOT_PERFORMANCE_PVS,
-    BOT_PERFORMANCE_PVS_AND_VISIBILITY,
-    BOT_PERFORMANCE_SLEEP_PVS,
 
     LAST_PERFORMANCE
 };
 
 //================================================================================
-// Información de las partes/huesos de una entidad
+// Stores the assigned Hitbox number for each body part
 //================================================================================
 struct HitboxBones
 {
@@ -315,6 +583,10 @@ struct HitboxPositions
         rightLeg.Invalidate();
     }
 
+    bool IsValid() {
+        return (head.IsValid() && chest.IsValid());
+    }
+
     Vector head;
     Vector chest;
     Vector leftLeg;
@@ -322,7 +594,7 @@ struct HitboxPositions
 };
 
 //================================================================================
-// Condiciones
+// Conditions
 //================================================================================
 enum BCOND
 {
@@ -346,13 +618,17 @@ enum BCOND
     BCOND_SEE_FEAR,
     BCOND_SEE_DISLIKE,
     BCOND_SEE_ENEMY,
+    BCOND_SEE_FRIEND,
     BCOND_SEE_DEJECTED_FRIEND,
+
+    BCOND_WITHOUT_ENEMY,
 
     BCOND_ENEMY_LOST,
     BCOND_ENEMY_OCCLUDED,
-    BCOND_ENEMY_LAST_POSITION_OCCLUDED,
+    BCOND_ENEMY_OCCLUDED_BY_FRIEND,
+    BCOND_ENEMY_LAST_POSITION_VISIBLE,
     BCOND_ENEMY_DEAD,
-    BCOND_ENEMY_UNREACHABLE, // TODO
+
     BCOND_ENEMY_TOO_NEAR,
     BCOND_ENEMY_NEAR,
     BCOND_ENEMY_FAR,
@@ -374,7 +650,6 @@ enum BCOND
     BCOND_TOO_CLOSE_TO_ATTACK,
     BCOND_TOO_FAR_TO_ATTACK,
     BCOND_NOT_FACING_ATTACK,
-    BCOND_BLOCKED_BY_FRIEND,
 
     BCOND_TASK_FAILED,
     BCOND_TASK_DONE,
@@ -384,6 +659,7 @@ enum BCOND
     BCOND_BETTER_WEAPON_AVAILABLE,
     BCOND_MOBBED_BY_ENEMIES, // TODO
     BCOND_PLAYER_PUSHING, // TODO
+    BCOND_GOAL_UNREACHABLE,
 
     BCOND_SMELL_MEAT,
     BCOND_SMELL_CARCASS,
@@ -417,19 +693,23 @@ static const char *g_Conditions[LAST_BCONDITION] = {
     "EMPTY_CLIP2_AMMO",
     "LOW_CLIP2_AMMO",
 
-	"INDEFENSE",
+	"HELPLESS",
 
     "SEE_HATE",
     "SEE_FEAR",
     "SEE_DISLIKE",
     "SEE_ENEMY",
+    "SEE_FRIEND",
     "SEE_DEJECTED_FRIEND",
+
+    "WITHOUT_ENEMY",
 
     "ENEMY_LOST",
     "ENEMY_OCCLUDED",
-    "ENEMY_LAST_POSITION_OCCLUDED",
+    "ENEMY_OCCLUDED_BY_FRIEND",
+    "ENEMY_LAST_POSITION_VISIBLE",
     "ENEMY_DEAD",
-    "ENEMY_UNREACHABLE",
+
     "ENEMY_TOO_NEAR",
     "ENEMY_NEAR",
     "ENEMY_FAR",
@@ -443,15 +723,14 @@ static const char *g_Conditions[LAST_BCONDITION] = {
 
     "CAN_RANGE_ATTACK1",
     "CAN_RANGE_ATTACK2",
-
     "CAN_MELEE_ATTACK1",
     "CAN_MELEE_ATTACK2",
+
     "NEW_ENEMY",
 
     "TOO_CLOSE_TO_ATTACK",
     "TOO_FAR_TO_ATTACK",
     "NOT_FACING_ATTACK",
-    "BLOCKED_BY_FRIEND",
 
     "TASK_FAILED",
     "TASK_DONE",
@@ -461,6 +740,7 @@ static const char *g_Conditions[LAST_BCONDITION] = {
     "BETTER_WEAPON_AVAILABLE",
     "MOBBED_BY_ENEMIES",
     "PLAYER_PUSHING",
+    "GOAL_UNREACHABLE",
 
     "SMELL_MEAT",
     "SMELL_CARCASS",
@@ -475,6 +755,31 @@ static const char *g_Conditions[LAST_BCONDITION] = {
     "HEAR_DANGER",
     "HEAR_MOVE_AWAY",
     "HEAR_SPOOKY",
+};
+
+//================================================================================
+// Tactical mode
+//================================================================================
+enum
+{
+    TACTICAL_MODE_INVALID = 0,
+    TACTICAL_MODE_NONE,        // No preference
+    TACTICAL_MODE_STEALTH,     // Less noise and possible attention
+    TACTICAL_MODE_ASSAULT,     // Organized and careful
+    TACTICAL_MODE_DEFENSIVE,   // Defend a goal at all costs
+    TACTICAL_MODE_AGGRESSIVE,  // Fight without fear
+
+    LAST_TACTICAL_MODE
+};
+
+static const char *g_TacticalModes[LAST_TACTICAL_MODE] =
+{
+    "INVALID",
+    "NONE",
+    "STEALTH",
+    "ASSAULT",
+    "DEFENSIVE",
+    "AGGRESSIVE"
 };
 
 #endif // BOT_CONDITIONS_H

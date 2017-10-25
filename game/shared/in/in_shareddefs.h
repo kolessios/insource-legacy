@@ -287,7 +287,8 @@ enum
 //================================================================================
 enum
 {
-    PLAYER_STATE_WELCOME = 0,
+    PLAYER_STATE_NONE = 0,
+    PLAYER_STATE_WELCOME,
     PLAYER_STATE_ACTIVE,
     PLAYER_STATE_PICKING_TEAM,
     PLAYER_STATE_PICKING_CLASS,
@@ -298,12 +299,13 @@ enum
 };
 
 static char *g_PlayerStateNames[LAST_PLAYER_STATE] = {
-  "WELCOME",
-  "ACTIVE",
-  "PICKING_TEAM",
-  "PICKING_CLASS",
-  "SPECTATOR",
-  "DEAD"
+    "NONE",
+    "WELCOME",
+    "ACTIVE",
+    "PICKING_TEAM",
+    "PICKING_CLASS",
+    "SPECTATOR",
+    "DEAD"
 };
 
 //================================================================================
@@ -362,31 +364,6 @@ enum
 	ATTR_SHIELD,
 
 	LAST_PLAYER_ATTRIBUTE
-};
-
-//================================================================================
-// Modo táctico
-//================================================================================
-enum
-{
-    TACTICAL_MODE_INVALID = 0,
-    TACTICAL_MODE_NONE,        // Sin preferencia
-    TACTICAL_MODE_STEALTH,     // Menor ruido y atención posible
-    TACTICAL_MODE_ASSAULT,     // Organizados, cuidadosos
-    TACTICAL_MODE_DEFENSIVE,   // Defensa de un objetivo
-    TACTICAL_MODE_AGGRESSIVE,  // Luchar sin cuidado
-
-    LAST_TACTICAL_MODE
-};
-
-static const char *g_TacticalModes[LAST_TACTICAL_MODE] =
-{
-    "INVALID",
-    "NONE",
-    "STEALTH",
-    "ASSAULT",
-    "DEFENSIVE",
-    "AGGRESSIVE"
 };
 
 //================================================================================

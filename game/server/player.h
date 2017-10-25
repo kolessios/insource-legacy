@@ -1089,6 +1089,8 @@ protected:
 
 	bool					m_bAllowInstantSpawn;
 
+    friend class CEntHost;
+
 private:
 
 // Replicated to all clients

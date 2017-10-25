@@ -1,4 +1,6 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "in_player.h"
@@ -46,7 +48,6 @@
 //================================================================================
 
 extern ISoundEmitterSystemBase *soundemitterbase;
-
 extern bool IsInCommentaryMode( void );
 extern float DamageForce( const Vector &size, float damage );
 
@@ -87,7 +88,7 @@ END_SEND_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CPlayer, DT_BaseInPlayer )
     // Excluimos el envio de información del sistema de animaciones.
-    // Este será procesado en el cliente por el [AnimationSystem] 
+    // Este será procesado en el cliente por el [GetAnimationSystem] 
     SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
     SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
     SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
@@ -106,10 +107,10 @@ IMPLEMENT_SERVERCLASS_ST( CPlayer, DT_BaseInPlayer )
 
     SendPropBool( SENDINFO(m_bFlashlightEnabled) ),
     SendPropBool( SENDINFO(m_bSprinting) ),
-    SendPropBool( SENDINFO( m_bWalking ) ),
+    SendPropBool( SENDINFO( m_bSneaking ) ),
 
-    SendPropBool( SENDINFO(m_bIsInCombat) ),
-    SendPropBool( SENDINFO(m_bIsUnderAttack) ),
+    SendPropBool( SENDINFO(m_bOnCombat) ),
+    SendPropBool( SENDINFO(m_bUnderAttack) ),
 
     SendPropInt( SENDINFO(m_iPlayerStatus) ),
     SendPropInt( SENDINFO( m_iPlayerState ) ),
@@ -154,39 +155,41 @@ CPlayer::CPlayer()
 //================================================================================
 CPlayer::~CPlayer()
 {
-    if ( AnimationSystem() ) {
-        delete m_pAnimState;
+    if ( GetAnimationSystem() ) {
+        delete m_pAnimationSystem;
+        m_pAnimationSystem = NULL;
     }
 
     if ( GetSenses() ) {
         delete m_pSenses;
+        m_pSenses = NULL;
     }
 }
 
 //================================================================================
 // Devuelve si el jugador esta calmado
 //================================================================================
-bool CPlayer::IsIdle() 
+bool CPlayer::IsIdle() const
 {
     if ( GetBotController() ) {
         return GetBotController()->IsIdle();
     }
 
 	// Si no nos estan atacando ni estamos en combate
-	return ( !IsUnderAttack() && !IsInCombat() );
+	return ( !IsUnderAttack() && !IsOnCombat() );
 }
 
 //================================================================================
 // Devuelve si el jugador esta en alerta
 //================================================================================
-bool CPlayer::IsAlerted() 
+bool CPlayer::IsAlerted() const
 {
     if ( GetBotController() ) {
         return GetBotController()->IsAlerted();
     }
 
 	// Nos estan atacando o estamos en combate!
-	return ( IsUnderAttack() || IsInCombat());
+	return ( IsUnderAttack() || IsOnCombat());
 }
 
 //================================================================================
@@ -227,8 +230,7 @@ void CPlayer::InitialSpawn()
     pl.deadflag = false;
     m_lifeState = LIFE_ALIVE;
 
-    // Acabamos de entrar
-    SetPlayerState( PLAYER_STATE_WELCOME );
+    SetPlayerState( PLAYER_STATE_NONE );
 
     CreateExpresser();
     CreateAnimationSystem();
@@ -238,11 +240,14 @@ void CPlayer::InitialSpawn()
 //================================================================================
 // Creación en el mundo
 //================================================================================
-// NOTA: 
+// NOTA: Se llama como minimo 2 veces al entrar al servidor:
+// 1. Cuando se conecta, su estado debe ser PLAYER_STATE_WELCOME
+// 2. Después de seleccionar equipo/clase, su estado debe ser PLAYER_STATE_ACTIVE
 //================================================================================
 void CPlayer::Spawn()
 {
-    // Reseteo de variables    
+    BaseClass::Spawn();
+
     m_nButtons = 0;
     m_iRespawnFrames = 0;
     m_iCurrentConcept = 0;
@@ -253,60 +258,44 @@ void CPlayer::Spawn()
     m_bAimingDisabled = false;
     m_iOldHealth = -1;
     m_bSprinting = false;
-    m_bWalking = false;
-    m_bIsInCombat = false;
-    m_bIsUnderAttack = false;
+    m_bSneaking = false;
+    m_bOnCombat = false;
+    m_bUnderAttack = false;
     m_iDejectedTimes = 0;
     m_flHelpProgress = 0.0f;
     m_iEyeAngleZ = 0;
     m_Local.m_iHideHUD = 0;
-    
-    m_nComponents.PurgeAndDeleteElements();
-    m_nAttributes.PurgeAndDeleteElements();
 
-    m_nSlowDamageTimer.Invalidate();
-    m_nIsUnderAttackTimer.Invalidate();
-    m_nIsInCombatTimer.Invalidate();
-    m_nRaiseHelpTimer.Invalidate();
-    m_nLastDamageTimer.Invalidate();
+    m_SlowDamageTimer.Invalidate();
+    m_UnderAttackTimer.Invalidate();
+    m_CombatTimer.Invalidate();
+    m_RaiseHelpTimer.Invalidate();
+    m_LastDamageTimer.Invalidate();
 
     AddFlag( FL_AIMTARGET );
 
-    BaseClass::Spawn();
+    SetSquad( (CSquad *)NULL );
+    SetPlayerStatus( PLAYER_STATUS_NONE );
 
-    CreateComponents();
-    CreateAttributes();
+    if ( GetPlayerState() == PLAYER_STATE_NONE ) {
+        SetPlayerState( PLAYER_STATE_WELCOME );
+    }
+    else if ( GetTeamNumber() != TEAM_UNASSIGNED ) {
+        SetPlayerState( PLAYER_STATE_ACTIVE );
+    }
 
     if ( GetBotController() ) {
         GetBotController()->Spawn();
     }
-
-    SetSquad( (CSquad *)NULL );
-    SetPlayerStatus( PLAYER_STATUS_NONE );
 
     SetThink( &CPlayer::PlayerThink );
     SetNextThink( gpGlobals->curtime + 0.1f );
 }
 
 //================================================================================
-// Coloca al jugador en el juego.
-//================================================================================
-void CPlayer::EnterToGame( bool forceForBots )
-{
-    // Los bots necesitan llamar a esta función
-    // solo al final de su preparación
-    if ( IsBot() && !forceForBots )
-        return;
-
-    Spawn();
-    SetPlayerState( PLAYER_STATE_ACTIVE );
-}
-
-//================================================================================
 //================================================================================
 void CPlayer::Connected()
 {
-    
 }
 
 //================================================================================
@@ -360,7 +349,6 @@ void CPlayer::PreThink()
     // Arreglamos un detalle con los angulos
     QAngle vOldAngles = GetLocalAngles();
     QAngle vTempAngles = GetLocalAngles();
-
     vTempAngles = EyeAngles();
 
     if ( vTempAngles[PITCH] > 180.0f ) {
@@ -397,22 +385,27 @@ void CPlayer::PostThink()
         UpdateComponents();
         UpdateAttributes();
 
-        m_bIsInCombat = ( m_nIsInCombatTimer.HasStarted() && m_nIsInCombatTimer.IsLessThen(10.0f) );
-        m_bIsUnderAttack = ( m_nIsUnderAttackTimer.HasStarted() && m_nIsUnderAttackTimer.IsLessThen(5.0f) ) ;
+        m_bOnCombat = ( m_CombatTimer.HasStarted() && m_CombatTimer.IsLessThen(10.0f) );
+        m_bUnderAttack = ( m_UnderAttackTimer.HasStarted() && m_UnderAttackTimer.IsLessThen(5.0f) ) ;
 
-        if ( m_bIsBot && !m_bIsInCombat ) {
-            m_bIsInCombat = GetBotController()->IsAlerted() || GetBotController()->IsCombating();
+        if ( m_bIsBot && !m_bOnCombat ) {
+            m_bOnCombat = GetBotController()->IsAlerted() || GetBotController()->IsCombating();
         }
 
         ProcessSceneEvents();
         DoBodyLean();
     }
 
-    if ( AnimationSystem() ) {
-        AnimationSystem()->Update();
+    if ( GetAnimationSystem() ) {
+        GetAnimationSystem()->Update();
     }
 
-    FixAngles();
+    m_angEyeAngles = EyeAngles();
+
+    QAngle angles = GetLocalAngles();
+    angles[PITCH] = 0;
+    SetLocalAngles( angles );
+
     DebugDisplay();
 }
 
@@ -1009,42 +1002,8 @@ void CPlayer::HandleAnimEvent( animevent_t *event )
         return;
     }	
 
+    CBasePlayer::HandleAnimEvent( event );
     BaseClass::HandleAnimEvent( event );
-}
-
-//================================================================================
-// Arregla los problemas con los angulos por usar el sistema de animación compartido
-//================================================================================
-void CPlayer::FixAngles() 
-{
-    /*
-    // Evitamos errores con el PITCH
-    // en servidor
-    QAngle angles = GetLocalAngles();
-    angles[PITCH] = 0;
-    SetLocalAngles( angles );
-
-    // Copiamos los angulos de la cámara (Viewangles)
-    // y lo transmitimos a los jugadores excepto local
-    QAngle viewAngles = EyeAngles();
-
-    // Si no tenemos un sistema de animación debemos
-    // limpiar el PITCH para evitar problemas con el modelo
-    if ( !AnimationSystem() )
-        viewAngles[PITCH] = 0;
-
-    // Evitamos errores con el YAW
-    //if ( angles[YAW] < 0 )
-        //angles[YAW] += 360.0f;
-
-    m_angEyeAngles = viewAngles;
-    */
-
-    m_angEyeAngles = EyeAngles();
-
-    QAngle angles = GetLocalAngles();
-	angles[PITCH] = 0;
-	SetLocalAngles( angles );
 }
 
 //================================================================================
@@ -1072,20 +1031,12 @@ void CPlayer::SetAnimation( PLAYER_ANIM nAnim )
 //================================================================================
 void CPlayer::DoAnimationEvent( PlayerAnimEvent_t pEvent, int nData, bool bPredicted )
 {
-    if ( !AnimationSystem() ) 
+    if ( !GetAnimationSystem() ) 
         return;
-
-    // Hemos disparado, entramos en combate!
-    // @TODO: Si el jugador no tiene animación de disparo esto
-    // jamás será llamado, necesitamos un mejor lugar.
-    if ( pEvent == PLAYERANIMEVENT_ATTACK_PRIMARY ) {
-        m_nIsInCombatTimer.Start();
-        AddAttributeModifier( "stress_firegun" );
-    }
 
     // Procesamos la animación en el servidor
     // y después la enviamos al cliente con una entidad temporal.
-    AnimationSystem()->DoAnimationEvent( pEvent, nData );
+    GetAnimationSystem()->DoAnimationEvent( pEvent, nData );
     SendPlayerAnimation( this, pEvent, nData, bPredicted );
 }
 
@@ -1133,7 +1084,7 @@ void CPlayer::FootstepSound()
 {
     float flVolume = (IsSprinting()) ? RandomFloat( 200.0f, 400.0f ) : RandomFloat(100.0f, 200.0f);
 
-    if ( IsWalking() ) {
+    if ( IsSneaking() ) {
         flVolume = RandomFloat(30.0f, 100.0f);
     }
 
@@ -1271,7 +1222,8 @@ void CPlayer::DamageEffect( const CTakeDamageInfo &info )
 
     // Bala
     else if ( fDamageType & DMG_BULLET ) {
-        //EmitSound( "Flesh.BulletImpact" );
+        ViewPunch( QAngle( random->RandomInt( -0.1, 0.1 ), random->RandomInt( -0.1, 0.1 ), random->RandomInt( -0.1, 0.1 ) ) );
+        EmitSound( "Flesh.BulletImpact" );
     }
 
     // Explosión
@@ -1318,7 +1270,7 @@ bool CPlayer::CanTakeDamage( const CTakeDamageInfo &info )
             return false;
     }
 
-    if ( InGodMode() )
+    if ( IsOnGodMode() )
         return false;
 
     if ( info.GetDamage() <= 0.0f )
@@ -1334,26 +1286,28 @@ bool CPlayer::CanTakeDamage( const CTakeDamageInfo &info )
 }
 
 //================================================================================
-// Hemos recibido daño
+// We have received damage
 //================================================================================
 int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
     CTakeDamageInfo info = inputInfo;
 
+    // We are invulnerable
     if ( !CanTakeDamage( info ) )
         return 0;
 
     int response = 1;
 
-    // Información del último daño recibido
-    // Los Bots necesitan esta información aunque al final no recibamos daño
-    m_nLastDamageInfo = info;
-    m_nLastDamageTimer.Start();
+    // We store the damage information received.
+    // Bots always need this information.
+    m_LastDamage = info;
+    m_LastDamageTimer.Start();
     m_lastDamageAmount = info.GetDamage();
+    m_fTimeLastHurt = gpGlobals->curtime;
 
+    // We save the original amount of damage
     info.CopyDamageToBaseDamage();
 
-    // Estas funciones deciden si debemos aplicar la reducción en la vida y los efectos al recibir daño
     switch ( m_lifeState ) {
         case LIFE_ALIVE:
         {
@@ -1380,13 +1334,11 @@ int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
         }
     }
 
+    // Apparently we should not get hurt this time
     if ( response == 0 )
         return 0;
 
-    if ( IsAlive() ) {
-        ApplyDamage( info );
-    }
-
+    ApplyDamage( info );
     return 1;
 }
 
@@ -1398,6 +1350,7 @@ int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 //================================================================================
 int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
 {
+    // We report damage to the Bots system and squadron.
     if ( GetBotController() ) {
         GetBotController()->OnTakeDamage( info );
     }
@@ -1406,29 +1359,34 @@ int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
         GetSquad()->ReportTakeDamage( this, info );
     }
 
+    // The game rules allow us to adjust the damage. (Armor, place of impact, etc.)
     TheGameRules->AdjustPlayerDamageTaken( this, info );
 
-    if ( TheGameRules->Damage_MakeSlow( info ) ) {
-        m_nSlowDamageTimer.Start();
+    m_UnderAttackTimer.Start();
+    m_CombatTimer.Start();
+
+    // This type of damage slows us down
+    if ( TheGameRules->Damage_CausesSlowness( info ) ) {
+        m_SlowDamageTimer.Start();
     }
 
-    m_nIsUnderAttackTimer.Start();
-    m_nIsInCombatTimer.Start();
-
+    // This type of damage can knock us down
     if ( TheGameRules->FPlayerCanDejected( this, info ) ) {
-        int damage = (int)round( info.GetDamage() );
-        int newHealth = GetHealth() - damage;
+        int newHealth = GetHealth() - info.GetDamage();
 
         if ( newHealth <= 0 ) {
-            if ( GetPlayerStatus() == PLAYER_STATUS_CLIMBING )
+            if ( GetPlayerStatus() == PLAYER_STATUS_CLIMBING ) {
                 SetPlayerStatus( PLAYER_STATUS_FALLING );
-            else
+            }
+            else {
                 SetPlayerStatus( PLAYER_STATUS_DEJECTED );
+            }
 
             return 0;
         }
     }
 
+    /*
     if ( info.GetAttacker() && (info.GetDamageType() & DMG_BULLET) == 0 ) {
         Vector vecDir = info.GetAttacker()->WorldSpaceCenter() - Vector( 0, 0, 10 ) - WorldSpaceCenter();
         VectorNormalize( vecDir );
@@ -1440,7 +1398,7 @@ int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
             }
             ApplyAbsVelocityImpulse( force );
         }
-    }
+    }*/
 
     return 1;
 }
@@ -1450,6 +1408,10 @@ int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
 //================================================================================
 void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
 {
+    if ( !IsAlive() )
+        return;
+
+    // Play an animation depending on the location of the impact.
     switch ( LastHitGroup() ) {
         case HITGROUP_GENERIC:
             DoAnimationEvent( PLAYERANIMEVENT_FLINCH );
@@ -1481,23 +1443,27 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
             break;
     }
 
-    if ( info.GetDamage() > 0 && info.GetAttacker() ) {
-        if ( info.GetAttacker()->IsPlayer() )
-            DebugAddMessage( "Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetPlayerName() );
-        else
-            DebugAddMessage( "Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetClassname() );
-    }
+    if ( info.GetDamage() > 0 ) {
+        if ( info.GetAttacker() ) {
+            if ( info.GetAttacker()->IsPlayer() ) {
+                DebugAddMessage( "Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetPlayerName() );
+            }
+            else {
+                DebugAddMessage( "Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetClassname() );
+            }
+        }
 
-    if ( IsNetClient() && !ShouldThrottleUserMessage( "Damage" ) ) {
-        CUserAndObserversRecipientFilter user( this );
-        user.MakeReliable();
+        if ( IsNetClient() && !ShouldThrottleUserMessage( "Damage" ) ) {
+            CUserAndObserversRecipientFilter user( this );
+            user.MakeReliable();
 
-        UserMessageBegin( user, "Damage" );
+            UserMessageBegin( user, "Damage" );
             WRITE_BYTE( info.GetBaseDamage() );
             WRITE_FLOAT( info.GetDamagePosition().x );
             WRITE_FLOAT( info.GetDamagePosition().y );
             WRITE_FLOAT( info.GetDamagePosition().z );
-        MessageEnd();
+            MessageEnd();
+        }
     }
 
     DamageEffect( info );
@@ -1515,10 +1481,11 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
     // add to the damage total for clients, which will be sent as a single
     // message at the end of the frame
     // todo: remove after combining shotgun blasts?
-    if ( info.GetInflictor() && info.GetInflictor()->edict() )
+    if ( info.GetInflictor() && info.GetInflictor()->edict() ) {
         m_DmgOrigin = info.GetInflictor()->GetAbsOrigin();
+    }
 
-    m_DmgTake += (int)info.GetDamage();
+    m_DmgTake += info.GetDamage();
 
     // Reset damage time countdown for each type of time based damage player just sustained
     for ( int i = 0; i < CDMG_TIMEBASED; i++ ) {
@@ -1533,27 +1500,13 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
     m_bitsDamageType |= info.GetDamageType(); // Save this so we can report it to the client
     m_bitsHUDDamage = -1;  // make sure the damage bits get resent
 
-    // Separate the fractional amount of damage from the whole
-    float flFractionalDamage = info.GetDamage() - floor( info.GetDamage() );
-    float flIntegerDamage = info.GetDamage() - flFractionalDamage;
-
-    // Add fractional damage to the accumulator
-    m_flDamageAccumulator += flFractionalDamage;
-
-    // If the accumulator is holding a full point of damage, move that point
-    // of damage into the damage we're about to inflict.
-    if ( m_flDamageAccumulator >= 1.0 ) {
-        flIntegerDamage += 1.0;
-        m_flDamageAccumulator -= 1.0;
-    }
-
-    if ( flIntegerDamage <= 0 )
-        return;
-
     PainSound( info );
 
+    if ( info.GetDamage() <= 0 )
+        return;
+
     // Aplicamos la reducción de vida
-    m_iHealth = m_iHealth - flIntegerDamage;
+    m_iHealth = m_iHealth - info.GetDamage();
     m_iHealth = clamp( m_iHealth, 0, GetMaxHealth() );
 
     // fire global game event
@@ -1575,14 +1528,13 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
         gameeventmanager->FireEvent( event );
     }
 
-    if ( m_iHealth < GetMaxHealth() )
-        m_fTimeLastHurt = gpGlobals->curtime;
-
     if ( m_iHealth == 0 ) {
-        if ( InBuddhaMode() )
+        if ( IsOnBuddhaMode() ) {
             m_iHealth = 1;
-        else
+        }
+        else {
             Event_Killed( info );
+        }
     }
 }
 
@@ -1750,7 +1702,7 @@ void CPlayer::PlayerDeathPostThink()
     m_lifeState = LIFE_RESPAWNABLE;
 
     if ( TheGameRules->FPlayerCanRespawnNow( this ) ) {
-        EnterToGame();
+        Spawn();
     }
 }
 
@@ -1868,7 +1820,7 @@ void CPlayer::RaiseFromDejected( CPlayer *pRescuer )
 
     // Progreso
     m_flHelpProgress += 0.35f;
-    m_nRaiseHelpTimer.Start();
+    m_RaiseHelpTimer.Start();
 
     // Aumentamos nuestra visión poco a poco
     Vector vecView = VEC_DEJECTED_VIEWHEIGHT;
@@ -1890,8 +1842,7 @@ void CPlayer::EnterPlayerState( int status )
         // Hemos entrado al servidor
         case PLAYER_STATE_WELCOME:
         {
-            // Equipo predeterminado
-            // Esto debe decidirlo el jugador
+            // Equipo y clase sin definir
             ChangeTeam( TEAM_UNASSIGNED );
             SetPlayerClass( PLAYER_CLASS_NONE );
 
@@ -1915,9 +1866,15 @@ void CPlayer::EnterPlayerState( int status )
         // Estamos activos en el juego
         case PLAYER_STATE_ACTIVE:
         {
+            //
             SetModel( GetPlayerModel() );
             SetUpModel();
             SetUpHands();
+
+            m_nComponents.PurgeAndDeleteElements();
+            m_nAttributes.PurgeAndDeleteElements();
+            CreateComponents();
+            CreateAttributes();
 
             // Ya podemos interactuar con el mundo
             SetMoveType( MOVETYPE_WALK );
@@ -2118,14 +2075,14 @@ void CPlayer::Jump()
 //================================================================================
 void CPlayer::SetSquad( CSquad *pSquad )
 {
-    if ( m_nSquad ) {
-        m_nSquad->RemoveMember( this );
+    if ( m_pSquad ) {
+        m_pSquad->RemoveMember( this );
     }
 
-    m_nSquad = pSquad;
+    m_pSquad = pSquad;
 
-    if ( m_nSquad ) {
-        m_nSquad->AddMember( this );
+    if ( m_pSquad ) {
+        m_pSquad->AddMember( this );
     }
 }
 
@@ -2263,7 +2220,7 @@ bool CPlayer::ShouldAutoaim()
 int CPlayer::GetDifficultyLevel()
 {
     if ( IsBot() ) {
-        return GetBotController()->GetSkill()->GetLevel();
+        return GetBotController()->GetProfile()->GetSkill();
     }
 
     if ( TheGameRules->HasDirector() && NameMatches( "director_*" ) ) {
@@ -2510,7 +2467,7 @@ bool CPlayer::ClientCommand( const CCommand &args )
                 CommitSuicide();
             }
 
-            EnterToGame();
+            Spawn();
         }
 
         return true;
@@ -2585,8 +2542,8 @@ const char *CPlayer::GetSpawnEntityName()
 CBaseEntity *CPlayer::EntSelectSpawnPoint()
 {
     // Devolvemos el punto de spawn para el Jugador
-    if ( m_nSpawnSpot && TheGameRules->IsSpawnMode( SPAWN_MODE_UNIQUE ) ) {
-        return m_nSpawnSpot;
+    if ( m_pSpawner && TheGameRules->IsSpawnMode( SPAWN_MODE_UNIQUE ) ) {
+        return m_pSpawner;
     }
 
     CBaseEntity *pSpot = NULL;
@@ -2611,7 +2568,7 @@ CBaseEntity *CPlayer::EntSelectSpawnPoint()
                 continue;
 
             // Lo ocupamos
-            m_nSpawnSpot = pSpot;
+            m_pSpawner = pSpot;
             TheGameRules->UseSpawnPoint( pSpot );
 
             return pSpot;
@@ -2784,7 +2741,7 @@ void CPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
 {
     // Un humano dejando que la I.A. controle su personaje
     if ( !IsBot() && GetBotController() ) {
-        CBotCmd *cmd = GetBotController()->GetLastCmd();
+        CUserCmd *cmd = GetBotController()->GetLastCmd();
 
         if ( ucmd && cmd ) {
             ucmd->buttons = cmd->buttons;
@@ -2916,11 +2873,11 @@ void CPlayer::DebugDisplay()
 
     DebugScreenText( "" );
 
-    if ( m_nLastDamageTimer.HasStarted() )
-        DebugScreenText( UTIL_VarArgs( "Last Damage: %.2fs", m_nLastDamageTimer.GetElapsedTime() ) );
+    if ( m_LastDamageTimer.HasStarted() )
+        DebugScreenText( UTIL_VarArgs( "Last Damage: %.2fs", m_LastDamageTimer.GetElapsedTime() ) );
 
-    if ( m_nRaiseHelpTimer.HasStarted() )
-        DebugScreenText( UTIL_VarArgs( "Raise: %.2fs", m_nRaiseHelpTimer.GetElapsedTime() ) );
+    if ( m_RaiseHelpTimer.HasStarted() )
+        DebugScreenText( UTIL_VarArgs( "Raise: %.2fs", m_RaiseHelpTimer.GetElapsedTime() ) );
 
     DebugScreenText("");
     DebugScreenText( UTIL_VarArgs("Features: %i", m_nComponents.Count()) );

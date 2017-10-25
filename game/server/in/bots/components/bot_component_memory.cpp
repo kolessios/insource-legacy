@@ -9,10 +9,14 @@
 
 #include "cbase.h"
 #include "bots\bot.h"
+#include "bots\bot_manager.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
 #include "in_player.h"
-#include "bots\bot_manager.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -74,19 +78,17 @@ void CBotMemory::UpdateMemory()
         memory->UpdateVisibility( false );
 
         if ( !memory->IsLost() ) {
-            int relationship = memory->GetRelationship();
-
             // The last known position of this entity is close to us.
             // We mark how many allied/enemy entities are close to us to make better decisions.
             if ( memory->IsInRange( m_flNearbyDistance ) ) {
-                if ( relationship == GR_ENEMY ) {
+                if ( memory->IsEnemy() ) {
                     if ( GetDecision()->IsDangerousEnemy( pEntity ) ) {
                         ++nearbyDangerousThreats;
                     }
 
                     ++nearbyThreats;
                 }
-                else if ( relationship == GR_ALLY ) {
+                else if ( memory->IsFriend() ) {
                     ++nearbyFriends;
                 }
             }
@@ -118,7 +120,7 @@ void CBotMemory::UpdateIdealThreat()
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ENEMY )
+        if ( !memory->IsEnemy() )
             continue;
 
         CBaseEntity *pEnt = memory->GetEntity();
@@ -157,7 +159,7 @@ void CBotMemory::UpdateThreat()
         // We already have a primary threat but it is low priority, 
         // the ideal threat is better.
         if ( m_pIdealThreat && m_pPrimaryThreat != m_pIdealThreat ) {
-            if ( GetDecision()->IsEnemyLowPriority() ) {
+            if ( GetDecision()->IsBetterEnemy( m_pIdealThreat->GetEntity(), m_pPrimaryThreat->GetEntity() ) ) {
                 m_pPrimaryThreat = m_pIdealThreat;
             }
         }
@@ -213,7 +215,7 @@ void CBotMemory::SetEnemy( CBaseEntity * pEnt, bool bUpdate )
     CEntityMemory *memory = GetEntityMemory( pEnt );
 
     if ( bUpdate || !memory ) {
-        memory = UpdateEntityMemory( pEnt, pEnt->GetAbsOrigin() );
+        memory = UpdateEntityMemory( pEnt, pEnt->WorldSpaceCenter() );
     }
 
     if ( m_pPrimaryThreat == memory )
@@ -264,7 +266,7 @@ CEntityMemory * CBotMemory::UpdateEntityMemory( CBaseEntity * pEnt, const Vector
 
     // I have seen this entity with my own eyes, 
     // we must communicate it to our squad.
-    if ( !pInformer && GetBot()->GetSquad() ) {
+    if ( !pInformer && GetBot()->GetSquad() && GetDecision()->IsEnemy(pEnt) ) {
         GetBot()->GetSquad()->ReportEnemy( GetHost(), pEnt );
     }
 
@@ -370,7 +372,7 @@ CEntityMemory * CBotMemory::GetEntityMemory( int entindex ) const
 //================================================================================
 float CBotMemory::GetMemoryDuration() const
 {
-    return GetSkill()->GetMemoryDuration();
+    return GetProfile()->GetMemoryDuration();
 }
 
 //================================================================================
@@ -388,7 +390,7 @@ CEntityMemory * CBotMemory::GetClosestThreat( float *distance ) const
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ENEMY )
+        if ( !memory->IsEnemy() )
             continue;
 
         float distance = memory->GetDistance();
@@ -420,7 +422,7 @@ int CBotMemory::GetThreatCount( float range ) const
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ENEMY )
+        if ( !memory->IsEnemy() )
             continue;
 
         float distance = memory->GetDistance();
@@ -448,7 +450,7 @@ int CBotMemory::GetThreatCount() const
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ENEMY )
+        if ( !memory->IsEnemy() )
             continue;
 
         ++count;
@@ -472,7 +474,7 @@ CEntityMemory * CBotMemory::GetClosestFriend( float *distance ) const
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ALLY )
+        if ( !memory->IsFriend() )
             continue;
 
         float distance = memory->GetDistance();
@@ -504,7 +506,7 @@ int CBotMemory::GetFriendCount( float range ) const
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ALLY )
+        if ( !memory->IsFriend() )
             continue;
 
         float distance = memory->GetDistance();
@@ -532,7 +534,7 @@ int CBotMemory::GetFriendCount() const
         if ( memory->IsLost() )
             continue;
 
-        if ( memory->GetRelationship() != GR_ALLY )
+        if ( !memory->IsFriend() )
             continue;
 
         ++count;

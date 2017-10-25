@@ -26,7 +26,7 @@
 #endif
 
 #ifdef APOCALYPSE
-#include "ap_player.h"
+    #include "ap_player.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -39,7 +39,7 @@ ConVar sv_gameseed( "sv_gameseed", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER );
 #endif
 
 #define COS_TABLE_SIZE 256
-static float cosTable[COS_TABLE_SIZE];
+static float cosTable[ COS_TABLE_SIZE ];
 
 //================================================================================
 //================================================================================
@@ -112,9 +112,9 @@ QAngle Utils::RandomAngle( const char *sharedname, float minVal, float maxVal )
 //================================================================================
 void Utils::NormalizeAngle( float& fAngle )
 {
-    if ( fAngle < 0.0f )
+    if (fAngle < 0.0f)
         fAngle += 360.0f;
-    else if ( fAngle >= 360.0f )
+    else if (fAngle >= 360.0f)
         fAngle -= 360.0f;
 }
 
@@ -122,9 +122,9 @@ void Utils::NormalizeAngle( float& fAngle )
 //================================================================================
 void Utils::DeNormalizeAngle( float& fAngle )
 {
-    if ( fAngle < -180.0f )
+    if (fAngle < -180.0f)
         fAngle += 360.0f;
-    else if ( fAngle >= 180.0f )
+    else if (fAngle >= 180.0f)
         fAngle -= 360.0f;
 }
 
@@ -180,13 +180,14 @@ bool Utils::IsBreakable( CBaseEntity *pEntity )
         return true;
 
     // Es una superficie que se puede romper
-    if ( (dynamic_cast<CBreakableSurface *>(pEntity)) ) {
-        CBreakableSurface *surf = static_cast< CBreakableSurface * >(pEntity);
+    if ( (dynamic_cast<CBreakableSurface *>(pEntity)) )
+    {
+        CBreakableSurface *surf = static_cast< CBreakableSurface * >( pEntity );
 
         // Ya esta roto
         if ( surf->m_bIsBroken )
             return false;
-
+        
         return true;
     }
 
@@ -204,12 +205,12 @@ bool Utils::IsDoor( CBaseEntity *pEntity )
     if ( !pEntity )
         return false;
 
-    CBaseDoor *pDoor = dynamic_cast<CBaseDoor *>(pEntity);
+    CBaseDoor *pDoor = dynamic_cast<CBaseDoor *>( pEntity );
 
     if ( pDoor )
         return true;
 
-    CBasePropDoor *pPropDoor = dynamic_cast<CBasePropDoor *>(pEntity);
+    CBasePropDoor *pPropDoor = dynamic_cast<CBasePropDoor *>( pEntity );
 
     if ( pPropDoor )
         return true;
@@ -221,22 +222,23 @@ bool Utils::IsDoor( CBaseEntity *pEntity )
 //================================================================================
 CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxDist, float fMinMass, float fMaxMass, CBaseEntity *pFrom )
 {
-    CBaseEntity *pFinalEntity = NULL;
-    CBaseEntity *pThrowEntity = NULL;
-    float flNearestDist = 0;
+    CBaseEntity *pFinalEntity    = NULL;
+    CBaseEntity *pThrowEntity    = NULL;
+    float flNearestDist            = 0;
 
     // Buscamos los objetos que podemos lanzar
-    do {
+    do
+    {
         // Objetos con físicas
         pThrowEntity = gEntList.FindEntityByClassnameWithin( pThrowEntity, "prop_physics", vOrigin, fMaxDist );
-
+    
         // Ya no existe
         if ( !pThrowEntity )
             continue;
 
         // La entidad que lo quiere no puede verlo
         if ( pFrom ) {
-            if ( !pFrom->FVisible( pThrowEntity ) )
+            if ( !pFrom->FVisible(pThrowEntity) )
                 continue;
         }
 
@@ -248,8 +250,8 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
         if ( !pThrowEntity->VPhysicsGetObject()->IsMoveable() )
             continue;
 
-        Vector v_center = pThrowEntity->WorldSpaceCenter();
-        float flDist = UTIL_DistApprox2D( vOrigin, v_center );
+        Vector v_center    = pThrowEntity->WorldSpaceCenter();
+        float flDist    = UTIL_DistApprox2D( vOrigin, v_center );
 
         // Esta más lejos que el objeto anterior
         if ( flDist > flNearestDist && flNearestDist != 0 )
@@ -257,17 +259,17 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
 
         // Calcular la distancia al enemigo
         if ( pFrom && pFrom->IsNPC() ) {
-            CAI_BaseNPC *pNPC = dynamic_cast<CAI_BaseNPC *>(pFrom);
+            CAI_BaseNPC *pNPC = dynamic_cast<CAI_BaseNPC *>( pFrom );
 
             if ( pNPC && pNPC->GetEnemy() ) {
-                Vector vecDirToEnemy = pNPC->GetEnemy()->GetAbsOrigin() - pNPC->GetAbsOrigin();
-                vecDirToEnemy.z = 0;
+                Vector vecDirToEnemy    = pNPC->GetEnemy()->GetAbsOrigin() - pNPC->GetAbsOrigin();
+                vecDirToEnemy.z            = 0;
 
                 Vector vecDirToObject = pThrowEntity->WorldSpaceCenter() - vOrigin;
-                VectorNormalize( vecDirToObject );
+                VectorNormalize(vecDirToObject);
                 vecDirToObject.z = 0;
 
-                if ( DotProduct( vecDirToEnemy, vecDirToObject ) < 0.8 )
+                if ( DotProduct(vecDirToEnemy, vecDirToObject) < 0.8 )
                     continue;
             }
         }
@@ -278,7 +280,7 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
         // Muy liviano
         if ( pEntityMass < fMinMass && fMinMass > 0 )
             continue;
-
+            
         // ¡Muy pesado!
         if ( pEntityMass > fMaxMass )
             continue;
@@ -289,23 +291,22 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
 
         if ( pFrom ) {
             Vector vecGruntKnees;
-            pFrom->CollisionProp()->NormalizedToWorldSpace( Vector( 0.5f, 0.5f, 0.25f ), &vecGruntKnees );
+            pFrom->CollisionProp()->NormalizedToWorldSpace( Vector(0.5f, 0.5f, 0.25f), &vecGruntKnees );
 
             vcollide_t *pCollide = modelinfo->GetVCollide( pThrowEntity->GetModelIndex() );
-
+        
             Vector objMins, objMaxs;
-            physcollision->CollideGetAABB( &objMins, &objMaxs, pCollide->solids[0], pThrowEntity->GetAbsOrigin(), pThrowEntity->GetAbsAngles() );
+            physcollision->CollideGetAABB(&objMins, &objMaxs, pCollide->solids[0], pThrowEntity->GetAbsOrigin(), pThrowEntity->GetAbsAngles());
 
             if ( objMaxs.z < vecGruntKnees.z )
                 continue;
         }
 
         // Este objeto es perfecto, guardamos su distancia por si encontramos otro más cerca
-        flNearestDist = flDist;
-        pFinalEntity = pThrowEntity;
+        flNearestDist    = flDist;
+        pFinalEntity    = pThrowEntity;
 
-    }
-    while ( pThrowEntity );
+    } while( pThrowEntity );
 
     // No pudimos encontrar ningún objeto
     if ( !pFinalEntity )
@@ -328,7 +329,7 @@ bool Utils::IsMoveableObject( CBaseEntity *pEntity )
         return false;
 
     if ( !pEntity->VPhysicsGetObject()->IsMoveable() )
-        return false;
+        return false;        
 
     return true;
 }
@@ -363,60 +364,64 @@ IGameEvent *Utils::CreateLesson( const char *pLesson, CBaseEntity *pSubject )
 //================================================================================
 bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, int team )
 {
-    CTeamRecipientFilter filter( team );
-    return AddAttributeModifier( name, radius, vecPosition, filter );
+	CTeamRecipientFilter filter( team );
+	return AddAttributeModifier( name, radius, vecPosition, filter );
 }
 
 //================================================================================
 // Aplica el modificador a todos los jugadores
 //================================================================================
-bool Utils::AddAttributeModifier( const char *name, int team )
+bool Utils::AddAttributeModifier( const char *name, int team ) 
 {
-    return AddAttributeModifier( name, 0.0f, vec3_origin, team );
+	return AddAttributeModifier( name, 0.0f, vec3_origin, team );
 }
 
 //================================================================================
 // Aplica el modificador del atributo a todos los jugadores en el radio especificado
 //================================================================================
-bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter )
+bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter ) 
 {
-    AttributeInfo info;
+	AttributeInfo info;
 
-    // El modificador no existe
-    if ( !TheAttributeSystem->GetModifierInfo( name, info ) )
-        return false;
+	// El modificador no existe
+	if ( !TheAttributeSystem->GetModifierInfo(name, info) )
+		return false;
 
-    for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+	for ( int i = 1; i <= gpGlobals->maxClients; ++i ) 
+	{
+		CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(i) );
 
         if ( !pPlayer )
             continue;
 
-        // Jugador muerto
+		// Jugador muerto
         if ( !pPlayer->IsAlive() )
             continue;
 
-        // Esta muy lejos
-        if ( radius > 0 ) {
-            float distance = pPlayer->GetAbsOrigin().DistTo( vecPosition );
+		// Esta muy lejos
+		if ( radius > 0 )
+		{
+			float distance = pPlayer->GetAbsOrigin().DistTo( vecPosition );
 
-            if ( distance > radius )
-                continue;
-        }
+			if ( distance > radius )
+				continue;
+		}
 
-        // Verificamos si esta en el filtro
-        for ( int s = 0; s < filter.GetRecipientCount(); ++s ) {
-            CPlayer *pItem = ToInPlayer( UTIL_PlayerByIndex( filter.GetRecipientIndex( s ) ) );
+		// Verificamos si esta en el filtro
+		for ( int s = 0; s < filter.GetRecipientCount(); ++s )
+		{
+			CPlayer *pItem = ToInPlayer( UTIL_PlayerByIndex( filter.GetRecipientIndex(s) ) );
+		
+			// Aquí esta
+			if ( pItem == pPlayer )
+			{
+				// Agregamos el modificador
+				pPlayer->AddAttributeModifier(name);
+			}
+		}
+	}
 
-            // Aquí esta
-            if ( pItem == pPlayer ) {
-                // Agregamos el modificador
-                pPlayer->AddAttributeModifier( name );
-            }
-        }
-    }
-
-    return true;
+	return true;
 }
 #endif
 
@@ -433,7 +438,7 @@ bool Utils::GetEntityBones( CBaseEntity *pEntity, HitboxBones &bones )
     bones.rightLeg = -1;
 
 #ifdef APOCALYPSE
-    if ( pEntity->ClassMatches( "npc_infected" ) ) {
+    if ( pEntity->ClassMatches("npc_infected") ) {
         bones.head = 16;
         bones.chest = 10;
         bones.leftLeg = 4;
@@ -449,7 +454,28 @@ bool Utils::GetEntityBones( CBaseEntity *pEntity, HitboxBones &bones )
         return true;
     }
 #elif HL2MP
-    // TODO
+    enum
+    {
+        TEAM_COMBINE = 2,
+        TEAM_REBELS,
+    };
+
+    if ( pEntity->IsPlayer() ) {
+        if ( pEntity->GetTeamNumber() == TEAM_REBELS ) {
+            bones.head = 0;
+            bones.chest = 0;
+            bones.leftLeg = 7;
+            bones.rightLeg = 11;
+            return true;
+        }
+        else if ( pEntity->GetTeamNumber() == TEAM_COMBINE ) {
+            bones.head = 17;
+            bones.chest = 17;
+            bones.leftLeg = 8;
+            bones.rightLeg = 12;
+            return true;
+        }
+    }
 #endif
 
     return false;
@@ -556,9 +582,10 @@ bool Utils::GetHitboxPosition( CBaseEntity *pEntity, Vector &vecPosition, Hitbox
 //================================================================================
 void Utils::InitBotTrig()
 {
-    for ( int i = 0; i<COS_TABLE_SIZE; ++i ) {
-        float angle = (float)(2.0f * M_PI * i / (float)(COS_TABLE_SIZE - 1));
-        cosTable[i] = (float)cos( angle );
+    for( int i=0; i<COS_TABLE_SIZE; ++i )
+    {
+        float angle = (float)(2.0f * M_PI * i / (float)(COS_TABLE_SIZE-1));
+        cosTable[i] = (float)cos( angle ); 
     }
 }
 
@@ -567,7 +594,7 @@ void Utils::InitBotTrig()
 float Utils::BotCOS( float angle )
 {
     angle = AngleNormalizePositive( angle );
-    int i = (int)(angle * (COS_TABLE_SIZE - 1) / 360.0f);
+    int i = (int)( angle * (COS_TABLE_SIZE-1) / 360.0f );
     return cosTable[i];
 }
 
@@ -576,7 +603,7 @@ float Utils::BotCOS( float angle )
 float Utils::BotSIN( float angle )
 {
     angle = AngleNormalizePositive( angle - 90 );
-    int i = (int)(angle * (COS_TABLE_SIZE - 1) / 360.0f);
+    int i = (int)( angle * (COS_TABLE_SIZE-1) / 360.0f );
     return cosTable[i];
 }
 
@@ -585,13 +612,15 @@ float Utils::BotSIN( float angle )
 bool Utils::IsIntersecting2D( const Vector &startA, const Vector &endA, const Vector &startB, const Vector &endB, Vector *result )
 {
     float denom = (endA.x - startA.x) * (endB.y - startB.y) - (endA.y - startA.y) * (endB.x - startB.x);
-    if ( denom == 0.0f ) {
+    if (denom == 0.0f)
+    {
         // parallel
         return false;
     }
 
     float numS = (startA.y - startB.y) * (endB.x - startB.x) - (startA.x - startB.x) * (endB.y - startB.y);
-    if ( numS == 0.0f ) {
+    if (numS == 0.0f)
+    {
         // coincident
         return true;
     }
@@ -599,19 +628,21 @@ bool Utils::IsIntersecting2D( const Vector &startA, const Vector &endA, const Ve
     float numT = (startA.y - startB.y) * (endA.x - startA.x) - (startA.x - startB.x) * (endA.y - startA.y);
 
     float s = numS / denom;
-    if ( s < 0.0f || s > 1.0f ) {
+    if (s < 0.0f || s > 1.0f)
+    {
         // intersection is not within line segment of startA to endA
         return false;
     }
 
     float t = numT / denom;
-    if ( t < 0.0f || t > 1.0f ) {
+    if (t < 0.0f || t > 1.0f)
+    {
         // intersection is not within line segment of startB to endB
         return false;
     }
 
     // compute intesection point
-    if ( result )
+    if (result)
         *result = startA + s * (endA - startA);
 
     return true;
@@ -624,8 +655,9 @@ CPlayer *Utils::GetClosestPlayer( const Vector &vecPosition, float *distance, CP
     CPlayer *pClosest = NULL;
     float closeDist = 999999999999.9f;
 
-    for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+    for ( int i = 1; i <= gpGlobals->maxClients; ++i ) 
+	{
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(i) );
 
         if ( !pPlayer )
             continue;
@@ -644,10 +676,10 @@ CPlayer *Utils::GetClosestPlayer( const Vector &vecPosition, float *distance, CP
 
         if ( dist < closeDist ) {
             closeDist = dist;
-            pClosest = pPlayer;
+            pClosest  = pPlayer;
         }
     }
-
+    
     if ( distance )
         *distance = closeDist;
 
@@ -669,13 +701,14 @@ bool Utils::IsSpotOccupied( const Vector &vecPosition, CPlayer *pIgnore, float c
     return false;
 }
 
-CPlayer * Utils::GetClosestPlayerByClass( const Vector & vecPosition, Class_T classify, float *distance, CPlayer *pIgnore )
+CPlayer * Utils::GetClosestPlayerByClass( const Vector & vecPosition, Class_T classify, float *distance, CPlayer *pIgnore ) 
 {
-    CPlayer *pClosest = NULL;
+	CPlayer *pClosest = NULL;
     float closeDist = 999999999999.9f;
 
-    for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+    for ( int i = 1; i <= gpGlobals->maxClients; ++i ) 
+	{
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(i) );
 
         if ( !pPlayer )
             continue;
@@ -694,19 +727,19 @@ CPlayer * Utils::GetClosestPlayerByClass( const Vector & vecPosition, Class_T cl
 
         if ( dist < closeDist ) {
             closeDist = dist;
-            pClosest = pPlayer;
+            pClosest  = pPlayer;
         }
     }
-
+    
     if ( distance )
         *distance = closeDist;
 
     return pClosest;
 }
 
-bool Utils::IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, CPlayer * pIgnore, float closeRange )
+bool Utils::IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, CPlayer * pIgnore, float closeRange ) 
 {
-    float distance;
+	float distance;
     CPlayer *pPlayer = Utils::GetClosestPlayerByClass( vecPosition, classify, &distance, pIgnore );
 
     if ( pPlayer && distance < closeRange )
@@ -719,10 +752,11 @@ bool Utils::IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, 
 // Devuelve si algún jugador esta en la línea de fuego (FOV) de un punto de salida
 // a un punto de destino
 //================================================================================
-bool Utils::IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore, int ignoreTeam )
+bool Utils::IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore, int ignoreTeam  )
 {
-    for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+    for ( int i = 1; i <= gpGlobals->maxClients; ++i )
+    {
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(i) );
 
         if ( !pPlayer )
             continue;
@@ -746,15 +780,18 @@ bool Utils::IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinis
 
         Vector result( 0, 0, 0 );
 
-        if ( IsIntersecting2D( vecStart, vecFinish, playerOrigin, playerTarget, &result ) ) {
+        if ( IsIntersecting2D(vecStart, vecFinish, playerOrigin, playerTarget, &result) )
+        {
             // simple check to see if intersection lies in the Z range of the path
             float loZ, hiZ;
 
-            if ( vecStart.z < vecFinish.z ) {
+            if ( vecStart.z < vecFinish.z )
+            {
                 loZ = vecStart.z;
                 hiZ = vecFinish.z;
             }
-            else {
+            else
+            {
                 loZ = vecFinish.z;
                 hiZ = vecStart.z;
             }
@@ -802,7 +839,7 @@ bool Utils::IsValidSpot( const Vector & vecSpot, const Vector & vecOrigin, const
 #else
     if ( criteria.m_iAvoidTeam && criteria.m_bOutOfVisibility ) {
         for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-            CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( it ) );
+            CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(it) );
 
             if ( !pPlayer )
                 continue;
@@ -1069,7 +1106,7 @@ bool Utils::FindIntestingPosition( Vector *vecResult, CPlayer *pPlayer, const CS
         }
 
         //if ( criteria.m_bUseNearest )
-        //hintCriteria.SetFlag( bits_HINT_NODE_NEAREST );
+            //hintCriteria.SetFlag( bits_HINT_NODE_NEAREST );
 
         if ( criteria.m_flMaxRange > 0 )
             hintCriteria.AddIncludePosition( vecOrigin, criteria.m_flMaxRange );
@@ -1098,13 +1135,14 @@ bool Utils::FindIntestingPosition( Vector *vecResult, CPlayer *pPlayer, const CS
 //================================================================================
 bool Utils::FindCoverPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotCriteria &criteria )
 {
-    Vector vecOrigin = pPlayer->GetAbsOrigin();
+	Vector vecOrigin = pPlayer->GetAbsOrigin();
 
-    if ( criteria.m_vecOrigin.IsValid() )
+    if ( criteria.m_vecOrigin.IsValid() ) {
         vecOrigin = criteria.m_vecOrigin;
+    }
 
     // NavMesh
-    if ( FindNavCoverSpot( vecResult, vecOrigin, criteria, pPlayer ) )
+    if ( FindNavCoverSpot(vecResult, vecOrigin, criteria, pPlayer) )
         return true;
 
     // Hints
@@ -1127,7 +1165,7 @@ bool Utils::FindCoverPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotC
     }
 
     // Random Area Spot
-    if ( FindNavCoverSpotInArea( vecResult, vecOrigin, pPlayer->GetLastKnownArea(), criteria, pPlayer ) )
+    if ( FindNavCoverSpotInArea(vecResult, vecOrigin, pPlayer->GetLastKnownArea(), criteria, pPlayer) )
         return true;
 
     return false;
@@ -1202,17 +1240,17 @@ void Utils::AlienFX_SetColor( CPlayer *pPlayer, unsigned int lights, unsigned in
     if ( !pPlayer || !pPlayer->IsNetClient() )
         return;
 
-    if ( pPlayer->ShouldThrottleUserMessage( "AlienFX" ) )
+    if ( pPlayer->ShouldThrottleUserMessage("AlienFX") )
         return;
 
     CSingleUserRecipientFilter user( pPlayer );
     user.MakeReliable();
 
-    UserMessageBegin( user, "AlienFX" );
-    WRITE_SHORT( ALIENFX_SETCOLOR );
-    WRITE_LONG( lights );
-    WRITE_LONG( color );
-    WRITE_FLOAT( duration );
+    UserMessageBegin( user, "AlienFX" );        
+        WRITE_SHORT( ALIENFX_SETCOLOR );
+        WRITE_LONG( lights );
+        WRITE_LONG( color );
+        WRITE_FLOAT( duration );
     MessageEnd();
 }
 #endif

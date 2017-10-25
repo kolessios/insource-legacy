@@ -54,16 +54,25 @@ public:
     ~C_Player();
 
     // Utilidades
-    virtual bool IsCrouching() { return (GetFlags() & FL_DUCKING) ? true : false; }
-    virtual bool IsCrouching() const { return (GetFlags() & FL_DUCKING) ? true : false; }
+	virtual bool IsCrouching() const {
+		return (GetFlags() & FL_DUCKING) ? true : false;
+	}
 
-    virtual bool IsOnGround() {
-        return (GetFlags() & FL_ONGROUND) ? true : false;
-    }
-    virtual bool IsGod() { return (GetFlags() & FL_GODMODE) ? true : false; }
+	virtual bool IsOnGround() const {
+		return (GetFlags() & FL_ONGROUND) ? true : false;
+	}
 
-    virtual bool IsUnderAttack() { return m_bIsUnderAttack; }
-    virtual bool IsInCombat() { return m_bIsInCombat; }
+	virtual bool IsOnGodMode() const {
+		return (GetFlags() & FL_GODMODE) ? true : false;
+	}
+
+	virtual bool IsUnderAttack() const {
+		return m_bUnderAttack;
+	}
+
+	virtual bool IsOnCombat() const {
+		return m_bOnCombat;
+	}
 
     virtual int GetButtons() { return m_nButtons; }
     virtual bool IsButtonPressing( int btn ) { return ((m_nButtons & btn)) ? true : false; }
@@ -105,15 +114,17 @@ public:
     // Correr y Caminar
     virtual void UpdateMovementType();
 
-    virtual bool AllowSprint();
+    virtual bool CanSprint();
     virtual void StartSprint() { m_bSprinting = true; }
     virtual void StopSprint() { m_bSprinting = false; }
     virtual bool IsSprinting() { return m_bSprinting; }
 
-    virtual bool AllowWalk();
-    virtual void StartWalking() { m_bWalking = true; }
-    virtual void StopWalking() { m_bWalking = false; }
-    virtual bool IsWalking() { return m_bWalking; }
+    virtual bool CanSneak();
+    virtual void StartSneaking() {
+		m_bSneaking = true; }
+    virtual void StopSneaking() {
+		m_bSneaking = false; }
+    virtual bool IsSneaking() { return m_bSneaking; }
 
     // Condición
     virtual int GetDejectedTimes() { return m_iDejectedTimes; }
@@ -165,7 +176,7 @@ public:
     C_BaseWeapon *GetBaseWeapon();
 
     // Animaciones
-    virtual CPlayerAnimationSystem *AnimationSystem() { return m_pAnimState; }
+    virtual CPlayerAnimationSystem *AnimationSystem() { return m_pAnimationSystem; }
     virtual void CreateAnimationSystem();
 
     virtual void SetAnimation( PLAYER_ANIM );
@@ -239,9 +250,12 @@ public:
 public:
     // Compartido
     virtual Activity TranslateActivity( Activity actBase );
+
     virtual Vector Weapon_ShootPosition();
     virtual Vector Weapon_ShootDirection();
-    virtual void FireBullets( const FireBulletsInfo_t & );
+
+	virtual void FireBullets( const FireBulletsInfo_t &info );
+	virtual void OnFireBullets( const FireBulletsInfo_t &info );
     virtual bool ShouldDrawUnderwaterBulletBubbles();
 
 public:
@@ -260,15 +274,14 @@ public:
 
     bool m_bFlashlightEnabled;
     bool m_bSprinting;
-    bool m_bWalking;
-    //float m_flStamina;
-	//float m_flStress;
+    bool m_bSneaking;
 	float m_flLocalStress;
 
-    bool m_bIsInCombat;
-    bool m_bIsUnderAttack;
-    IntervalTimer m_nIsUnderAttackTimer;
-    IntervalTimer m_nIsInCombatTimer;
+    bool m_bOnCombat;
+    bool m_bUnderAttack;
+
+    IntervalTimer m_UnderAttackTimer;
+    IntervalTimer m_OnCombatTimer;
 
     int m_iPlayerStatus;
     int m_iPlayerState;
@@ -284,7 +297,7 @@ public:
     CountdownTimer m_nBlinkTimer;
 
 protected:
-    CPlayerAnimationSystem *m_pAnimState;
+    CPlayerAnimationSystem *m_pAnimationSystem;
 
 private:
     C_Player( const C_Player & );

@@ -13,7 +13,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;.\hl2;$SRCDIR\game\shared\hl2;;.\sdk;$SRCDIR\game\shared\sdk;.\sdk\vgui;$SRCDIR\game\client\sdk\gameui;..\statemachine;$SRCDIR\game\shared\multiplayer;.\in;$SRCDIR\game\shared\in;$SRCDIR\public\cef"
-		$PreprocessorDefinitions		"$BASE;GAMEUI_EMBEDDED;GAMEUI_EXPORTS;GAMEUI_CEF;INSOURCE_DLL;L4D2_HACKS"
+		$PreprocessorDefinitions		"$BASE;GAMEUI_EMBEDDED;GAMEUI_EXPORTS;GAMEUI_ENGINE;INSOURCE_DLL;L4D2_HACKS"
 	}
 
 	$Linker

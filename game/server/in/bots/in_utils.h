@@ -45,41 +45,21 @@ public:
         m_iAvoidTeam = NULL;
         m_iTacticalMode = TACTICAL_MODE_NONE;
 
-        m_vecOrigin.Invalidate();
+		m_vecOrigin.Invalidate();
     }
 
-    virtual void SetOrigin( Vector position ) {
-        m_vecOrigin = position;
-    }
-    virtual void SetMaxRange( float maxRange ) {
-        m_flMaxRange = maxRange;
-    }
-    virtual void SetMinDistanceAvoid( float minDistance ) {
-        m_flMinDistanceFromEnemy = minDistance;
-    }
-    virtual void SniperSpots( bool isSniper ) {
-        m_bIsSniper = isSniper;
-    }
-    virtual void UseNearest( bool status ) {
-        m_bUseNearest = status;
-    }
-    virtual void UseRandom( bool status ) {
-        m_bUseRandom = status;
-    }
-    virtual void OnlyVisible( bool status ) {
-        m_bOnlyVisible = status;
-    }
-    virtual void OutOfLineOfFire( bool status ) {
-        m_bOutOfLineOfFire = status;
-    }
-    virtual void OutOfVisibility( bool status ) {
-        m_bOutOfVisibility = status;
-    }
-    virtual void AvoidTeam( int team ) {
-        m_iAvoidTeam = team;
-    }
-    virtual void AvoidTeam( CBaseEntity *pEntity )
-    {
+	virtual void SetOrigin( Vector position ) { m_vecOrigin = position; }
+    virtual void SetMaxRange( float maxRange ) { m_flMaxRange = maxRange; }
+    virtual void SetMinDistanceAvoid( float minDistance ) { m_flMinDistanceFromEnemy = minDistance; }
+    virtual void SniperSpots( bool isSniper ) { m_bIsSniper = isSniper; }
+    virtual void UseNearest( bool status ) { m_bUseNearest = status; }
+    virtual void UseRandom( bool status ) { m_bUseRandom = status; }
+    virtual void OnlyVisible( bool status ) { m_bOnlyVisible = status; }
+    virtual void OutOfLineOfFire( bool status ) { m_bOutOfLineOfFire = status; }
+    virtual void OutOfVisibility( bool status ) { m_bOutOfVisibility = status; }
+    virtual void AvoidTeam( int team ) { m_iAvoidTeam = team; }
+    virtual void AvoidTeam( CBaseEntity *pEntity ) 
+    { 
         if ( !pEntity )
             return;
 
@@ -101,7 +81,7 @@ public:
     bool m_bOutOfVisibility;
     int m_iTacticalMode;
     int m_iAvoidTeam;
-    Vector m_vecOrigin;
+	Vector m_vecOrigin;
 };
 
 //================================================================================
@@ -131,8 +111,8 @@ public:
     static IGameEvent *CreateLesson( const char *pLesson, CBaseEntity *pSubject = NULL );
 
 #ifdef INSOURCE_DLL
-    static bool AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, int team = TEAM_ANY );
-    static bool AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter );
+	static bool AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, int team = TEAM_ANY );
+	static bool AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter );
     static bool AddAttributeModifier( const char *name, int team = TEAM_ANY );
 #endif
 
@@ -147,10 +127,10 @@ public:
     static bool IsIntersecting2D( const Vector &startA, const Vector &endA, const Vector &startB, const Vector &endB, Vector *result = NULL );
 
     static CPlayer *GetClosestPlayer( const Vector &vecPosition, float *distance = NULL, CPlayer *pIgnore = NULL, int team = NULL );
-    static bool IsSpotOccupied( const Vector &vecPosition, CPlayer *pIgnore = NULL, float closeRange = 75.0f, int avoidTeam = NULL );
+    static bool IsSpotOccupied(  const Vector &vecPosition, CPlayer *pIgnore = NULL, float closeRange = 75.0f, int avoidTeam = NULL );
 
-    static CPlayer *GetClosestPlayerByClass( const Vector &vecPosition, Class_T classify, float *distance = NULL, CPlayer *pIgnore = NULL );
-    static bool IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, CPlayer *pIgnore = NULL, float closeRange = 75.0f );
+	static CPlayer *GetClosestPlayerByClass( const Vector &vecPosition, Class_T classify, float *distance = NULL, CPlayer *pIgnore = NULL );
+    static bool IsSpotOccupiedByClass(  const Vector &vecPosition, Class_T classify, CPlayer *pIgnore = NULL, float closeRange = 75.0f );
 
     static bool IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore = NULL, int ignoreTeam = NULL );
     static bool IsValidSpot( const Vector &vecSpot, const Vector &vecOrigin, const CSpotCriteria &criteria, CPlayer *pPlayer = NULL );
@@ -186,10 +166,7 @@ public:
         m_totalWeight = 0;
     }
 
-    enum
-    {
-        MAX_SPOTS = 256
-    };
+    enum { MAX_SPOTS = 256 };
 
     bool operator() ( CNavArea *area )
     {
@@ -202,29 +179,34 @@ public:
 
         FOR_EACH_VEC( (*list), it )
         {
-            const HidingSpot *spot = (*list)[it];
+            const HidingSpot *spot = (*list)[ it ];
 
             // if we've filled up, stop searching
-            if ( m_count == MAX_SPOTS ) {
+            if ( m_count == MAX_SPOTS )
+            {
                 return false;
             }
 
             // make sure hiding spot is in range
-            if ( m_range > 0.0f ) {
+            if ( m_range > 0.0f )
+            {
                 //if ( (spot->GetPosition() - m_origin).IsLengthGreaterThan(m_range) )
-                if ( m_origin.DistTo( spot->GetPosition() ) > m_range ) {
+                if ( m_origin.DistTo(spot->GetPosition()) > m_range )
+                {
                     continue;
                 }
             }
 
             // if a Player is using this hiding spot, don't consider it
-            if ( Utils::IsSpotOccupied( spot->GetPosition(), m_me ) ) {
+            if ( Utils::IsSpotOccupied(spot->GetPosition(), m_me) )
+            {
                 // player is in hiding spot
                 /// @todo Check if player is moving or sitting still
                 continue;
             }
 
-            if ( spot->GetArea() && (spot->GetArea()->GetAttributes() & NAV_MESH_DONT_HIDE) ) {
+            if ( spot->GetArea() && (spot->GetArea()->GetAttributes() & NAV_MESH_DONT_HIDE) )
+            {
                 // the area has been marked as DONT_HIDE since the last analysis, so let's ignore it
                 continue;
             }
@@ -233,15 +215,18 @@ public:
                 continue;
 
             // only collect hiding spots with matching flags
-            if ( m_flags & spot->GetFlags() ) {
-                m_hidingSpot[m_count] = &spot->GetPosition();
-                m_hidingSpotWeight[m_count] = m_totalWeight;
+            if ( m_flags & spot->GetFlags() )
+            {
+                m_hidingSpot[ m_count ] = &spot->GetPosition();
+                m_hidingSpotWeight[ m_count ] = m_totalWeight;
 
                 // if it's an 'avoid' area, give it a low weight
-                if ( spot->GetArea() && (spot->GetArea()->GetAttributes() & NAV_MESH_AVOID) ) {
+                if ( spot->GetArea() && ( spot->GetArea()->GetAttributes() & NAV_MESH_AVOID ) )
+                {
                     m_totalWeight += 1;
                 }
-                else {
+                else
+                {
                     m_totalWeight += 2;
                 }
 
@@ -253,15 +238,15 @@ public:
     }
 
     /**
-    * Remove the spot at index "i"
-    */
+     * Remove the spot at index "i"
+     */
     void RemoveSpot( int i )
     {
-        if ( m_count == 0 )
+        if (m_count == 0)
             return;
 
-        for ( int j = i + 1; j<m_count; ++j )
-            m_hidingSpot[j - 1] = m_hidingSpot[j];
+        for( int j=i+1; j<m_count; ++j )
+            m_hidingSpot[j-1] = m_hidingSpot[j];
 
         --m_count;
     }
@@ -269,10 +254,12 @@ public:
 
     int GetRandomHidingSpot( void )
     {
-        int weight = RandomInt( 0, m_totalWeight - 1 );
-        for ( int i = 0; i<m_count - 1; ++i ) {
+        int weight = RandomInt( 0, m_totalWeight-1 );
+        for ( int i=0; i<m_count-1; ++i )
+        {
             // if the next spot's starting weight is over the target weight, this spot is the one
-            if ( m_hidingSpotWeight[i + 1] >= weight ) {
+            if ( m_hidingSpotWeight[i+1] >= weight )
+            {
                 return i;
             }
         }
@@ -285,8 +272,8 @@ public:
     const Vector &m_origin;
     float m_range;
 
-    const Vector *m_hidingSpot[MAX_SPOTS];
-    int m_hidingSpotWeight[MAX_SPOTS];
+    const Vector *m_hidingSpot[ MAX_SPOTS ];
+    int m_hidingSpotWeight[ MAX_SPOTS ];
     int m_totalWeight;
     int m_count;
 

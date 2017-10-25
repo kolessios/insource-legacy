@@ -29,18 +29,15 @@
 // Macros
 //================================================================================
 
-#define ADD_TASK( task, value ) m_Tasks.AddToTail( new BotTaskInfo_t(task, value) );
-#define ADD_INTERRUPT( condition ) m_Interrupts.AddToTail( condition );
+#define ADD_TASK( task, value ) m_Tasks.AddToTail( new BotTaskInfo_t(task, value) )
+#define ADD_INTERRUPT( condition ) m_Interrupts.AddToTail( condition )
 
 #define DECLARE_SCHEDULE( id ) virtual int GetID() const { return id; } \
-    virtual void Setup();
+    virtual void Install_Tasks(); \
+    virtual void Install_Interruptions();
 
-#define BEGIN_SETUP_SCHEDULE( classname ) typedef classname CurrentSchedule; \
-    void CurrentSchedule::Setup() {
-
-#define BEGIN_SCHEDULE( classname ) void classname::Setup() {
-
-#define END_SCHEDULE() }
+#define SET_SCHEDULE_TASKS( classname ) void classname::Install_Tasks()
+#define SET_SCHEDULE_INTERRUPTS( classname ) void classname::Install_Interruptions()
 
 //================================================================================
 // Base para crear un conjunto de tareas
@@ -52,7 +49,6 @@ public:
 
     IBotSchedule( IBot *bot ) : BaseClass( bot )
     {
-        
     }
 
     virtual bool IsSchedule() const {
@@ -60,7 +56,9 @@ public:
     }
 
 public:
-    virtual void Setup() = 0;
+    virtual void Install_Tasks() = 0;
+    virtual void Install_Interruptions() = 0;
+
     virtual float GetDesire() const = 0;
 
 public:
@@ -86,6 +84,14 @@ public:
         return false;
     }
 
+    virtual float GetElapsedTime() const {
+        return m_StartTimer.GetElapsedTime();
+    }
+
+    virtual float GetElapsedTimeSinceFail() const {
+        return m_FailTimer.GetElapsedTime();
+    }
+
     virtual bool IsWaitFinished() const {
         return m_WaitTimer.IsElapsed();
     }
@@ -100,12 +106,16 @@ public:
     virtual void Finish();
     virtual void Fail( const char *pWhy );
 
-    virtual bool ShouldInterrupted() const;
+    virtual BCOND GetInterruption();
+    virtual bool ShouldInterrupted();
     virtual float GetInternalDesire();
 
     virtual void Update();    
 
     virtual void Wait( float seconds );
+
+    virtual bool SavePosition( const Vector &position, float duration = -1.0f );
+    virtual const Vector &GetSavedPosition();
 
     virtual const char *GetActiveTaskName() const;
 
@@ -118,6 +128,8 @@ protected:
     bool m_bStarted;
     bool m_bFinished;
 
+    int m_iScheduleOnFail;
+
     BotTaskInfo_t *m_nActiveTask;
     float m_flLastDesire;
 
@@ -126,9 +138,7 @@ protected:
 
     CountdownTimer m_WaitTimer;
     IntervalTimer m_StartTimer;
-
-    Vector m_vecSavedLocation;
-    Vector m_vecLocation;
+    IntervalTimer m_FailTimer;
 };
 
 #endif // IBOT_SCHEDULE_H

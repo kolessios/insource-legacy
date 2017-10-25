@@ -136,7 +136,7 @@ void CPlayerDejectedComponent::UpdateDejected()
         }*/
 
         // Dejaron de ayudarte compañero..
-        //if ( pPlayer->GetHelpProgress() > 0 && pPlayer->m_nRaiseHelpTimer.IsGreaterThen( 0.05f ) )
+        //if ( pPlayer->GetHelpProgress() > 0 && pPlayer->m_RaiseHelpTimer.IsGreaterThen( 0.05f ) )
             //pPlayer->OnPlayerStatus( pPlayer->GetPlayerStatus(), pPlayer->GetPlayerStatus() );
     }
 
@@ -179,7 +179,7 @@ void CPlayerDejectedComponent::UpdateFall()
     if ( pPlayer->IsOnGround() )
         return;
 
-    if ( pPlayer->InGodMode() || pPlayer->GetMoveType() != MOVETYPE_WALK )
+    if ( pPlayer->IsOnGodMode() || pPlayer->GetMoveType() != MOVETYPE_WALK )
         return;
 
     if ( !pPlayer->GetLastKnownArea() )

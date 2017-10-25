@@ -5,45 +5,44 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
 #include "in_gamerules.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //================================================================================
-// Establece el nivel de habilidad del Bot
+// Sets the level of difficulty
 //================================================================================
 void CBot::SetSkill( int level )
 {
-    // Dificultad al azar
-    if ( level == 0 )
+    // Random
+    if ( level == 0 ) {
         level = RandomInt( SKILL_EASY, SKILL_HARDEST );
-
-    // Igual que la dificultad del juego
-    if ( level == 99 )
-        level = TheGameRules->GetSkillLevel();
-
-    if ( !GetSkill() ) {
-        m_Skill = new CBotSkill( level );
-        return;
     }
 
-    GetSkill()->SetLevel( level );
+    // Same game difficulty
+    if ( level == 99 ) {
+        level = TheGameRules->GetSkillLevel();
+    }
+
+    GetProfile()->SetSkill( level );
 }
 
 //================================================================================
-// Establece el estado actual del Bot y su duración
+// Sets the current Bot status
 //================================================================================
 void CBot::SetState( BotState state, float duration )
 {
-    // Evitamos quedarnos en pánico para siempre
+    // We avoid being panicked forever
     if ( IsPanicked() && state == STATE_PANIC )
         return;
 
-    //
     if ( state != m_iState && state != STATE_PANIC && state != STATE_COMBAT ) {
-        // El estado actual no ha expirado
         if ( m_iStateTimer.HasStarted() && !m_iStateTimer.IsElapsed() )
             return;
     }
@@ -51,47 +50,54 @@ void CBot::SetState( BotState state, float duration )
     m_iState = state;
     m_iStateTimer.Invalidate();
 
-    if ( duration > 0 )
+    if ( duration > 0 ) {
         m_iStateTimer.Start( duration );
+    }
 }
 
 //================================================================================
-// Limpia el estado actual, para ponerse en modo relajado
+// Clears the current status.
+// If we were in combat/panic we put ourselves on alert.
+// If we were on alert, we put ourselves in idle.
 //================================================================================
 void CBot::CleanState() 
 {
-    if ( IsPanicked() || IsCombating() )
+    if ( IsPanicked() || IsCombating() ) {
         Alert();
-    else
+    }
+    else {
         Idle();
+    }
 }
 
 //================================================================================
-// Mete al Bot en un estado de pánico donde no podrá hacer nada
+// Put the bot in a state of panic where you can not do anything
 //================================================================================
 void CBot::Panic( float duration )
 {
-    // Usamos la duración de nuestro nivel
-    if ( duration < 0 )
-        duration = GetSkill()->GetPanicDuration();
+    // Skill duration
+    if ( duration < 0 ) {
+        duration = GetProfile()->GetReactionDelay();
+    }
 
     SetState( STATE_PANIC, duration );
 }
 
 //================================================================================
-// Mete al Bot en un estado de alerta
+// Put the bot on a state of alert
 //================================================================================
 void CBot::Alert( float duration )
 {
-    // Usamos la duración predeterminada
-    if ( duration < 0 )
-        duration = GetSkill()->GetAlertDuration();
+    // Skill duration
+    if ( duration < 0 ) {
+        duration = GetProfile()->GetAlertDuration();
+    }
 
     SetState( STATE_ALERT, duration );
 }
 
 //================================================================================
-// Mete al Bot en un estado de relajación
+// Put the bot on a state of idle
 //================================================================================
 void CBot::Idle()
 {
@@ -103,7 +109,7 @@ void CBot::Idle()
 }
 
 //================================================================================
-// Mete al Bot en un estado de combate
+// Put the bot on a state combat
 //================================================================================
 void CBot::Combat()
 {

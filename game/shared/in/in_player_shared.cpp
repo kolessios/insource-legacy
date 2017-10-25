@@ -93,10 +93,10 @@ void CPlayer::CreateAnimationSystem()
     data.Init();
 
     data.m_flBodyYawRate = 120.0f;
-    data.m_flRunSpeed = 190.0f;
+    data.m_flRunSpeed = 110.0f;
     data.m_flWalkSpeed = 1.0f;
 
-    m_pAnimState = CreatePlayerAnimationSystem( this, data );
+    m_pAnimationSystem = CreatePlayerAnimationSystem( this, data );
 }
 
 //================================================================================
@@ -188,8 +188,9 @@ void CPlayer::FireBullets( const FireBulletsInfo_t &info )
 #endif
 
     // Make sure we don't have a dangling damage target from a recursive call
-    if ( g_MultiDamage.GetTarget() != NULL )
+    if ( g_MultiDamage.GetTarget() != NULL ) {
         ApplyMultiDamage();
+    }
 
     ClearMultiDamage();
     g_MultiDamage.SetDamageType( iDamageType );
@@ -210,7 +211,19 @@ void CPlayer::FireBullets( const FireBulletsInfo_t &info )
     lagcompensation->FinishLagCompensation( this );
 #endif
 
+    OnFireBullets( info );
+
     ApplyMultiDamage();
+}
+
+//================================================================================
+//================================================================================
+void CPlayer::OnFireBullets( const FireBulletsInfo_t & info )
+{
+#ifndef CLIENT_DLL
+    m_CombatTimer.Start();
+    AddAttributeModifier( "stress_firegun" );
+#endif
 }
 
 //====================================================================
@@ -320,7 +333,7 @@ float CPlayer::GetSpeed()
     // Estamos corriendo o agachados
     // Ivan: Si estamos agachados usamos la velocidad
     // al correr ya que en el código de Valve se hace la disminución
-    if ( IsWalking() )
+    if ( IsSneaking() )
         flSpeed = sv_player_walk_speed.GetFloat();
     else if ( IsSprinting() || IsCrouching() )
         flSpeed = sv_player_sprint_speed.GetFloat();
@@ -336,7 +349,7 @@ void CPlayer::SpeedModifier( float &speed )
     // TODO: Clientside
 #ifndef CLIENT_DLL
     // Hemos recibido daño que nos hace lentos
-    if ( m_nSlowDamageTimer.HasStarted() && m_nSlowDamageTimer.IsLessThen( 0.5f ) ) {
+    if ( m_SlowDamageTimer.HasStarted() && m_SlowDamageTimer.IsLessThen( 0.5f ) ) {
         speed -= 110.0f;
         speed = MAX( 80.0f, speed );
         return;
@@ -369,7 +382,7 @@ void CPlayer::UpdateSpeed()
 //================================================================================
 // Devuelve si el jugador puede correr
 //================================================================================
-bool CPlayer::AllowSprint()
+bool CPlayer::CanSprint()
 {
 #ifdef APOCALYPSE
     // No tenemos aguante
@@ -383,7 +396,7 @@ bool CPlayer::AllowSprint()
 //================================================================================
 // Devuelve si el jugador puede caminar
 //================================================================================
-bool CPlayer::AllowWalk()
+bool CPlayer::CanSneak()
 {
     // Agachados ya estamos a una velocidad muy baja
     if ( IsCrouching() )
@@ -398,7 +411,7 @@ bool CPlayer::AllowWalk()
 void CPlayer::UpdateMovementType()
 {
     // Nos permitimos correr
-    if ( AllowSprint() ) {
+    if ( CanSprint() ) {
         // Solo si presionamos el boton
         if ( IsButtonPressing( IN_SPEED ) ) {
             StartSprint();
@@ -416,17 +429,17 @@ void CPlayer::UpdateMovementType()
     }
 
     // Nos permitimos caminar 
-    if ( AllowWalk() ) {
+    if ( CanSneak() ) {
         // Solo si presionamos el boton
         if ( IsButtonPressing( IN_WALK ) ) {
-            StartWalking();
+            StartSneaking();
         }
         else {
-            StopWalking();
+            StopSneaking();
         }
     }
-    else if ( IsWalking() ) {
-        StopWalking();
+    else if ( IsSneaking() ) {
+        StopSneaking();
     }
 }
 

@@ -492,7 +492,7 @@ bool DirectorManager::SetupMinion( CBotSpawn * pSpawner, CMinionInfo * minion, V
 {
     pSpawner->SpawnBot();
 
-    if ( !pSpawner->GetBot() ) {
+    if ( !pSpawner->GetPlayer() ) {
         Assert( !"Ha ocurrido un problema al hacer que un info_bot_spawn haga Spawn!" );
         return false;
     }
@@ -501,7 +501,7 @@ bool DirectorManager::SetupMinion( CBotSpawn * pSpawner, CMinionInfo * minion, V
     angles.x = 0.0f;
     angles.z = 0.0f;
 
-    CPlayer *pPlayer = pSpawner->GetBot();
+    CPlayer *pPlayer = pSpawner->GetPlayer();
 
     const char *pName = UTIL_VarArgs( "director_%s", g_MinionTypes[minion->type] );
 

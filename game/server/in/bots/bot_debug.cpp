@@ -5,8 +5,12 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
 #include "in_gamerules.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 #include "nav.h"
 #include "nav_mesh.h"
@@ -26,7 +30,10 @@ extern ConVar bot_debug_conditions;
 extern ConVar bot_debug_cmd;
 extern ConVar bot_debug_max_msgs;
 
+extern ConVar think_limit;
+
 //================================================================================
+// Returns whether to display debugging information for this bot.
 //================================================================================
 bool CBot::ShouldShowDebug()
 {
@@ -42,8 +49,7 @@ bool CBot::ShouldShowDebug()
 }
 
 //================================================================================
-// Muestra información de depuración del Bot cuando el Jugador Host esta
-// en modo espectador mirandolo
+// Displays debug information on the host screen
 //================================================================================
 void CBot::DebugDisplay()
 {
@@ -55,7 +61,6 @@ void CBot::DebugDisplay()
     m_flDebugYPosition = 0.06f;
     CFmtStr msg;
 
-    // Colores
     const Color green = Color( 0, 255, 0, 200 );
     const Color red = Color( 255, 150, 150, 200 );
     const Color yellow = Color( 255, 255, 0, 200 );
@@ -63,21 +68,23 @@ void CBot::DebugDisplay()
     const Color pink = Color( 247, 129, 243, 200 );
     const Color white = Color( 255, 255, 255, 200 );
 
-    // Cuadro rojo: Enemigo actual
-    // Cuadro azul: Enemigo ideal
-    // Cruz roja: Enemigo
-    // Cruz amarilla: Lugar donde estamos mirando
-    // Cruz hacia abajo azul: Destino
+    float thinkTime = m_RunTimer.GetDuration().GetMillisecondsF();
+    float scheduleTime = m_ScheduleTimer.GetDuration().GetMicrosecondsF();
 
-    // Skill
-    if ( GetSkill() ) {
-        DebugScreenText( msg.sprintf( "%s (%s)", GetName(), GetSkill()->GetLevelName() ) );
+    // General
+    if ( thinkTime >= think_limit.GetFloat() ) {
+        DebugScreenText( msg.sprintf( "%s (%.3f ms)", GetName(), thinkTime ), red );
+        DebugAddMessage( "RunAI: %.3f ms !!", thinkTime );
+    }
+    else {
+        DebugScreenText( msg.sprintf( "%s (%.3f ms)", GetName(), thinkTime ) );
     }
 
+    DebugScreenText( msg.sprintf( "%s - %s", GetProfile()->GeSkillName(), g_TacticalModes[GetTacticalMode()] ) );
     DebugScreenText( msg.sprintf( "Health: %i", GetHealth() ) );
     DebugScreenText( "" );
 
-    // Estado
+    // State
     switch ( GetState() ) {
         case STATE_IDLE:
         default:
@@ -102,12 +109,15 @@ void CBot::DebugDisplay()
     DebugScreenText( "" );
     DebugScreenText( "A.I." );
 
-    DebugScreenText( msg.sprintf( "    Tactical Mode: %s", g_TacticalModes[GetTacticalMode()] ) );
-
+    // Schedule
     if ( GetActiveSchedule() ) {
         IBotSchedule *pSchedule = GetActiveSchedule();
-        DebugScreenText( msg.sprintf( "    Schedule: %s (%.2f)", g_BotSchedules[pSchedule->GetID()], pSchedule->GetInternalDesire() ) );
+        DebugScreenText( msg.sprintf( "    Schedule: %s (%.3f ms)", g_BotSchedules[pSchedule->GetID()], scheduleTime ) );
         DebugScreenText( msg.sprintf( "    Task: %s", pSchedule->GetActiveTaskName() ) );
+
+        /*if ( scheduleTime >= 0.5f ) {
+            DebugAddMessage( "%s:%s %.3f ms !!", g_BotSchedules[pSchedule->GetID()], pSchedule->GetActiveTaskName(), scheduleTime );
+        }*/
     }
     else {
         DebugScreenText( msg.sprintf( "    Schedule: -" ) );
@@ -123,6 +133,7 @@ void CBot::DebugDisplay()
             DebugScreenText( msg.sprintf( "    Ideal Schedule: -" ) );
     }
 
+    // Schedule Desires
     if ( bot_debug_desires.GetBool() ) {
         DebugScreenText( "" );
 
@@ -149,10 +160,10 @@ void CBot::DebugDisplay()
         }
     }
 
-    // Relaciones y enemigos
+    // Memory
     if ( GetMemory() ) {
         DebugScreenText( "" );
-        DebugScreenText( msg.sprintf("Memory (%i):", GetMemory()->GetKnownCount() ), red );
+        DebugScreenText( msg.sprintf("Memory (Ents: %i) (%.3f ms):", GetMemory()->GetKnownCount(), GetMemory()->GetUpdateCost() ), red );
 
         DebugScreenText( msg.sprintf( "    Threats: %i (Nearby: %i - Dangerous: %i)", GetMemory()->GetThreatCount(), GetDataMemoryInt( "NearbyThreats" ), GetDataMemoryInt( "NearbyDangerousThreats" ) ), red );
         DebugScreenText( msg.sprintf( "    Friends: %i (Nearby: %i)", GetMemory()->GetFriendCount(), GetDataMemoryInt( "NearbyFriends" ) ), green );
@@ -165,7 +176,7 @@ void CBot::DebugDisplay()
                 DebugScreenText( msg.sprintf( "    Ideal Threat: %s (%s)", pIdeal->GetEntity()->GetClassname(), STRING( pIdeal->GetEntity()->GetEntityName() ) ), blue );
 
                 if ( pIdeal != pThreat ) {
-                    NDebugOverlay::EntityBounds( pIdeal->GetEntity(), blue.r(), blue.g(), blue.b(), 5.0f, 0.1f );
+                    NDebugOverlay::EntityBounds( pIdeal->GetEntity(), blue.r(), blue.g(), blue.b(), 15.0f, 0.1f );
                 }
             }
 
@@ -179,7 +190,12 @@ void CBot::DebugDisplay()
                              pThreat->GetVisibleHitbox().leftLeg.IsValid(),
                              pThreat->GetVisibleHitbox().rightLeg.IsValid() ), red );
 
-            NDebugOverlay::EntityBounds( pThreat->GetEntity(), red.r(), red.g(), red.b(), 5.0f, 0.1f );            
+            if ( bot_debug_memory.GetBool() ) {
+                NDebugOverlay::EntityBounds( pThreat->GetEntity(), red.r(), red.g(), red.b(), 15.0f, 0.1f );
+            }
+            else {
+                NDebugOverlay::EntityBounds( pThreat->GetEntity(), red.r(), red.g(), red.b(), 5.0f, 0.1f );
+            }
 
             if ( pThreat ) {
                 if ( pThreat->GetVisibleHitbox().head.IsValid() )
@@ -197,7 +213,7 @@ void CBot::DebugDisplay()
         }
     }
 
-    // Escuadron
+    // Squad
     if ( GetSquad() ) {
         DebugScreenText( "" );
         DebugScreenText( "Squad:", pink );
@@ -211,13 +227,19 @@ void CBot::DebugDisplay()
     // Vision
     if ( GetVision() ) {
         DebugScreenText( "" );
-        DebugScreenText( "Vision:", yellow );
+        DebugScreenText( msg.sprintf("Vision (%.3f ms):", GetVision()->GetUpdateCost()), yellow );
 
         if ( GetVision()->HasAimGoal() ) {
             int priority = GetVision()->GetPriority();
 
-            DebugScreenText( msg.sprintf( "    Looking At: %s", GetVision()->GetDescription() ), yellow );
-            DebugScreenText( msg.sprintf( "    Time Left: %.2fs", GetVision()->GetTimer().GetRemainingTime()), yellow );
+            if ( GetVision()->IsAimReady() ) {
+                DebugScreenText( msg.sprintf( "    Looking At: %s (READY)", GetVision()->GetDescription() ), yellow );
+                DebugScreenText( msg.sprintf( "    Time Left: %.2fs", GetVision()->GetTimer().GetRemainingTime() ), yellow );
+            }
+            else {
+                DebugScreenText( msg.sprintf( "    Looking At: %s (AIMING)", GetVision()->GetDescription() ), yellow );
+            }
+            
             DebugScreenText( msg.sprintf( "    Priority: %s", g_PriorityNames[priority] ), yellow );
 
             if ( GetVision()->GetAimTarget() ) {
@@ -234,16 +256,17 @@ void CBot::DebugDisplay()
     // Locomotion
     if ( GetLocomotion() ) {
         DebugScreenText( "" );
-        DebugScreenText( "Locomotion:", blue );
+        DebugScreenText( msg.sprintf( "Locomotion (%.3f ms):", GetLocomotion()->GetUpdateCost() ), blue );
 
         if ( GetLocomotion()->HasDestination() ) {
             Vector vecDestination = GetLocomotion()->GetDestination();
             int priority = GetLocomotion()->GetPriority();
 
-            DebugScreenText( msg.sprintf( "    Destination: %s (%.2f,%.2f,%.2f)", GetLocomotion()->GetDescription(), vecDestination.x, vecDestination.y, vecDestination.z ), blue );
+            DebugScreenText( msg.sprintf( "    Destination: %s (%.2f since build)", GetLocomotion()->GetDescription(), GetLocomotion()->GetPath()->GetElapsedTimeSinceBuild() ), blue );
             DebugScreenText( msg.sprintf( "    Distance Left: %.2f", GetLocomotion()->GetDistanceToDestination() ), blue );
             DebugScreenText( msg.sprintf( "    Priority: %s", g_PriorityNames[priority] ), blue );
             DebugScreenText( msg.sprintf( "    Using Ladder: %i", GetLocomotion()->IsUsingLadder() ), blue );
+            //DebugScreenText( msg.sprintf( "    Commands: forward: %.2f, side: %.2f, up: %.2f", GetUserCommand()->forwardmove, GetUserCommand()->sidemove, GetUserCommand()->upmove ), blue );
 
             if ( GetFollow() && GetFollow()->IsFollowing() ) {
                 DebugScreenText( msg.sprintf( "    Following: %s (Enabled: %i)", GetFollow()->GetEntity()->GetClassname(), GetFollow()->IsEnabled() ), blue );
@@ -260,7 +283,7 @@ void CBot::DebugDisplay()
         }
     }
 
-    // Condiciones
+    // Conditions
     if ( bot_debug_conditions.GetBool() ) {
         DebugScreenText( "" );
         DebugScreenText( "Conditions:" );
@@ -275,31 +298,49 @@ void CBot::DebugDisplay()
         }
     }
 
-    // Memoria
+    // Deep Memory
     if ( bot_debug_memory.GetBool() && GetMemory() ) {
         FOR_EACH_MAP_FAST( GetMemory()->m_Memory, it )
         {
             CEntityMemory *memory = GetMemory()->m_Memory[it];
             Assert( memory );
 
-            CBaseCombatCharacter *pCharacter = memory->GetEntity()->MyCombatCharacterPointer();
+            CBaseEntity *pEntity = memory->GetEntity();
+            Assert( pEntity );
 
-            if ( pCharacter ) {
+            if ( memory == GetMemory()->GetPrimaryThreat() || memory == GetMemory()->GetIdealThreat() )
+                continue;
+
+            if ( pEntity ) {
                 Vector lastposition = memory->GetLastKnownPosition();
-                lastposition.z -= HalfHumanHeight;
+
+                CCollisionProperty *pCollide = pEntity->CollisionProp();
+                //BoxAngles( pCollide->GetCollisionOrigin(), pCollide->OBBMins(), pCollide->OBBMaxs(), pCollide->GetCollisionAngles(), r, g, b, a, flDuration );
+
+                if ( pEntity->MyCombatCharacterPointer() ) {
+                    lastposition.z -= HalfHumanHeight;
+                }
 
                 if ( memory->GetInformer() ) {
                     NDebugOverlay::Line( lastposition, memory->GetInformer()->WorldSpaceCenter(), pink.r(), pink.g(), pink.b(), true, 0.1f );
-                    NDebugOverlay::EntityBounds( pCharacter, pink.r(), pink.g(), pink.b(), 1.0f, 0.1f );
+                    NDebugOverlay::Box( lastposition, pCollide->OBBMins(), pCollide->OBBMaxs(), pink.r(), pink.g(), pink.b(), 5.0f, 0.1f );
                 }
                 else {
-                    NDebugOverlay::EntityBounds( pCharacter, white.r(), white.g(), white.b(), 1.0f, 0.1f );
+                    if ( memory->IsFriend() ) {
+                        NDebugOverlay::Box( lastposition, pCollide->OBBMins(), pCollide->OBBMaxs(), green.r(), green.g(), green.b(), 5.0f, 0.1f );
+                    }
+                    else if ( memory->IsEnemy() ) {
+                        NDebugOverlay::Box( lastposition, pCollide->OBBMins(), pCollide->OBBMaxs(), red.r(), red.g(), red.b(), 5.0f, 0.1f );
+                    }
+                    else {
+                        NDebugOverlay::Box( lastposition, pCollide->OBBMins(), pCollide->OBBMaxs(), white.r(), white.g(), white.b(), 5.0f, 0.1f );
+                    }
                 }
             }
         }
     }
 
-    // CBotCmd
+    // Command
     if ( bot_debug_cmd.GetBool() ) {
         DebugScreenText( "" );
         DebugScreenText( msg.sprintf( "command_number: %i", GetUserCommand()->command_number ) );
@@ -318,9 +359,7 @@ void CBot::DebugDisplay()
         DebugScreenText( msg.sprintf( "hasbeenpredicted: %i", (int)GetUserCommand()->hasbeenpredicted ) );
     }
 
-    //
-    // Mensajes de depuración
-    //
+    // Debug Messages
 
     const float fadeAge = 7.0f;
     const float maxAge = 10.0f;
@@ -345,9 +384,7 @@ void CBot::DebugDisplay()
         }
     }
 
-    //
-    // Lugares interesantes
-    //
+    // Interesting Spots
 
     if ( !GetHost()->IsBot() )
         return;
@@ -358,14 +395,18 @@ void CBot::DebugDisplay()
     CSpotCriteria criteria;
     criteria.SetMaxRange( 1000.0f );
 
-    // Lugares donde podemos ocultarnos
+    // Cover Spots
     SpotVector spotList;
     Utils::FindNavCoverSpot( &vecDummy, GetAbsOrigin(), criteria, GetHost(), &spotList );
 
-    // info_node donde podemos escondernos
     SpotVector hintList;
     CHintCriteria hintCriteria;
+#ifdef INSOURCE_DLL
     hintCriteria.AddHintType( HINT_TACTICAL_COVER );
+#else
+    hintCriteria.AddHintType( HINT_TACTICAL_COVER_MED );
+    hintCriteria.AddHintType( HINT_TACTICAL_COVER_LOW );
+#endif
     hintCriteria.AddHintType( HINT_WORLD_VISUALLY_INTERESTING );
     Utils::FindHintSpot( GetAbsOrigin(), hintCriteria, criteria, GetHost(), &spotList );
 
@@ -373,7 +414,11 @@ void CBot::DebugDisplay()
     {
         Vector vecSpot = spotList.Element( it );
 
+#ifdef INSOURCE_DLL
         if ( GetHost()->FEyesVisible( vecSpot ) )
+#else
+        if ( GetHost()->FVisible( vecSpot ) && GetHost()->IsInFieldOfView( vecSpot ) )
+#endif
             NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 255, 255, 255, 100.0f, true, 0.15f );
         else
             NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 0, 0, 0, 100.0f, true, 0.15f );
@@ -383,14 +428,15 @@ void CBot::DebugDisplay()
     {
         Vector vecSpot = hintList.Element( it );
 
+#ifdef INSOURCE_DLL
         if ( GetHost()->FEyesVisible( vecSpot ) )
+#else
+        if ( GetHost()->FVisible( vecSpot ) && GetHost()->IsInFieldOfView( vecSpot ) )
+#endif
             NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 255, 255, 255, 0, true, 0.15f );
         else
             NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 0, 0, 0, 0, true, 0.15f );
     }
-
-    //if ( GetNearestCover(vecDummy) )
-        //NDebugOverlay::VertArrow( vecDummy + Vector(0, 0, 25.0f), vecDummy, 25.0f/4.0f, 0, 255, 0, 255, true, 0.15f );
 }
 
 //================================================================================
@@ -427,6 +473,7 @@ void CBot::DebugAddMessage( char *format, ... )
         m_debugMessages.RemoveMultipleFromTail(1);
 }
 
+#ifdef DEBUG
 Vector g_DebugSpot1;
 Vector g_DebugSpot2;
 
@@ -462,7 +509,21 @@ CON_COMMAND_F( bot_debug_process_navigation, "", FCVAR_SERVER )
 
 	g_DebugPath.Invalidate();
 
-	BotPathCost pathCost( pOwner );
-	g_DebugPath.Compute( g_DebugSpot1, g_DebugSpot2, pathCost );
+    CBot *pBot = new CBot( pOwner );
+    pBot->Spawn();
+
+    CSimpleBotPathCost pathCost( pBot );
+	bool result = g_DebugPath.Compute( g_DebugSpot1, g_DebugSpot2, pathCost );
 	g_DebugPath.Draw();
+
+    if ( result ) {
+        DevMsg( "Path Computed Correctly\n" );
+    }
+    else {
+        DevWarning( "Path Computed FAIL!\n" );
+    }
+
+    delete pBot;
+    pBot = NULL;
 }
+#endif

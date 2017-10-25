@@ -141,9 +141,10 @@ int CSquad::GetActiveCount()
 
     FOR_EACH_MEMBER(
     {
+
         // Incapacitado
-        if ( pMember->IsDejected() )
-            continue;
+        //if ( pMember->IsDejected() )
+            //continue;
 
         ++count;
     })    

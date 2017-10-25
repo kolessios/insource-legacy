@@ -94,8 +94,8 @@ enum DirectorPhase
     PHASE_INVALID = 0,
     PHASE_RELAX,
     PHASE_BUILD_UP,
-    PHASE_STRESS_FADE,
-    PHASE_POPULATION_FADE,
+    PHASE_SUSTAIN,
+    PHASE_FADE,
     PHASE_EVENT,
 
     LAST_DIRECTOR_PHASE
@@ -106,8 +106,8 @@ static const char *g_DirectorPhase[LAST_DIRECTOR_PHASE] =
     "INVALID",
     "RELAX",
     "BUILD_UP",
-    "STRESS_FADE",
-    "POPULATION_FADE",
+    "SUSTAIN",
+    "FADE",
     "EVENT"
 };
 

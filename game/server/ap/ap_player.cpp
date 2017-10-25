@@ -167,9 +167,6 @@ void CAP_Player::SetUpAI()
 void CAP_Player::InitialSpawn()
 {
     BaseClass::InitialSpawn();
-
-    // @TODO: Pruebas, eliminar.
-    SetPlayerState( PLAYER_STATE_PICKING_TEAM );
 }
 
 //================================================================================
@@ -300,6 +297,12 @@ void CAP_Player::EnterPlayerState( int status )
     BaseClass::EnterPlayerState( status );
 
     switch ( status ) {
+        case PLAYER_STATE_WELCOME:
+        {
+            SetPlayerState( PLAYER_STATE_PICKING_TEAM );
+            break;
+        }
+
         case PLAYER_STATE_ACTIVE:
         {
             if ( IsSoldier() ) {
@@ -322,10 +325,7 @@ void CAP_Player::EnterPlayerState( int status )
 void CAP_Player::OnPlayerClass( int playerClass )
 {
     BaseClass::OnPlayerClass( playerClass );
-
-    if ( IsSoldier() ) {
-        EnterToGame();
-    }
+    Spawn();
 }
 
 //================================================================================
@@ -348,7 +348,6 @@ void CAP_Player::ChangeTeam( int iTeamNum )
 
             if ( iTeamNum == TEAM_HUMANS ) {
                 SetPlayerClass( PLAYER_CLASS_NONE );
-                EnterToGame();
             }
 
             if ( iTeamNum == TEAM_SOLDIERS ) {
@@ -362,7 +361,6 @@ void CAP_Player::ChangeTeam( int iTeamNum )
         {
             SetFlashlightEnabled( false );
             SetPlayerClass( PLAYER_CLASS_NONE );
-            EnterToGame();
             break;
         }
     }
@@ -640,7 +638,7 @@ bool CAP_Player::ShouldFidget()
         return false;
 
     // Esperamos a estar relajados
-    if ( IsInCombat() || IsUnderAttack() )
+    if ( IsOnCombat() || IsUnderAttack() )
         return false;
 
     return m_nFidgetTimer.IsElapsed();

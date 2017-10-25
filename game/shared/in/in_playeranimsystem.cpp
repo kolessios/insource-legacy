@@ -295,7 +295,7 @@ void CPlayerAnimationSystem::HandleStatus( Activity &nActivity, Activity nNormal
     if ( !GetInPlayer() )
         return;
 
-    if ( !GetInPlayer()->IsInCombat() && !GetInPlayer()->FlashlightIsOn() && !GetInPlayer()->IsWalking() )
+    if ( !GetInPlayer()->IsOnCombat() && !GetInPlayer()->FlashlightIsOn() && !GetInPlayer()->IsSneaking() )
         nActivity = nCalm;
 
     if ( GetInPlayer()->GetHealth() <= anim_injured_health.GetInt() )

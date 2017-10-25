@@ -371,8 +371,9 @@ void CPostFrameNavigationHook::EnqueueEntityNavigationQuery( CAI_BaseNPC *pNPC, 
 
 CAI_Component::CAI_Component( CAI_BaseNPC *pOuter )
 {
-	if ( pOuter )
-		m_pOuter = pOuter->MyCombatCharacterPointer();
+    if ( pOuter ) {
+        m_pOuter = pOuter->MyCombatCharacterPointer();
+    }
 }
 
 // ================================================================

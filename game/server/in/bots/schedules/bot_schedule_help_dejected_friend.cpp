@@ -5,36 +5,45 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
-#include "in_buttons.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
-#include "weapon_base.h"
+#include "in_buttons.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef INSOURCE_DLL
+
 //================================================================================
 //================================================================================
-BEGIN_SETUP_SCHEDULE( CHelpDejectedFriendSchedule )
+SET_SCHEDULE_TASKS( CHelpDejectedFriendSchedule )
+{
     CDataMemory *memory = GetMemory()->GetDataMemory( "DejectedFriend" );
     Assert( memory );
 
-    ADD_TASK( BTASK_SAVE_POSITION,	 NULL )
-	ADD_TASK( BTASK_RUN,	         NULL )
-	ADD_TASK( BTASK_MOVE_DESTINATION, memory->GetEntity() )
-	ADD_TASK( BTASK_AIM, memory->GetEntity() )
-	ADD_TASK( BTASK_HELP,		     NULL )
-	ADD_TASK( BTASK_RESTORE_POSITION, NULL )
+    ADD_TASK( BTASK_SAVE_POSITION, NULL );
+    ADD_TASK( BTASK_RUN, NULL );
+    ADD_TASK( BTASK_MOVE_DESTINATION, memory->GetEntity() );
+    ADD_TASK( BTASK_AIM, memory->GetEntity() );
+    ADD_TASK( BTASK_HELP, NULL );
+    ADD_TASK( BTASK_RESTORE_POSITION, NULL );
+}
 
-    ADD_INTERRUPT( BCOND_REPEATED_DAMAGE )
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE )
-    ADD_INTERRUPT( BCOND_LOW_HEALTH )
-    ADD_INTERRUPT( BCOND_DEJECTED )
-END_SCHEDULE()
+SET_SCHEDULE_INTERRUPTS( CHelpDejectedFriendSchedule )
+{
+    ADD_INTERRUPT( BCOND_REPEATED_DAMAGE );
+    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE );
+    ADD_INTERRUPT( BCOND_LOW_HEALTH );
+    ADD_INTERRUPT( BCOND_DEJECTED );
+}
 
 //================================================================================
 //================================================================================
-bool CurrentSchedule::ShouldHelp()
+bool CHelpDejectedFriendSchedule::ShouldHelp()
 {
     if ( !GetMemory() )
         return false;
@@ -63,7 +72,7 @@ bool CurrentSchedule::ShouldHelp()
 
 //================================================================================
 //================================================================================
-float CurrentSchedule::GetDesire() const
+float CHelpDejectedFriendSchedule::GetDesire() const
 {
     if ( !GetMemory() )
         return BOT_DESIRE_NONE;
@@ -90,7 +99,7 @@ float CurrentSchedule::GetDesire() const
 
 //================================================================================
 //================================================================================
-void CurrentSchedule::TaskRun()
+void CHelpDejectedFriendSchedule::TaskRun()
 {
     CDataMemory *memory = GetMemory()->GetDataMemory( "DejectedFriend" );
     Assert( memory );
@@ -136,3 +145,5 @@ void CurrentSchedule::TaskRun()
         }
     }
 }
+
+#endif

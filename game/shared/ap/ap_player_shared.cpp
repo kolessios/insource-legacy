@@ -33,7 +33,7 @@ void CAP_Player::CreateAnimationSystem()
     data.m_flRunSpeed = 190.0f;
     data.m_flWalkSpeed = 1.0f;
 
-    m_pAnimState = CreatePlayerAnimationSystem( this, data );
+    m_pAnimationSystem = CreatePlayerAnimationSystem( this, data );
 }
 
 //====================================================================

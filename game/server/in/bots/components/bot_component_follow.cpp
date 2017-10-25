@@ -5,7 +5,11 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

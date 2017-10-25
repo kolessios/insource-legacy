@@ -102,13 +102,14 @@ public:
     virtual bool Damage_ShowOnHUD( int iDmgType );            // Damage types that have client HUD art.
     virtual bool Damage_NoPhysicsForce( int iDmgType );        // Damage types that don't have to supply a physics force & position.
     virtual bool Damage_ShouldNotBleed( int iDmgType );        // Damage types that don't make the player bleed.
+    virtual bool Damage_CausesSlowness( const CTakeDamageInfo &info );
 
     virtual int Damage_GetTimeBased();
     virtual int Damage_GetShouldGibCorpse();
     virtual int Damage_GetShowOnHud();
     virtual int Damage_GetNoPhysicsForce();
     virtual int Damage_GetShouldNotBleed();
-    virtual bool Damage_MakeSlow( const CTakeDamageInfo & );
+    virtual int Damage_GetCausesSlowness();
 
     virtual bool CanPushEntity( CBaseEntity *pPushingEntity, CBaseEntity *pEntity );
 
@@ -122,7 +123,10 @@ public:
 
     // Director
 	virtual bool Director_AdaptativeSkill();
-    virtual void Director_Think();
+
+    virtual void Director_PreUpdate() {}
+    virtual void Director_Update();
+    virtual void Director_PostUpdate() {}
 
     virtual void Director_CreateMusic( CSoundManager *pManager );
     virtual int Director_MusicDesire( const char *soundname, int channel );

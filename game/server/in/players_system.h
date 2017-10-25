@@ -86,7 +86,7 @@ public:
     virtual bool HasFireWeapons() { return (GetWithFireWeapons() > 0); }
 
     virtual int GetInCombat() { return m_iInCombat; }
-    virtual bool IsInCombat() { return (GetInCombat() > 0); }
+    virtual bool IsOnCombat() { return (GetInCombat() > 0); }
 
     virtual int GetUnderAttack() { return m_iUnderAttack; }
     virtual bool IsUnderAttack() { return (GetUnderAttack() > 0); }

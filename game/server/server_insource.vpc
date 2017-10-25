@@ -141,7 +141,6 @@ $Project
 						$File	"in\bots\schedules\bot_schedule_hide_and_reload.cpp"
 						$File	"in\bots\schedules\bot_schedule_hunt_enemy.cpp"
 						$File	"in\bots\schedules\bot_schedule_investigate_location.cpp"
-						$File	"in\bots\schedules\bot_schedule_investigate_sound.cpp"
 						$File	"in\bots\schedules\bot_schedule_move_aside.cpp"
 						$File	"in\bots\schedules\bot_schedule_reload.cpp"
 						$File	"in\bots\schedules\bot_schedules.h"
@@ -167,6 +166,8 @@ $Project
 					$File	"in\bots\bot_senses.cpp"
 					$File	"in\bots\bot_skill.cpp"
 					$File	"in\bots\bot_state.cpp"
+					$File	"in\bots\bot_utils.cpp"
+					$File	"in\bots\bot_utils.h"
 				}
 
 				$Folder "NPC"

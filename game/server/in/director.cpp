@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "director.h"
@@ -47,8 +49,8 @@ BEGIN_ENT_SCRIPTDESC_ROOT( Director, SCRIPT_SINGLETON "TheDirector" )
 	DEFINE_SCRIPTFUNC( Resume, "" )
 	DEFINE_SCRIPTFUNC( Stop, "" )
 
-	DEFINE_SCRIPTFUNC( GetPanicDelay, "" )
-	DEFINE_SCRIPTFUNC( GetPanicHordes, "" )
+	DEFINE_SCRIPTFUNC( GetPanicEventDelay, "" )
+	DEFINE_SCRIPTFUNC( GetPanicEventHordes, "" )
 	DEFINE_SCRIPTFUNC( StartPanic, "" )
 
 	DEFINE_SCRIPTFUNC( SoundDesire, "" )
@@ -79,43 +81,46 @@ BEGIN_ENT_SCRIPTDESC_ROOT( Director, SCRIPT_SINGLETON "TheDirector" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetAngry, "SetAngry", "" )
 END_SCRIPTDESC();
 
-#undef CALL
-#undef RETURNED
+#undef VSCRIPT_CALL
+#undef VSCRIPT_RESULT
 
-#define CALL( methodname ) ScriptVariant_t _retVal; CallScriptFunction( #methodname, &_retVal )
+#define VSCRIPT_CALL( methodname ) ScriptVariant_t _retVal; CallScriptFunction( #methodname, &_retVal )
+#define VSCRIPT_RESULT( type, value ) _retVal.Get<type>() == value
 
-#define RETURNED( type, value ) _retVal.Get<type>() == value
-
-#define HANDLED_BY_SCRIPT( methodname ) ScriptVariant_t _retVal; \
+#define HANDLED_BY_VSCRIPT( methodname ) ScriptVariant_t _retVal; \
 	if ( CallScriptFunction(#methodname, &_retVal) ) { \
-		if ( RETURNED(bool, true) ) \
+		if ( VSCRIPT_RESULT(bool, true) ) \
 			return; \
 	}
 
-#define HANDLED_BY_SCRIPT_VALUE( type, methodname, condition, value ) ScriptVariant_t _retVal; \
+#define IF_NOT_HANDLED_BY_VSCRIPT(methodname) ScriptVariant_t _retVal; \
+	if ( CallScriptFunction(#methodname, &_retVal) && VSCRIPT_RESULT(bool, true) ) {\
+		return; \
+    } else \
+
+#define HANDLED_BY_VSCRIPT_VALUE( type, methodname, condition, value ) ScriptVariant_t _retVal; \
 	if ( CallScriptFunction(#methodname, &_retVal) ) { \
 		if ( !_retVal.IsNull() && _retVal.Get<type>() condition value ) \
 			return _retVal.Get<type>(); \
 	}
 
-#define HANDLED_BY_SCRIPT_VALUE_ARG1( type, methodname, arg1type, arg1value, condition, value ) ScriptVariant_t _retVal; \
+#define HANDLED_BY_VSCRIPT_VALUE_ARG1( type, methodname, arg1type, arg1value, condition, value ) ScriptVariant_t _retVal; \
 	if ( CallScriptFunction<arg1type>(#methodname, &_retVal, arg1value) ) { \
 		if ( !_retVal.IsNull() && _retVal.Get<type>() condition value ) \
 			return _retVal.Get<type>(); \
 	}
 
-#define HANDLED_BY_SCRIPT_RETURN( type, methodname ) ScriptVariant_t _retVal; \
+#define HANDLED_BY_VSCRIPT_RETURN( type, methodname ) ScriptVariant_t _retVal; \
 	if ( CallScriptFunction(#methodname, &_retVal) ) { \
 		return _retVal.Get<type>(); \
 	}
 
-#define HANDLED_BY_SCRIPT_RETURN_ARG1( type, methodname, arg1type, arg1value ) ScriptVariant_t _retVal; \
+#define HANDLED_BY_VSCRIPT_RETURN_ARG1( type, methodname, arg1type, arg1value ) ScriptVariant_t _retVal; \
 	if ( CallScriptFunction<arg1type>(#methodname, &_retVal, arg1value) ) { \
 		return _retVal.Get<type>(); \
 	}
 
 //================================================================================
-// Constructor
 //================================================================================
 Director::Director() : CAutoGameSystemPerFrame( "Director" )
 {
@@ -123,29 +128,19 @@ Director::Director() : CAutoGameSystemPerFrame( "Director" )
 }
 
 //================================================================================
-// Inicialización del motor
 //================================================================================
 void Director::PostInit()
 {
-    m_GameTimer.Invalidate();
-    m_MusicManager = NULL;
-
-    TheDirectorManager->Init();
-    m_bDisabled = false;
-
-    // Reiniciamos las estadísticas
-    //ResetCampaign(); // TODO: Poner en la inicialización de una campaña real
+    Reset();
 }
 
 //================================================================================
 //================================================================================
 void Director::Shutdown()
 {
-    Stop();
 }
 
 //================================================================================
-// Antes de cargar las entidades de un nuevo mapa
 //================================================================================
 void Director::LevelInitPreEntity()
 {
@@ -153,7 +148,6 @@ void Director::LevelInitPreEntity()
 }
 
 //================================================================================
-// Después de cargar las entidades de un nuevo mapa
 //================================================================================
 void Director::LevelInitPostEntity()
 {
@@ -164,11 +158,10 @@ void Director::LevelInitPostEntity()
         return;
 
     CreateMusic();
-    ResetMap();
+    StartMap();
 }
 
 //================================================================================
-// Antes de eliminar todas las entidades
 //================================================================================
 void Director::LevelShutdownPreEntity()
 {
@@ -178,11 +171,10 @@ void Director::LevelShutdownPreEntity()
     if ( !TheGameRules->HasDirector() )
         return;
 
-    Shutdown();
+    Stop();
 }
 
 //================================================================================
-// Después de eliminar todas las entidades
 //================================================================================
 void Director::LevelShutdownPostEntity()
 {
@@ -209,22 +201,13 @@ void Director::SetPopulation( const char *type )
     TheDirectorManager->SetPopulation( type );
 }
 
-/*
-//================================================================================
-//================================================================================
-const char * Director::GetMinionUnitName( MinionType type )
-{
-    return TheDirectorManager->GetMinionUnitName( type );
-}
-*/
-
 //================================================================================
 // Reanuda el procesamiento del Director
 //================================================================================
 void Director::Resume()
 {
     m_bDisabled = false;
-    CALL( Resume );
+    VSCRIPT_CALL( Resume );
 }
 
 //================================================================================
@@ -234,28 +217,7 @@ void Director::Stop()
 {
     KillAll( false );
     m_bDisabled = true;
-    //CALL( Stop );
-}
-
-//================================================================================
-//================================================================================
-void Director::FindEntity()
-{
-    // Ya lo tenemos
-    if ( m_pEntity )
-        return;
-
-    m_pEntity = (CInfoDirector *)gEntList.FindEntityByClassname( NULL, "info_director" );
-
-    // No hay ningún info_director
-    if ( !m_pEntity ) {
-        m_pEntity = (CInfoDirector *)CBaseEntity::CreateNoSpawn( "info_director", vec3_origin, vec3_angle );
-        m_pEntity->SetName( MAKE_STRING( "@director" ) );
-        DispatchSpawn( m_pEntity );
-        m_pEntity->Activate();
-    }
-
-    Assert( m_pEntity );
+    //VSCRIPT_CALL( Stop );
 }
 
 //================================================================================
@@ -319,67 +281,118 @@ bool Director::CallScriptFunction( const char * pFunctionName, ScriptVariant_t *
 }
 
 //================================================================================
-// Reinicia el Director para un nuevo mapa
 //================================================================================
-void Director::ResetMap()
+void Director::Reset()
 {
-    // Temporal
+    m_iStatus = STATUS_INVALID;
+    m_iPhase = PHASE_INVALID;
+    m_iAngry = ANGRY_INVALID;
+
+    m_PhaseTimer.Invalidate();
+    m_ThinkTimer.Invalidate();
+
+    m_SustainTimer.Invalidate();
+    m_PanicTimer.Invalidate();
+
+    m_MapTimer.Invalidate();
+    m_GameTimer.Invalidate();
+
+    m_pEntity = NULL;
+
+    m_bDisabled = false;
+    m_iPanicEventHordesLeft = 0;
+
+    TheDirectorManager->Init();
+}
+
+//================================================================================
+//================================================================================
+void Director::StartMap()
+{
     if ( !m_GameTimer.HasStarted() ) {
-        ResetCampaign();
+        StartCampaign();
     }
 
-    FindEntity();
+    FindDirectorEntity();
     StartVirtualMachine();
+
     Set( STATUS_NORMAL, PHASE_RELAX, 5.0f );
 
-    m_MapTimer.Start();
     m_ThinkTimer.Start( 3.0f );
-    m_PanicTimer.Start( GetPanicDelay() );
-    
+    m_SustainTimer.Invalidate();
+    m_PanicTimer.Start( GetPanicEventDelay() );
+
+    m_MapTimer.Start();
+    m_iPanicEventHordesLeft = 0;
+
+    TheDirectorManager->ResetMap();    
+    VSCRIPT_CALL( StartMap );
+
+    // TODO
     m_BackgroundMusicTimer.Start( RandomInt( 10, 20 ) );
     m_ChoirTimer.Start( 10 );
     m_HordeMusic = m_HordeMusicList[RandomInt( HORDE_DEVIDDLE, LAST_HORDE_MUSIC - 1 )];
-
-    TheDirectorManager->ResetMap();
-    CALL( ResetMap );
 }
 
 //================================================================================
 // Reinicia el Director para una nueva campaña/partida
 //================================================================================
-void Director::ResetCampaign()
+void Director::StartCampaign()
 {
     SetAngry( ANGRY_LOW );
     m_GameTimer.Start();
 }
 
 //================================================================================
-// Pensamiento
+//================================================================================
+void Director::FindDirectorEntity()
+{
+    // Ya lo tenemos
+    if ( m_pEntity )
+        return;
+
+    m_pEntity = (CInfoDirector *)gEntList.FindEntityByClassname( NULL, "info_director" );
+
+    // No hay ningún info_director
+    if ( !m_pEntity ) {
+        m_pEntity = (CInfoDirector *)CBaseEntity::CreateNoSpawn( "info_director", vec3_origin, vec3_angle );
+        m_pEntity->SetName( MAKE_STRING( "@director" ) );
+        DispatchSpawn( m_pEntity );
+        m_pEntity->Activate();
+    }
+
+    Assert( m_pEntity );
+}
+
+//================================================================================
 //================================================================================
 void Director::Think()
 {
     if ( engine->IsInEditMode() )
         return;
 
-    if ( director_debug.GetBool() )
+    if ( director_debug.GetBool() ) {
         DebugDisplay();
+    }
 
-    if ( !m_ThinkTimer.IsElapsed() || m_bDisabled )
+    if ( !m_ThinkTimer.IsElapsed() || IsDisabled() )
         return;
 
-    CALL( PreThink );
+    PreUpdate();
+    Update();
+    PostUpdate();
+
+    m_ThinkTimer.Start( 0.3f );
+}
+
+//================================================================================
+//================================================================================
+void Director::PreUpdate()
+{
+    VSCRIPT_CALL( PreUpdate );
 
     TheDirectorManager->Scan();
-
-    // Actualizamos al director
-    // (Enojo, fase, pánico, etc)
-    Update();
-
-    TheGameRules->Director_Think();
-    TheDirectorManager->Spawn();
-
-    PostUpdate();
-    m_ThinkTimer.Start( 0.3f );
+    TheGameRules->Director_PreUpdate();
 }
 
 //================================================================================
@@ -387,13 +400,17 @@ void Director::Think()
 //================================================================================
 void Director::Update()
 {
-    HANDLED_BY_SCRIPT( Think );
+    VSCRIPT_CALL( Update );
 
-    UpdatePhase();
     UpdateAngry();
+    UpdatePhase();
     UpdatePanicEvent();
 
     m_MusicManager->Update();
+
+    TheDirectorManager->Spawn();
+
+    TheGameRules->Director_Update();
 }
 
 //================================================================================
@@ -401,19 +418,12 @@ void Director::Update()
 //================================================================================
 void Director::PostUpdate()
 {
-    HANDLED_BY_SCRIPT( PostThink );
+    VSCRIPT_CALL( PostUpdate );
 
-    // Los jugadores estan estresados
-    //if ( ThePlayersSystem->GetStress() >= 80.0f )
-        //SetPhase( PHASE_STRESS_FADE );
-
-    // Estamos en pánico
-    if ( GetStatus() == STATUS_PANIC && m_iHordes != INFINITE )
-        SetPhase( PHASE_POPULATION_FADE );
-
-    // Ataquen hijos!
-    if ( GetStatus() == STATUS_PANIC || GetStatus() == STATUS_FINALE )
+    // Attack!
+    if ( IsOnPanicEvent() ) {
         TheDirector->Disclose();
+    }
 }
 
 //================================================================================
@@ -421,19 +431,14 @@ void Director::PostUpdate()
 //================================================================================
 void Director::UpdatePhase()
 {
-    HANDLED_BY_SCRIPT( UpdatePhase );
-
-    // La fase actual ha terminado
-    if ( m_PhaseTimer.HasStarted() && m_PhaseTimer.IsElapsed() ) {
-        m_PhaseTimer.Invalidate();
-        OnPhaseTimeEnd( GetPhase() );
-    }
+    HANDLED_BY_VSCRIPT( UpdatePhase );
 
     DirectorPhase phase = GetPhase();
 
     // Esta fase debería terminar
-    if ( ShouldPhaseEnd( phase ) )
+    if ( ShouldPhaseEnd( phase ) ) {
         OnPhaseEnd( phase );
+    }
 }
 
 //================================================================================
@@ -442,7 +447,7 @@ void Director::UpdatePhase()
 //================================================================================
 void Director::UpdateAngry()
 {
-    HANDLED_BY_SCRIPT( UpdateAngry );
+    HANDLED_BY_VSCRIPT( UpdateAngry );
 
     // ANGRY_LOW = 1
     int angry = ANGRY_LOW;
@@ -475,16 +480,13 @@ void Director::UpdateAngry()
 //================================================================================
 void Director::UpdatePanicEvent()
 {
-    HANDLED_BY_SCRIPT( UpdatePanicEvent );
+    HANDLED_BY_VSCRIPT( UpdatePanicEvent );
 
-    if ( !IsStatus( STATUS_NORMAL ) )
+    if ( !ShouldStartPanicEvent() )
         return;
 
-    if ( !m_PanicTimer.HasStarted() || !m_PanicTimer.IsElapsed() )
-        return;
-
-    StartPanic( GetPanicHordes() );
-    m_PanicTimer.Start( GetPanicDelay() );
+    StartPanic( GetPanicEventHordes() );
+    m_PanicTimer.Start( GetPanicEventDelay() );
 }
 
 //================================================================================
@@ -492,33 +494,82 @@ void Director::UpdatePanicEvent()
 //================================================================================
 bool Director::ShouldPhaseEnd( DirectorPhase phase )
 {
-    HANDLED_BY_SCRIPT_RETURN_ARG1( bool, ShouldPhaseEnd, int, phase );
+    HANDLED_BY_VSCRIPT_RETURN_ARG1( bool, ShouldPhaseEnd, int, phase );
 
     switch ( phase ) {
-        // Esperando a que la población disminuya
-        case PHASE_POPULATION_FADE:
+        // Give players a break
+        case PHASE_RELAX:
         {
-            // Quedan menos de 5 hijos
-            if ( TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].alive <= 5 ) {
+            // Nothing
+            break;
+        }
+
+        // Create enemies until players reach a high level of stress
+        case PHASE_BUILD_UP:
+        {
+            if ( GetStress() >= GetMaxStress() )
                 return true;
-            }
 
             break;
         }
 
-        // Esperando a que los jugadores se relajen
-        case PHASE_STRESS_FADE:
+        // Keep the stress level high for a while
+        case PHASE_SUSTAIN:
         {
-            // Menos del 20% de estrés
-            if ( ThePlayersSystem->GetStress() <= 20.0f ) {
+            if ( !IsOnPanicEvent() )
                 return true;
-            }
 
+            if ( m_SustainTimer.HasStarted() && m_SustainTimer.IsElapsed() )
+                return true;
+
+            if ( GetStress() >= 100.0f )
+                return true;
+
+            break;
+        }
+
+        // Wait until the enemies are eliminated and the level of stress goes down
+        case PHASE_FADE:
+        {
+            if ( GetStress() <= GetMinStress() && TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].alive <= 5 )
+                return true;
+
+            break;
+        }
+
+        default:
+        {
+            Assert(!"Invalid Phase");
             break;
         }
     }
 
+    if ( m_PhaseTimer.HasStarted() && m_PhaseTimer.IsElapsed() )
+        return true;
+
     return false;
+}
+
+//================================================================================
+//================================================================================
+void Director::OnPhaseStart( DirectorPhase phase )
+{
+    switch ( phase ) {
+        case PHASE_RELAX:
+        {
+            if ( IsStatus( STATUS_PANIC ) ) {
+                EndPanicHorde();
+            }
+
+            break;
+        }
+
+        case PHASE_SUSTAIN:
+        {
+            m_SustainTimer.Start( (3.0f * 60.0f) );
+            break;
+        }
+    }
 }
 
 //================================================================================
@@ -526,84 +577,45 @@ bool Director::ShouldPhaseEnd( DirectorPhase phase )
 //================================================================================
 void Director::OnPhaseEnd( DirectorPhase phase )
 {
+    m_PhaseTimer.Invalidate();
+
     switch ( phase ) {
-        // Esperando a que la población disminuya
-        case PHASE_POPULATION_FADE:
-        {
-            // En evento de pánico: esto cuenta como una horda
-            if ( GetStatus() == STATUS_PANIC ) {
-                if ( m_iHordes > 0 ) {
-                    OnPanicHordeEnd( m_iHordes, (m_iHordes - 1) );
-                    --m_iHordes;
-                }
-
-                // El pánico termino
-                if ( m_iHordes == 0 ) {
-                    OnPanicEnd();
-                }
-                else {
-                    SetPhase( PHASE_BUILD_UP );
-                }
-            }
-            else {
-                SetPhase( PHASE_BUILD_UP );
-            }
-
-            break;
-        }
-
-        // Esperando a que los jugadores se relajen
-        case PHASE_STRESS_FADE:
-        {
-            float delay = 5.0f;
-
-            if ( IS_SKILL_EASY )
-                delay = RandomFloat( 10.0f, 15.0f );
-            else if ( IS_SKILL_MEDIUM )
-                delay = 10.0f;
-
-            SetPhase( PHASE_RELAX, delay );
-            break;
-        }
-    }
-}
-
-//================================================================================
-// El tiempo de una fase ha terminado
-//================================================================================
-void Director::OnPhaseTimeEnd( DirectorPhase phase )
-{
-    switch ( phase ) {
-        // Si estabamos descansando
-        // o esperando a que el estrés/población disminuyera
-        // Pasamos a la creación de nuevos hijos
+        // The break is over, time to fight.
         case PHASE_RELAX:
-        case PHASE_STRESS_FADE:
-        case PHASE_POPULATION_FADE:
         {
             SetPhase( PHASE_BUILD_UP );
             break;
         }
 
-        // Si estabamos en un evento especial
-        // Pasamos a la creación de nuevos hijos
-        case PHASE_EVENT:
+        // The level of stress is high or we have finished creating enemies.
+        case PHASE_BUILD_UP:
         {
-            if ( IS_SKILL_EASY )
-                SetPhase( PHASE_RELAX, RandomFloat( 5.0f, 10.0f ) );
-            else if ( IS_SKILL_MEDIUM )
-                SetPhase( PHASE_RELAX, 5.0f );
-            else
-                SetPhase( PHASE_BUILD_UP );
-
+            if ( IsOnPanicEvent() ) {
+                SetPhase( PHASE_SUSTAIN );
+            }
+            else {
+                if ( GetDifficulty() >= SKILL_HARD ) {
+                    SetPhase( PHASE_RELAX, 10.0f );
+                }
+                else {
+                    SetPhase( PHASE_FADE );
+                }
+            }
+            
             break;
         }
 
-        // Si estabamos en la creación de nuevos hijos
-        // Pasamos a la relajación
-        case PHASE_BUILD_UP:
+        // It's been a while since players are highly stressed or have reached an extreme stress level.
+        case PHASE_SUSTAIN:
         {
-            SetPhase( PHASE_RELAX, 8.0f );
+            SetPhase( PHASE_FADE );
+            break;
+        }
+
+        // The enemies have been eliminated and the level of stress is low, let us rest for a while.
+        case PHASE_FADE:
+        {
+            SetPhase( PHASE_RELAX, 10.0f );
             break;
         }
     }
@@ -612,28 +624,22 @@ void Director::OnPhaseTimeEnd( DirectorPhase phase )
 //================================================================================
 // Devuelve el tiempo en segundos para el próximo evento de pánico
 //================================================================================
-float Director::GetPanicDelay()
+float Director::GetPanicEventDelay()
 {
-    HANDLED_BY_SCRIPT_VALUE( float, GetPanicDelay, >, 0.0f );
+    HANDLED_BY_VSCRIPT_VALUE( float, GetPanicEventDelay, >, 0.0f );
 
     // De 5 a 7 minutos
     float delay = (60.0f * RandomFloat( 5.0f, 7.0f ));
 
     // Medio o dificil: -1 minuto
-    if ( IS_SKILL_MEDIUM )
+    if ( GetDifficulty() == SKILL_MEDIUM ) {
         delay -= 60.0f;
+    }
 
     // Dificil -1 minuto
-    if ( IS_SKILL_HARD || IS_SKILL_VERY_HARD )
+    if ( GetDifficulty() >= SKILL_HARD ) {
         delay -= 60.0f;
-
-    // Estamos enojados
-    if ( IS_ANGRY )
-        delay -= 30.0f;
-
-    // Estamos furiosos!!
-    if ( IS_CRAZY )
-        delay -= -60.0f;
+    }
 
     return delay;
 }
@@ -641,24 +647,39 @@ float Director::GetPanicDelay()
 //================================================================================
 // Devuelve el número de hordas que debería tener el siguiente evento de pánico
 //================================================================================
-int Director::GetPanicHordes()
+int Director::GetPanicEventHordes()
 {
-    HANDLED_BY_SCRIPT_VALUE( int, GetPanicHordes, >, 0 );
+    HANDLED_BY_VSCRIPT_VALUE( int, GetPanicEventHordes, >, 0 );
 
     // Número de hordas
     int hordes = 1;
 
     // Estamos enojados
-    if ( IS_ANGRY ) {
+    if ( GetDifficulty() >= SKILL_HARD ) {
         hordes += 1;
     }
 
     // Estamos furiosos!
-    if ( IS_CRAZY ) {
+    if ( GetDifficulty() >= SKILL_VERY_HARD ) {
         hordes += 2;
     }
 
     return hordes;
+}
+
+//================================================================================
+//================================================================================
+bool Director::ShouldStartPanicEvent()
+{
+    HANDLED_BY_VSCRIPT_RETURN( bool, ShouldStartPanicEvent );
+
+    if ( !IsStatus( STATUS_NORMAL ) )
+        return false;
+
+    if ( !m_PanicTimer.HasStarted() || !m_PanicTimer.IsElapsed() )
+        return false;
+
+    return true;
 }
 
 //================================================================================
@@ -671,15 +692,31 @@ void Director::StartPanic( int hordes )
 
     // Pánico
     SetStatus( STATUS_PANIC );
-
-    if ( hordes == INFINITE ) {
-        m_iHordes = INFINITE;
-    }
-    else {
-        m_iHordes = hordes + 1;
-    }
+    m_iPanicEventHordesLeft = hordes;
 
     OnPanicStart();
+}
+
+//================================================================================
+//================================================================================
+void Director::EndPanicHorde()
+{
+    if ( !IsStatus( STATUS_PANIC ) )
+        return;
+
+    if ( m_iPanicEventHordesLeft == INFINITE )
+        return;
+
+    int hordeNumber = m_iPanicEventHordesLeft;
+    int hordesLeft = (m_iPanicEventHordesLeft - 1);
+
+    OnPanicHordeEnd( hordeNumber, hordesLeft );
+
+    --m_iPanicEventHordesLeft;
+
+    if ( m_iPanicEventHordesLeft == 0 ) {
+        OnPanicEnd();
+    }
 }
 
 //================================================================================
@@ -687,7 +724,7 @@ void Director::StartPanic( int hordes )
 //================================================================================
 void Director::OnPanicStart()
 {
-    CALL( OnPanicStart );
+    VSCRIPT_CALL( OnPanicStart );
 
     if ( director_debug.GetBool() )
         DevMsg( "[Director] Un evento de panico ha comenzado.\n" );
@@ -696,12 +733,12 @@ void Director::OnPanicStart()
 //================================================================================
 // Una horda de pánico ha terminado
 //================================================================================
-void Director::OnPanicHordeEnd( int hordeNumber, int left )
+void Director::OnPanicHordeEnd( int hordeNumber, int hordesLeft )
 {
-    // TODO: CALL 
+    // TODO: VSCRIPT_CALL 
 
     if ( director_debug.GetBool() )
-        DevMsg( "[Director] Una horda ha terminado #%i - Faltan: %i.\n", hordeNumber, left );
+        DevMsg( "[Director] Una horda ha terminado #%i - Faltan: %i.\n", hordeNumber, hordesLeft );
 }
 
 //================================================================================
@@ -709,18 +746,10 @@ void Director::OnPanicHordeEnd( int hordeNumber, int left )
 //================================================================================
 void Director::OnPanicEnd()
 {
-    HANDLED_BY_SCRIPT( OnPanicEnd );
+    HANDLED_BY_VSCRIPT( OnPanicEnd );
 
     // Estado normal
     SetStatus( STATUS_NORMAL );
-
-    // Dependiendo de la dificultado
-    if ( IS_SKILL_EASY )
-        SetPhase( PHASE_RELAX, RandomFloat( 5.0f, 10.0f ) );
-    else if ( IS_SKILL_MEDIUM )
-        SetPhase( PHASE_RELAX, 5.0f );
-    else
-        SetPhase( PHASE_BUILD_UP );
 
     if ( director_debug.GetBool() )
         DevMsg( "[Director] Un evento de panico ha terminado.\n" );
@@ -734,11 +763,16 @@ void Director::DebugDisplay()
     m_iDebugLine = 0;
     CFmtStr msg;
 
+    float stress = GetStress();
+    float maxStress = GetMaxStress();
+    float minStress = GetMinStress();
+
     DebugScreenText( "TheDirector" );
     DebugScreenText( "------------------------------------------" );
 
-    if ( m_bDisabled )
-        DebugScreenText( "DISABLED" );
+    if ( IsDisabled() ) {
+        DebugScreenText( "DISABLED!" );
+    }
 
     DebugScreenText( "" );
     DebugScreenText( "Map Time: %.2f", m_MapTimer.GetElapsedTime() );
@@ -747,13 +781,38 @@ void Director::DebugDisplay()
     // Estado
     DebugScreenText( "" );
     DebugScreenText( "Status: %s", g_DirectorStatus[m_iStatus] );
-    DebugScreenText( "Phase: %s", g_DirectorPhase[m_iPhase] );
+
+    if ( m_PhaseTimer.HasStarted() ) {
+        DebugScreenText( "Phase: %s (%.2f)", g_DirectorPhase[m_iPhase], m_PhaseTimer.GetRemainingTime() );
+    }
+    else {
+        DebugScreenText( "Phase: %s", g_DirectorPhase[m_iPhase] );
+    }
+    
+
+    if ( IsStatus( STATUS_PANIC ) ) {
+        DebugScreenText( "  Hordes: %i", m_iPanicEventHordesLeft );
+    }
+    
+    if ( IsPhase( PHASE_SUSTAIN ) ) {
+        DebugScreenText( "  Time Left: %.2f", m_SustainTimer.GetRemainingTime() );
+        
+        if ( stress <= minStress ) {
+            DebugScreenText( "  Unable to sustain! (%.2f %)", stress );
+        }
+        else if ( stress >= maxStress ) {
+            DebugScreenText( "  Maintaining maximum level (%.2f %)", stress );
+        }
+    }
+
+    if ( IsPhase( PHASE_BUILD_UP ) ) {
+        DebugScreenText( "  Stress: %.2f / %.2f", stress, maxStress );
+    }
+
+    DebugScreenText( "" );
     DebugScreenText( "Angry: %s", g_DirectorAngry[m_iAngry] );
     DebugScreenText( "Panic: %.2fs", m_PanicTimer.GetRemainingTime() );
-
-    if ( GetStatus() == STATUS_PANIC ) {
-        DebugScreenText( "Hordes: %i", m_iHordes );
-    }
+    DebugScreenText( "Stress: %.2f", GetStress() );
 
     DebugScreenText( "" );
     DebugScreenText( "------------------------------------------" );
@@ -775,7 +834,7 @@ void Director::DebugDisplay()
         DebugScreenText( "" );
     }
 
-    DebugScreenText( "" );
+    /*DebugScreenText( "" );
     DebugScreenText( "------------------------------------------" );
     DebugScreenText( "" );
 
@@ -796,7 +855,7 @@ void Director::DebugDisplay()
         DebugScreenText( "Next Spawn: %.2f", info->nextSpawn.GetRemainingTime() );
         DebugScreenText( "" );
 
-    }
+    }*/
 
     DebugScreenText( "" );
     DebugScreenText( "------------------------------------------" );
@@ -806,7 +865,7 @@ void Director::DebugDisplay()
     DebugScreenText( "Background Music: %.2f", m_BackgroundMusicTimer.GetRemainingTime() );
     DebugScreenText( "Choir Sound: %.2f", m_ChoirTimer.GetRemainingTime() );
 
-    // Jugadores
+    //
     DebugScreenText( "" );
     DebugScreenText( "Administrator" );
     DebugScreenText( "------------------------------------------" );
@@ -814,7 +873,7 @@ void Director::DebugDisplay()
     DebugScreenText( "Areas: %i", TheDirectorManager->m_CandidateAreas.Count() );
     DebugScreenText( "Nodes: %i", TheDirectorManager->m_CandidateNodes.Count() );
 
-    // Jugadores
+    //
     DebugScreenText( "" );
     DebugScreenText( "Players" );
     DebugScreenText( "------------------------------------------" );
@@ -828,7 +887,7 @@ void Director::DebugDisplay()
     DebugScreenText( "Stats: %s", g_StatsNames[ThePlayersSystem->m_PlayerStats] );
 
     // Información
-    DebugScreenText( "" );
+    /*DebugScreenText( "" );
     DebugScreenText( "Information" );
     DebugScreenText( "------------------------------------------" );
     DebugScreenText( "" );
@@ -839,7 +898,7 @@ void Director::DebugDisplay()
     DebugScreenText( "curtime: %2.f", gpGlobals->curtime );
     DebugScreenText( "frametime: %.2f", gpGlobals->frametime );
     DebugScreenText( "maxClients: %i", gpGlobals->maxClients );
-    DebugScreenText( "tickcount: %i", gpGlobals->tickcount );
+    DebugScreenText( "tickcount: %i", gpGlobals->tickcount );*/
 }
 
 //================================================================================
@@ -939,7 +998,7 @@ float Director::SoundDesire( const char *soundname, int channel )
     if ( m_HordeMusic ) {
         if ( FStrEq( soundname, m_HordeMusic->GetSoundName() ) ) {
             if ( GetStatus() == STATUS_PANIC ) {
-                if ( m_iHordes == INFINITE && TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].alive < 3 )
+                if ( m_iPanicEventHordesLeft == INFINITE && TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].alive < 3 )
                     return 0.1f;
                 else
                     return 2.0f;
@@ -997,13 +1056,18 @@ bool Director::CanSpawnMinions()
         return false;
     }
 
-    HANDLED_BY_SCRIPT_RETURN( bool, CanSpawnMinions );
+    HANDLED_BY_VSCRIPT_RETURN( bool, CanSpawnMinions );
 
-    if ( IsPhase( PHASE_RELAX ) || IsPhase( PHASE_POPULATION_FADE ) || IsPhase( PHASE_STRESS_FADE ) )
+    if ( IsPhase( PHASE_RELAX ) || IsPhase( PHASE_FADE ) )
         return false;
 
     if ( TheDirectorManager->m_CandidateAreas.Count() == 0 && TheDirectorManager->m_CandidateNodes.Count() == 0 )
         return false;
+
+    if ( IsPhase( PHASE_SUSTAIN ) ) {
+        if ( GetStress() >= GetMaxStress() )
+            return false;
+    }
 
     return true;
 }
@@ -1025,7 +1089,7 @@ bool Director::CanSpawnMinions( MinionType type )
     if ( alive >= max )
         return false;
 
-    HANDLED_BY_SCRIPT_RETURN_ARG1( bool, CanSpawnMinionsByType, int, (int)type );
+    HANDLED_BY_VSCRIPT_RETURN_ARG1( bool, CanSpawnMinionsByType, int, (int)type );
     return true;
 }
 
@@ -1049,16 +1113,53 @@ bool Director::CanSpawnMinion( CMinionInfo * info )
 }
 
 //================================================================================
+//================================================================================
+int Director::GetDifficulty()
+{
+    int difficulty = GetGameDifficulty();
+
+    switch ( GetAngry() ) {
+        case ANGRY_LOW:
+        {
+            difficulty -= 2;
+            break;
+        }
+
+        case ANGRY_MEDIUM:
+        {
+            difficulty -= 1;
+            break;
+        }
+
+        case ANGRY_HIGH:
+        {
+            difficulty += 1;
+            break;
+        }
+
+        case ANGRY_CRAZY:
+        {
+            difficulty += 2;
+            break;
+        }
+    }
+
+    difficulty = clamp( difficulty, SKILL_EASIEST, SKILL_HARDEST );
+    return difficulty;
+}
+
+//================================================================================
 // Devuelve la distancia máxima de los jugadores en la que se puede crear un hijo
 //================================================================================
 float Director::GetMaxDistance()
 {
-    HANDLED_BY_SCRIPT_VALUE( float, GetMaxDistance, >, 300.0f );
+    HANDLED_BY_VSCRIPT_VALUE( float, GetMaxDistance, >, 300.0f );
 
     float distance = director_max_distance.GetFloat();
 
-    if ( IsStatus( STATUS_PANIC ) || IsStatus( STATUS_FINALE ) )
+    if ( IsOnPanicEvent() ) {
         distance -= 200.0f;
+    }
 
     return MAX( distance, 300.0f );
 }
@@ -1068,7 +1169,7 @@ float Director::GetMaxDistance()
 //================================================================================
 float Director::GetMinDistance()
 {
-    HANDLED_BY_SCRIPT_VALUE( float, GetMinDistance, >, 0.0f );
+    HANDLED_BY_VSCRIPT_VALUE( float, GetMinDistance, >, 0.0f );
 
     float distance = director_min_distance.GetFloat();
     return MAX( distance, 0.0f );
@@ -1076,9 +1177,92 @@ float Director::GetMinDistance()
 
 //================================================================================
 //================================================================================
+float Director::GetMinStress()
+{
+    switch ( GetPhase() ) {
+        // Minimum level that we must maintain during SUSTAIN
+        case PHASE_SUSTAIN:
+        {
+            float level = 70.0f;
+
+            if ( GetDifficulty() <= SKILL_MEDIUM ) {
+                level = 50.0f;
+            }
+
+            if ( GetDifficulty() <= SKILL_EASY ) {
+                level = 40.0f;
+            }
+
+            return level;
+            break;
+        }
+
+        // If we reach this level and the minions have been eliminated we will move to RELAX
+        case PHASE_FADE:
+        {
+            return 30.0f;
+            break;
+        }
+    }
+
+    return 0.0f;
+}
+
+//================================================================================
+//================================================================================
+float Director::GetMaxStress()
+{
+    switch ( GetPhase() ) {
+        // If you pass from this level we move to SUSTAIN and try to keep it between minimum and maximum
+        case PHASE_BUILD_UP:
+        {
+            float level = 70.0f;
+
+            if ( GetDifficulty() <= SKILL_MEDIUM ) {
+                level = 50.0f;
+            }
+
+            if ( GetDifficulty() <= SKILL_EASY ) {
+                level = 40.0f;
+            }
+
+            return level;
+            break;
+        }
+
+        // If we reach this level we will stop creating minions
+        case PHASE_SUSTAIN:
+        {
+            float level = 90.0f;
+
+            if ( GetDifficulty() <= SKILL_MEDIUM ) {
+                level = 70.0f;
+            }
+
+            if ( GetDifficulty() <= SKILL_EASY ) {
+                level = 60.0f;
+            }
+
+            return level;
+            break;
+        }
+    }
+
+    return 100.0f;
+}
+
+//================================================================================
+//================================================================================
+float Director::GetStress()
+{
+    return ThePlayersSystem->GetStress();
+}
+
+//================================================================================
+//================================================================================
 int Director::GetMaxUnits()
 {
-    HANDLED_BY_SCRIPT_VALUE( int, GetMaxUnits, >= , 0 );
+    HANDLED_BY_VSCRIPT_VALUE( int, GetMaxUnits, >= , 0 );
     return director_max_childs.GetInt();
 }
 
@@ -1086,7 +1270,7 @@ int Director::GetMaxUnits()
 //================================================================================
 int Director::GetMaxUnits( MinionType type )
 {
-    HANDLED_BY_SCRIPT_VALUE_ARG1( int, GetMaxUnitsByType, int, (int)type, >= , 0 );
+    HANDLED_BY_VSCRIPT_VALUE_ARG1( int, GetMaxUnitsByType, int, (int)type, >= , 0 );
     return GetMaxUnits();
 }
 
@@ -1159,10 +1343,14 @@ void Director::SetPhase( DirectorPhase phase, float duration )
 {
     m_iPhase = phase;
 
-    if ( duration > 0.0f )
+    if ( duration > 0.0f ) {
         m_PhaseTimer.Start( duration );
-    else
+    }
+    else {
         m_PhaseTimer.Invalidate();
+    }
+
+    OnPhaseStart( phase );
 }
 
 //================================================================================

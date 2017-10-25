@@ -5,12 +5,17 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_player.h"
 #include "in_shareddefs.h"
-#include "in_utils.h"
 #include "in_gamerules.h"
 #include "players_system.h"
+#include "in_utils.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
+#include "bots\bot_defs.h"
 #include "bots\squad_manager.h"
 #include "bots\bot_manager.h"
 
@@ -33,29 +38,32 @@
 // Commands
 //================================================================================
 
-DECLARE_CHEAT_COMMAND( bot_frozen, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_crouch, "0", "" )
-DECLARE_REPLICATED_COMMAND( bot_flashlight, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_mimic, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_aim_player, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_primary_attack, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_frozen, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_crouch, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_flashlight, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_mimic, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_aim_player, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_primary_attack, "0", "" )
 
-DECLARE_CHEAT_COMMAND( bot_notarget, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_god, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_buddha, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_dont_attack, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_sendcmd, "", 0, "Forces bots to send the specified command." );
+DECLARE_DEBUG_COMMAND( bot_team, "0", "Force all bots created with bot_add to change to the specified team" )
 
-DECLARE_CHEAT_COMMAND( bot_debug, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_debug_locomotion, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_debug_jump, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_debug_memory, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_notarget, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_god, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_buddha, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_dont_attack, "0", "" )
 
-DECLARE_CHEAT_COMMAND( bot_debug_cmd, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_debug_conditions, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_debug_desires, "0", "" )
-DECLARE_CHEAT_COMMAND( bot_debug_max_msgs, "10", "" )
-DECLARE_CHEAT_COMMAND( bot_optimize, "0", "" );
+DECLARE_DEBUG_COMMAND( bot_debug, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_debug_locomotion, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_debug_jump, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_debug_memory, "0", "" )
 
+DECLARE_DEBUG_COMMAND( bot_debug_cmd, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_debug_conditions, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_debug_desires, "0", "" )
+DECLARE_DEBUG_COMMAND( bot_debug_max_msgs, "10", "" )
+
+DECLARE_DEBUG_COMMAND( bot_optimize, "0", "" );
 DECLARE_REPLICATED_COMMAND( bot_far_distance, "2500", "" )
 
 //================================================================================
@@ -70,8 +78,6 @@ DECLARE_REPLICATED_COMMAND( bot_far_distance, "2500", "" )
 //================================================================================
 CPlayer *CreateBot( const char *pPlayername, const Vector *vecPosition, const QAngle *angles )
 {
-    MDLCACHE_CRITICAL_SECTION();
-
     if ( !pPlayername ) {
         pPlayername = m_botNames[RandomInt( 0, ARRAYSIZE( m_botNames ) - 1 )];
         pPlayername = UTIL_VarArgs( "%s Bot", pPlayername );
@@ -91,6 +97,17 @@ CPlayer *CreateBot( const char *pPlayername, const Vector *vecPosition, const QA
     pPlayer->ClearFlags();
     pPlayer->AddFlag( FL_CLIENT | FL_FAKECLIENT );
 
+    // This is where we implement the Artificial Intelligence. 
+    pPlayer->SetUpBot();
+    Assert( pPlayer->GetBotController() );
+
+    if ( !pPlayer->GetBotController() ) {
+        Warning( "There was a problem creating a bot. The player was created but the controller could not be created." );
+        return NULL;
+    }
+
+    pPlayer->Spawn();
+
     if ( vecPosition ) {
         pPlayer->Teleport( vecPosition, angles, NULL );
     }
@@ -101,8 +118,16 @@ CPlayer *CreateBot( const char *pPlayername, const Vector *vecPosition, const QA
 
 //================================================================================
 //================================================================================
+CBot::CBot( CBasePlayer *parent ) : BaseClass( parent )
+{
+}
+
+//================================================================================
+//================================================================================
 void CBot::Spawn()
 {
+    Assert( GetProfile() );
+
     m_nComponents.Purge();
     m_nSchedules.Purge();
 
@@ -115,7 +140,7 @@ void CBot::Spawn()
     }
 
     m_cmd = NULL;
-    m_nLastCmd = NULL;
+    m_lastCmd = NULL;
 
     m_iState = STATE_IDLE;
     m_iTacticalMode = TACTICAL_MODE_NONE;
@@ -127,21 +152,17 @@ void CBot::Spawn()
     m_iRepeatedDamageTimes = 0;
     m_flDamageAccumulated = 0.0f;
 
-    if ( !GetSkill() ) {
-        SetSkill( 0 );
-    }
-
     if ( GetMemory() ) {
-        GetMemory()->UpdateDataMemory( MEMORY_SPAWN_POSITION, GetAbsOrigin(), -1.0f );
+        GetMemory()->UpdateDataMemory( MEMORY_SPAWN_POSITION, GetAbsOrigin() );
     }
 }
 
 //================================================================================
-// A.I. Thinking
+// Called every frame
 //================================================================================
-void CBot::Think()
+void CBot::Update()
 {
-    VPROF_BUDGET( "Think", VPROF_BUDGETGROUP_BOTS );
+    VPROF_BUDGET( "Update", VPROF_BUDGETGROUP_BOTS );
 
     if ( STATE_FINISHED ) {
         CleanState();
@@ -153,33 +174,141 @@ void CBot::Think()
         return;
     }
 
-    m_cmd = new CBotCmd();
-    m_cmd->viewangles = GetHost()->pl.v_angle;
+    m_cmd = new CUserCmd();
+    m_cmd->viewangles = GetHost()->EyeAngles();
 
-    if ( ShouldProcess() ) {
-        ApplyDebugCommands();
-        Process( m_cmd );
-        DebugDisplay();
-    }
-	
-	PlayerMove( m_cmd );
+    Upkeep();
+
+    if ( CanRunAI() ) RunAI();
+
+    PlayerMove( m_cmd );
 }
 
 //================================================================================
 // Simulates all input as if it were a player
 //================================================================================
-void CBot::PlayerMove( CBotCmd *cmd )
+void CBot::PlayerMove( CUserCmd *cmd )
 {
     VPROF_BUDGET( "PlayerMove", VPROF_BUDGETGROUP_BOTS );
 
-	m_nLastCmd = m_cmd;
+	m_lastCmd = m_cmd;
 
-    if ( !GetHost()->IsBot() ) {
+    // This is not necessary if the player is a human
+    if ( !GetHost()->IsBot() )
         return;
+
+#ifdef INSOURCE_DLL
+    PostClientMessagesSent();
+#else
+    GetHost()->RemoveEffects( EF_NOINTERP );
+#endif
+
+    // Save off the CUserCmd to execute later
+    GetHost()->ProcessUsercmds( cmd, 1, 1, 0, false );
+}
+
+//================================================================================
+// Returns if we can process Artificial Intelligence
+//================================================================================
+bool CBot::CanRunAI()
+{
+    if ( bot_frozen.GetBool() )
+        return false;
+
+    if ( !GetHost()->IsAlive() )
+        return false;
+
+    if ( GetHost()->IsMarkedForDeletion() )
+        return false;
+
+    if ( IsPanicked() )
+        return false;
+
+    AssertMsg( GetDecision(), "Bot without decision component!" );
+
+    if ( !GetDecision() )
+        return false;
+
+    if ( GetLocomotion() && TheNavMesh->GetNavAreaCount() == 0 )
+        return false;
+
+    if ( GetFollow() && GetFollow()->IsFollowingBot() ) {
+        CPlayer *pLeader = ToInPlayer( GetFollow()->GetEntity() );
+
+        if ( pLeader && pLeader->GetBotController() ) {
+            return pLeader->GetBotController()->CanRunAI();
+        }
     }
 
-    PostClientMessagesSent();
-    RunPlayerMove( cmd );
+#ifdef INSOURCE_DLL
+    if ( !GetHost()->IsActive() )
+        return false;
+
+    if ( GetPerformance() == BOT_PERFORMANCE_PVS ) {
+        CHumanPVSFilter filter( GetAbsOrigin() );
+
+        if ( filter.GetRecipientCount() == 0 )
+            return false;
+    }
+#endif
+
+    if ( ((gpGlobals->tickcount + GetHost()->entindex()) % 2) == 0 )
+        return true;
+
+    return false;
+}
+
+//================================================================================
+// All the processing that is required and preferably light for the engine.
+//================================================================================
+void CBot::Upkeep()
+{
+}
+
+//================================================================================
+// All the processing that can be heavy for the engine.
+//================================================================================
+void CBot::RunAI()
+{
+    m_RunTimer.Start();
+
+    BlockConditions();
+
+    ApplyDebugCommands();
+
+    UpdateComponents( true );
+
+    GatherConditions();
+
+    UnblockConditions();
+
+    UpdateComponents( false );
+
+    UpdateSchedule();
+
+    m_RunTimer.End();
+
+    DebugDisplay();
+}
+
+//================================================================================
+//================================================================================
+void CBot::UpdateComponents( bool important )
+{
+    CFastTimer timer;
+
+    FOR_EACH_COMPONENT
+    {
+        if ( important && !m_nComponents[it]->ItsImportant() )
+            continue;
+        else if ( !important && m_nComponents[it]->ItsImportant() )
+            continue;
+        
+        timer.Start();
+        m_nComponents[it]->Update();
+        timer.End();
+        m_nComponents[it]->SetUpdateCost( timer.GetDuration().GetMillisecondsF() );
+    }
 }
 
 //================================================================================
@@ -200,16 +329,26 @@ void CBot::ApplyDebugCommands()
     else GetHost()->m_debugOverlays = GetHost()->m_debugOverlays & ~OVERLAY_BUDDHA_MODE;
 
     // Forced Crouch
-    if ( bot_crouch.GetBool() )
+    if ( bot_crouch.GetBool() ) {
         InjectButton( IN_DUCK );
+    }
 	
 	// Forced primary attack
-    if ( bot_primary_attack.GetBool() )
+    if ( bot_primary_attack.GetBool() ) {
         InjectButton( IN_ATTACK );
+    }
 
     // Forced flashlight
-    if ( bot_flashlight.GetBool() ) GetHost()->FlashlightTurnOn();
-    else GetHost()->FlashlightTurnOff();
+    if ( bot_flashlight.GetBool() ) {
+        if ( !GetHost()->FlashlightIsOn() ) {
+            GetHost()->FlashlightTurnOn();
+        }
+    }
+    else {
+        if ( GetHost()->FlashlightIsOn() ) {
+            GetHost()->FlashlightTurnOff();
+        }
+    }
 
     if ( GetVision() ) {
         // We aim at the host
@@ -221,97 +360,6 @@ void CBot::ApplyDebugCommands()
             }
         }
     }
-
-    // bot_dont_attack
-}
-
-//================================================================================
-// Returns whether we should optimize parts of the A.I.
-//================================================================================
-bool CBot::ShouldOptimize()
-{
-    if ( bot_optimize.GetBool() )
-        return true;
-
-    // TODO: This works?
-    if ( (gpGlobals->tickcount % 2) )
-        return false;
-
-    // We optimize if no human player is watching us.
-    if ( GetPerformance() == BOT_PERFORMANCE_VISIBILITY || GetPerformance() == BOT_PERFORMANCE_PVS_AND_VISIBILITY ) {
-        if ( !ThePlayersSystem->IsVisible(GetHost()) )
-            return true;
-    }
-
-    // We optimize if no human player is in our PVS
-    if ( GetPerformance() == BOT_PERFORMANCE_PVS || GetPerformance() == BOT_PERFORMANCE_PVS_AND_VISIBILITY ) {
-        CHumanPVSFilter filter(GetAbsOrigin());
-
-        if ( filter.GetRecipientCount() == 0 )
-            return true;
-    }
-
-    return false;
-}
-
-//================================================================================
-// Returns if we can process Artificial Intelligence
-//================================================================================
-bool CBot::ShouldProcess()
-{
-    if ( !GetHost()->IsAlive() )
-        return false;
-
-    if ( GetHost()->IsMarkedForDeletion() )
-        return false;
-
-    if ( IsPanicked() )
-        return false;
-
-    AssertMsg( GetDecision(), "Bot without decision component!" );
-
-    if ( !GetDecision() )
-        return false;
-
-    if ( GetLocomotion() && TheNavMesh->GetNavAreaCount() == 0 )
-        return false;
-
-    if ( bot_frozen.GetBool() )
-        return false;
-
-    if ( GetFollow() && GetFollow()->IsFollowingBot() ) {
-        CPlayer *pLeader = ToInPlayer(GetFollow()->GetEntity());
-
-        if ( pLeader && pLeader->GetBotController() ) {
-            return pLeader->GetBotController()->ShouldProcess();
-        }
-    }
-
-    if ( GetPerformance() == BOT_PERFORMANCE_SLEEP_PVS ) {
-        CHumanPVSFilter filter( GetAbsOrigin() );
-
-        if ( filter.GetRecipientCount() == 0 )
-            return false;
-    }
-
-    return true;
-}
-
-//================================================================================
-// I think then I exist
-//================================================================================
-void CBot::Process( CBotCmd* &cmd )
-{
-    SelectPreConditions();
-
-    FOR_EACH_COMPONENT
-    {
-        m_nComponents[it]->Update();
-    }
-
-    SelectPostConditions();
-    
-    UpdateSchedule();
 }
 
 //================================================================================
@@ -335,7 +383,7 @@ void CBot::MimicThink( int playerIndex )
     DebugDisplay();
 
     const CUserCmd *playercmd = pPlayer->GetLastUserCommand();
-    m_cmd = new CBotCmd();
+    m_cmd = new CUserCmd();
 
     m_cmd->command_number = playercmd->command_number;
     m_cmd->tick_count = playercmd->tick_count;
@@ -368,6 +416,18 @@ void CBot::MimicThink( int playerIndex )
     DebugScreenText( msg.sprintf("hasbeenpredicted: %i", (int)GetUserCommand()->hasbeenpredicted) );
 
     //RunPlayerMove( m_cmd );
+}
+
+//================================================================================
+// Kick the player
+//================================================================================
+void CBot::Kick()
+{
+#ifdef INSOURCE_DLL
+    GetHost()->Kick();
+#else
+    engine->ServerCommand( UTIL_VarArgs( "kickid %i\n", GetHost()->GetPlayerInfo()->GetUserID() ) );
+#endif
 }
 
 //================================================================================
@@ -427,7 +487,9 @@ void CBot::InjectButton( int btn )
 //================================================================================
 void CBot::Possess( CPlayer *pOther )
 {
+#ifdef INSOURCE_DLL
     GetHost()->Possess(pOther);
+#endif
 }
 
 //================================================================================
@@ -436,7 +498,28 @@ void CBot::Possess( CPlayer *pOther )
 //================================================================================
 bool CBot::IsLocalPlayerWatchingMe()
 {
+#ifdef INSOURCE_DLL
     return GetHost()->IsLocalPlayerWatchingMe();
+#else
+    if ( engine->IsDedicatedServer() )
+        return false;
+
+    CBasePlayer *pPlayer = UTIL_GetListenServerHost();
+
+    if ( !pPlayer )
+        return false;
+
+    if ( pPlayer->IsAlive() || !pPlayer->IsObserver() )
+        return false;
+
+    if ( pPlayer->GetObserverMode() != OBS_MODE_IN_EYE && pPlayer->GetObserverMode() != OBS_MODE_CHASE )
+        return false;
+
+    if ( pPlayer->GetObserverTarget() != GetHost() )
+        return false;
+
+    return true;
+#endif
 }
 
 //================================================================================
@@ -449,14 +532,21 @@ CON_COMMAND_F( bot_add, "Adds a specified number of generic bots", FCVAR_SERVER 
 
     // Ok, spawn all the bots.
     while ( --count >= 0 ) {
-        CreateBot( NULL, NULL, NULL );
+        CPlayer *pPlayer = CreateBot( NULL, NULL, NULL );
+        Assert( pPlayer );
+
+        if ( pPlayer ) {
+            if ( bot_team.GetInt() > 0 ) {
+                pPlayer->ChangeTeam( bot_team.GetInt() );
+            }
+        }
     }
 }
 
 CON_COMMAND_F( bot_kick, "Kick all bots on the server", FCVAR_SERVER )
 {
     for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( it );
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(it) );
 
         if ( !pPlayer || !pPlayer->IsAlive() )
             continue;
@@ -464,7 +554,7 @@ CON_COMMAND_F( bot_kick, "Kick all bots on the server", FCVAR_SERVER )
         if ( !pPlayer->IsBot() )
             continue;
 
-        pPlayer->Kick();
+        pPlayer->GetBotController()->Kick();
     }
 }
 
@@ -476,7 +566,7 @@ CON_COMMAND_F( bot_debug_follow, "It causes all Bots to start following the host
         return;
 
     for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( it );
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(it) );
 
         if ( !pPlayer || !pPlayer->IsAlive() )
             continue;
@@ -495,7 +585,7 @@ CON_COMMAND_F( bot_debug_follow, "It causes all Bots to start following the host
 CON_COMMAND_F( bot_debug_stop_follow, "Causes all Bots to stop following", FCVAR_SERVER )
 {
     for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( it );
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( it ) );
 
         if ( !pPlayer || !pPlayer->IsAlive() )
             continue;
@@ -517,7 +607,7 @@ CON_COMMAND_F( bot_debug_drive_random, "Orders all bots to move at random sites"
         return;
 
     for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( it );
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( it ) );
 
         if ( !pPlayer || !pPlayer->IsAlive() )
             continue;
@@ -536,15 +626,15 @@ CON_COMMAND_F( bot_debug_drive_random, "Orders all bots to move at random sites"
         while ( true ) {
             pArea = TheNavAreas[RandomInt( 0, TheNavAreas.Count() - 1 )];
 
-            if ( !pArea )
+            if ( pArea == NULL )
                 continue;
 
             Vector vecGoal( pArea->GetCenter() );
 
-            if ( !pBot->GetLocomotion()->IsPotentiallyTraversable( vecFrom, vecGoal ) )
+            if ( !pBot->GetLocomotion()->IsTraversable( vecFrom, vecGoal ) )
                 continue;
 
-            pBot->GetLocomotion()->DriveTo( "bot_locomotion_debug_drive_random", pArea );
+            pBot->GetLocomotion()->DriveTo( "bot_debug_drive_random", pArea );
             break;
         }
     }
@@ -563,7 +653,7 @@ CON_COMMAND_F( bot_debug_drive_player, "Command all bots to move to host locatio
         return;
 
     for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( it );
+        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( it ) );
 
         if ( !pPlayer || !pPlayer->IsAlive() )
             continue;
@@ -576,7 +666,7 @@ CON_COMMAND_F( bot_debug_drive_player, "Command all bots to move to host locatio
         if ( !pBot->GetLocomotion() )
             continue;
 
-        pBot->GetLocomotion()->DriveTo( "bot_locomotion_debug_drive_player", pArea );
+        pBot->GetLocomotion()->DriveTo( "bot_debug_drive_player", pArea );
     }
 }
 

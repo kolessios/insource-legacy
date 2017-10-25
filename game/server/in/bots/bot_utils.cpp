@@ -8,9 +8,13 @@
 #include "bots\bot_defs.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
 #include "in_player.h"
 #include "in_gamerules.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -49,6 +53,8 @@ bool CEntityMemory::IsLost()
     return (GetTimeLeft() <= 0);
 }
 
+//================================================================================
+//================================================================================
 bool CEntityMemory::IsHitboxVisible( HitboxType part )
 {
     switch ( part ) {
@@ -73,45 +79,70 @@ bool CEntityMemory::IsHitboxVisible( HitboxType part )
     return false;
 }
 
+//================================================================================
+//================================================================================
 float CEntityMemory::GetDistance() const
 {
-    return m_pBot->GetHost()->GetAbsOrigin().DistTo( m_vecLastPosition );
+    return m_pBot->GetHost()->GetAbsOrigin().DistTo( GetLastKnownPosition() );
 }
 
+//================================================================================
+//================================================================================
 float CEntityMemory::GetDistanceSquare() const
 {
-    return m_pBot->GetHost()->GetAbsOrigin().DistToSqr( m_vecLastPosition );
+    return m_pBot->GetHost()->GetAbsOrigin().DistToSqr( GetLastKnownPosition() );
 }
 
-int CEntityMemory::GetRelationship() const
+//================================================================================
+//================================================================================
+bool CEntityMemory::IsEnemy() const
 {
-    return TheGameRules->PlayerRelationship( m_pBot->GetHost(), GetEntity() );
+    return m_pBot->GetDecision()->IsEnemy( GetEntity() );
 }
 
+//================================================================================
+//================================================================================
+bool CEntityMemory::IsFriend() const
+{
+    return m_pBot->GetDecision()->IsFriend( GetEntity() );
+}
+
+//================================================================================
+// Returns whether the specified hitbox is visible and sets its value to [vecPosition].
+// If the specified hitbox (favorite) is not visible, it will try another hitbox with a lower priority.
+//================================================================================
 bool CEntityMemory::GetVisibleHitboxPosition( Vector & vecPosition, HitboxType favorite )
 {
     if ( IsHitboxVisible( favorite ) ) {
         switch ( favorite ) {
             case HITGROUP_HEAD:
+            {
                 vecPosition = m_VisibleHitbox.head;
                 return true;
                 break;
+            }
 
             case HITGROUP_CHEST:
             default:
+            {
                 vecPosition = m_VisibleHitbox.chest;
                 return true;
                 break;
+            }
 
             case HITGROUP_LEFTLEG:
+            {
                 vecPosition = m_VisibleHitbox.leftLeg;
                 return true;
                 break;
+            }
 
             case HITGROUP_RIGHTLEG:
+            {
                 vecPosition = m_VisibleHitbox.rightLeg;
                 return true;
                 break;
+            }
         }
     }
 
@@ -138,42 +169,40 @@ bool CEntityMemory::GetVisibleHitboxPosition( Vector & vecPosition, HitboxType f
     return false;
 }
 
+//================================================================================
+// Update hitbox positions and visibility
+//================================================================================
 void CEntityMemory::UpdateHitboxAndVisibility()
 {
     UpdateVisibility( false );
-
     m_Hitbox.Reset();
     m_VisibleHitbox.Reset();
 
     Utils::GetHitboxPositions( GetEntity(), m_Hitbox );
 
-    CPlayer *pPlayer = m_pBot->GetHost();
+    if ( !m_Hitbox.IsValid() )
+        return;
 
-    if ( m_Hitbox.head.IsValid() ) {
-        if ( pPlayer->IsAbleToSee( m_Hitbox.head ) ) {
-            m_VisibleHitbox.head = m_Hitbox.head;
-            UpdateVisibility( true );
-        }
+    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.head ) ) {
+        m_VisibleHitbox.head = m_Hitbox.head;
+        UpdateVisibility( true );
     }
 
-    if ( m_Hitbox.chest.IsValid() ) {
-        if ( pPlayer->IsAbleToSee( m_Hitbox.chest ) ) {
-            m_VisibleHitbox.chest = m_Hitbox.chest;
-            UpdateVisibility( true );
-        }
+    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.chest ) ) {
+        m_VisibleHitbox.chest = m_Hitbox.chest;
+        UpdateVisibility( true );
     }
 
-    if ( m_Hitbox.leftLeg.IsValid() ) {
-        if ( pPlayer->IsAbleToSee( m_Hitbox.leftLeg ) ) {
-            m_VisibleHitbox.leftLeg = m_Hitbox.leftLeg;
-            UpdateVisibility( true );
-        }
+    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.leftLeg ) ) {
+        m_VisibleHitbox.leftLeg = m_Hitbox.leftLeg;
+        UpdateVisibility( true );
     }
 
-    if ( m_Hitbox.rightLeg.IsValid() ) {
-        if ( pPlayer->IsAbleToSee( m_Hitbox.rightLeg ) ) {
-            m_VisibleHitbox.rightLeg = m_Hitbox.rightLeg;
-            UpdateVisibility( true );
-        }
+    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.rightLeg ) ) {
+        m_VisibleHitbox.rightLeg = m_Hitbox.rightLeg;
+        UpdateVisibility( true );
     }
+
+    // We update the ideal position
+    GetVisibleHitboxPosition( m_vecIdealPosition, m_pBot->GetProfile()->GetFavoriteHitbox() );
 }

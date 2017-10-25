@@ -1,4 +1,6 @@
-//==== InfoSmart 2015. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "in_gamerules.h"
@@ -235,7 +237,7 @@ int CInGameRules::Damage_GetTimeBased()
 //====================================================================
 int    CInGameRules::Damage_GetShouldGibCorpse()
 {
-    return ( DMG_CRUSH | DMG_FALL | DMG_BLAST | DMG_SONIC | DMG_CLUB );
+    return ( DMG_CRUSH | DMG_BLAST | DMG_SONIC | DMG_CLUB );
 }
 
 //====================================================================
@@ -262,15 +264,10 @@ int    CInGameRules::Damage_GetShouldNotBleed()
 
 //====================================================================
 //====================================================================
-bool CInGameRules::Damage_MakeSlow( const CTakeDamageInfo &info )
+int CInGameRules::Damage_GetCausesSlowness()
 {
-#ifdef APOCALYPSE
-    // Infectados y balas
-    if ( info.GetAttacker()->Classify() == CLASS_INFECTED || (info.GetDamageType() & DMG_BULLET) != 0 )
-        return true;
-#endif
-
-    return Damage_IsTimeBased( info.GetDamageType() );
+    int iTimeBasedDamage = Damage_GetTimeBased();
+    return (DMG_SLASH | DMG_BULLET | iTimeBasedDamage );
 }
 
 //====================================================================
@@ -340,6 +337,13 @@ bool CInGameRules::Damage_ShouldNotBleed( int iDmgType )
     return ( (iDmgType & Damage_GetShouldNotBleed()) != 0 );
 }
 
+//====================================================================
+//====================================================================
+bool CInGameRules::Damage_CausesSlowness( const CTakeDamageInfo &info )
+{
+    return ((info.GetDamageType() & Damage_GetCausesSlowness()) != 0);
+}
+
 #ifndef CLIENT_DLL /////////// SERVER ONLY
 
 //====================================================================
@@ -394,7 +398,7 @@ bool CInGameRules::Director_AdaptativeSkill()
 // Le permite a las reglas del juego agregar comportamiento
 // al Director.
 //====================================================================
-void CInGameRules::Director_Think()
+void CInGameRules::Director_Update()
 {
 }
 
@@ -943,10 +947,10 @@ bool CInGameRules::FPlayerCanTakeDamage( CBasePlayer * pPlayer, CBaseEntity * pA
 bool CInGameRules::FPlayerCanShieldHandleDamage( CPlayer * pPlayer, const CTakeDamageInfo & info )
 {
     // En principio el escudo solo es para el daño por bala
-    //if ( (info.GetDamageType() & DMG_BULLET) != 0 )
-        //return false;
+    if ( (info.GetDamageType() & DMG_BULLET) )
+        return true;
     
-    return true;
+    return false;
 }
 
 //====================================================================
@@ -1011,7 +1015,7 @@ bool CInGameRules::FPlayerCanDejected( CBasePlayer *pPlayer, const CTakeDamageIn
             return false;
 
         // Esta en modo Buddha
-        if ( pInPlayer->InBuddhaMode() )
+        if ( pInPlayer->IsOnBuddhaMode() )
             return false;
     }
 

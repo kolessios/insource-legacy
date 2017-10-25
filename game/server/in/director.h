@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #ifndef DIRECTOR_H
 #define DIRECTOR_H
@@ -53,30 +55,31 @@ public:
     virtual void FrameUpdatePostEntityThink();
 
     // Devolución
-    virtual bool IsDisabled() { return m_bDisabled; }
+    virtual bool IsDisabled() {
+        return m_bDisabled;
+    }
+
+    virtual bool IsOnPanicEvent() {
+        return (GetStatus() == STATUS_PANIC || GetStatus() == STATUS_FINALE);
+    }
 
 	// Del Manager
 	virtual void SetPopulation( const char *type );
-	//virtual const char *GetMinionUnitName( MinionType type );
-	//virtual const char *ScriptGetChildClass( int type ) { return GetMinionUnitName( (MinionType)type ); }
     
     // Principales
 	virtual void Resume();
     virtual void Stop();
 
-	virtual void FindEntity();
-	virtual void StartVirtualMachine();
+    virtual void Reset();
 
-	virtual bool CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn );
+	virtual void StartMap();
+    virtual void StartCampaign();
 
-	template <typename ARG_TYPE_1>
-	bool CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn, ARG_TYPE_1 arg1 );
-
-	virtual void ResetMap();
-    virtual void ResetCampaign();
+    virtual void FindDirectorEntity();
 
     virtual void Think();
 
+    virtual void PreUpdate();
     virtual void Update();
 	virtual void PostUpdate();
 
@@ -85,12 +88,15 @@ public:
     virtual void UpdatePanicEvent();
 
 	virtual bool ShouldPhaseEnd( DirectorPhase phase );
+    virtual void OnPhaseStart( DirectorPhase phase );
 	virtual void OnPhaseEnd( DirectorPhase phase );
-	virtual void OnPhaseTimeEnd( DirectorPhase phase );
 
-	virtual float GetPanicDelay();
-	virtual int GetPanicHordes();
+	virtual float GetPanicEventDelay();
+	virtual int GetPanicEventHordes();
+    virtual bool ShouldStartPanicEvent();
+
     virtual void StartPanic( int hordes );
+    virtual void EndPanicHorde();
 
 	virtual void OnPanicStart();
 	virtual void OnPanicHordeEnd( int hordeNumber, int left );
@@ -112,8 +118,14 @@ public:
 	virtual bool ScriptCanSpawnMinionsByType( int type ) { return CanSpawnMinions( (MinionType)type ); }
 
     // Configuración
+    virtual int GetDifficulty();
+
     virtual float GetMaxDistance();
     virtual float GetMinDistance();
+
+    virtual float GetMinStress();
+    virtual float GetMaxStress();
+    virtual float GetStress();
 
     virtual int GetMaxUnits();
 	virtual int GetMaxUnits( MinionType type );
@@ -155,6 +167,14 @@ public:
 	int ScriptGetAngry() { return (int)m_iAngry; }
     virtual void ScriptSetAngry( int status ) { SetAngry( (DirectorAngry)status ); }
 
+    // Virtual Machine
+    virtual void StartVirtualMachine();
+
+    virtual bool CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn );
+
+    template <typename ARG_TYPE_1>
+    bool CallScriptFunction( const char *pFunctionName, ScriptVariant_t *pFunctionReturn, ARG_TYPE_1 arg1 );
+
 protected:
     DirectorStatus m_iStatus;
     DirectorPhase m_iPhase;
@@ -163,27 +183,30 @@ protected:
     CountdownTimer m_PhaseTimer;
     CountdownTimer m_ThinkTimer;
 
+    CountdownTimer m_SustainTimer;
     CountdownTimer m_PanicTimer;
-
-	CountdownTimer m_BackgroundMusicTimer;
-	CountdownTimer m_ChoirTimer;
 
     IntervalTimer m_MapTimer;
     IntervalTimer m_GameTimer;
 
-	CSoundManager *m_MusicManager;
-	CSoundInstance *m_HordeMusicList[LAST_HORDE_MUSIC];
-	CSoundInstance *m_HordeMusic = NULL;
-
-	CInfoDirector *m_pEntity;
-
-	CScriptScope m_ScriptScope;
-	HSCRIPT m_hScriptInstance;
-	string_t m_szScriptID;
+    CInfoDirector *m_pEntity;
 
     bool m_bDisabled;
     int m_iDebugLine;
-    int m_iHordes;
+    int m_iPanicEventHordesLeft;
+
+protected:
+    CountdownTimer m_BackgroundMusicTimer;
+    CountdownTimer m_ChoirTimer;
+
+    CSoundManager *m_MusicManager;
+    CSoundInstance *m_HordeMusicList[LAST_HORDE_MUSIC];
+    CSoundInstance *m_HordeMusic = NULL;
+
+protected:
+    CScriptScope m_ScriptScope;
+    HSCRIPT m_hScriptInstance;
+    string_t m_szScriptID;
 
     friend class DirectorManager;
 	friend class CInfoDirector;

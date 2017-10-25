@@ -5,44 +5,59 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
-#include "in_buttons.h"
-
 #include "weapon_base.h"
+#else
+#include "bots\in_utils.h"
+#endif
+
+#include "in_buttons.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //================================================================================
 //================================================================================
-BEGIN_SETUP_SCHEDULE( CChangeWeaponSchedule )
+SET_SCHEDULE_TASKS( CChangeWeaponSchedule )
+{
     CDataMemory *memory = GetMemory()->GetDataMemory( "BestWeapon" );
     Assert( memory );
 
-    ADD_TASK( BTASK_SAVE_POSITION, NULL )
-    ADD_TASK( BTASK_RUN, NULL )
-    ADD_TASK( BTASK_MOVE_DESTINATION, memory->GetEntity() )
-    ADD_TASK( BTASK_AIM, memory->GetEntity() )
-    ADD_TASK( BTASK_USE, NULL )
-    ADD_TASK( BTASK_RESTORE_POSITION, NULL )
+    ADD_TASK( BTASK_SAVE_POSITION, NULL );
+    ADD_TASK( BTASK_RUN, NULL );
+    ADD_TASK( BTASK_MOVE_DESTINATION, memory->GetEntity() );
+    ADD_TASK( BTASK_AIM, memory->GetEntity() );
+    ADD_TASK( BTASK_USE, NULL );
+    ADD_TASK( BTASK_RESTORE_POSITION, NULL );
+}
 
-    ADD_INTERRUPT( BCOND_REPEATED_DAMAGE )
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE )
-    ADD_INTERRUPT( BCOND_TOO_CLOSE_TO_ATTACK )
-    ADD_INTERRUPT( BCOND_LOW_HEALTH )
-    ADD_INTERRUPT( BCOND_DEJECTED )
-END_SCHEDULE()
+SET_SCHEDULE_INTERRUPTS( CChangeWeaponSchedule )
+{
+    if ( GetProfile()->GetSkill() < SKILL_ULTRA_HARD ) {
+        ADD_INTERRUPT( BCOND_SEE_HATE );
+        ADD_INTERRUPT( BCOND_SEE_FEAR );
+    }
+
+    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE );
+    ADD_INTERRUPT( BCOND_REPEATED_DAMAGE );
+    ADD_INTERRUPT( BCOND_LOW_HEALTH );
+    ADD_INTERRUPT( BCOND_DEJECTED );
+    ADD_INTERRUPT( BCOND_MOBBED_BY_ENEMIES );
+    ADD_INTERRUPT( BCOND_GOAL_UNREACHABLE );
+    ADD_INTERRUPT( BCOND_HEAR_MOVE_AWAY );
+}
 
 //================================================================================
 //================================================================================
-float CurrentSchedule::GetDesire() const
+float CChangeWeaponSchedule::GetDesire() const
 {
     if ( !GetMemory() )
         return BOT_DESIRE_NONE;
 
     CDataMemory *memory = GetMemory()->GetDataMemory( "BestWeapon" );
 
-    if ( !memory )
+    if ( memory == NULL )
         return BOT_DESIRE_NONE;
 
 	if ( !GetDecision()->CanMove() )
@@ -56,7 +71,7 @@ float CurrentSchedule::GetDesire() const
 
 //================================================================================
 //================================================================================
-void CurrentSchedule::TaskStart()
+void CChangeWeaponSchedule::TaskStart()
 {
 	BotTaskInfo_t *pTask = GetActiveTask();
 
@@ -78,7 +93,7 @@ void CurrentSchedule::TaskStart()
 
 //================================================================================
 //================================================================================
-void CurrentSchedule::TaskRun()
+void CChangeWeaponSchedule::TaskRun()
 {
     CDataMemory *memory = GetMemory()->GetDataMemory( "BestWeapon" );
 

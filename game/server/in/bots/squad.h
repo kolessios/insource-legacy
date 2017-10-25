@@ -10,11 +10,12 @@
 #endif
 
 #include "bots\bot_defs.h"
+
+#ifdef INSOURCE_DLL
 #include "in_player.h"
+#endif
 
-class CBot;
 class CBotSquad;
-
 typedef CUtlVector<EHANDLE> MembersVector;
 
 struct SquadOptions_t

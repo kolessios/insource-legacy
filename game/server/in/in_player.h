@@ -49,36 +49,54 @@ class CBaseProp;
 //================================================================================
 class CPlayer : public CAI_ExpresserHost<CBasePlayer>
 {
+public:
     DECLARE_CLASS( CPlayer, CAI_ExpresserHost<CBasePlayer> );
     DECLARE_SERVERCLASS();
     DECLARE_DATADESC();
 
-public:
     CPlayer();
     ~CPlayer();
     
-    virtual Class_T Classify() { return CLASS_PLAYER; }
+    //
+    virtual Class_T Classify() {
+        return CLASS_PLAYER;
+    }
 
-    // Utilidades
-    virtual bool IsCrouching()  { return (GetFlags() & FL_DUCKING ) ? true : false; }
-    virtual bool IsCrouching() const  { return (GetFlags() & FL_DUCKING ) ? true : false; }
+    // 
+    virtual bool IsCrouching() const {
+        return (GetFlags() & FL_DUCKING) ? true : false;
+    }
 
-    virtual bool IsOnGround() { return (GetFlags() & FL_ONGROUND) ? true : false; }
-    virtual bool InGodMode() { return (GetFlags() & FL_GODMODE) ? true : false; }
-    virtual bool InBuddhaMode() { return (m_debugOverlays & OVERLAY_BUDDHA_MODE) ? true : false; }
+    virtual bool IsOnGround() const {
+        return (GetFlags() & FL_ONGROUND) ? true : false;
+    }
 
-	virtual bool IsIdle();
-	virtual bool IsAlerted();
+    virtual bool IsOnGodMode() const {
+        return (GetFlags() & FL_GODMODE) ? true : false;
+    }
 
-    virtual bool IsUnderAttack() { return m_bIsUnderAttack; }
-    virtual bool IsInCombat() { return m_bIsInCombat; }
+    virtual bool IsOnBuddhaMode() const {
+        return (m_debugOverlays & OVERLAY_BUDDHA_MODE) ? true : false;
+    }
 
+    virtual bool IsUnderAttack() const {
+        return m_bUnderAttack;
+    }
+
+    virtual bool IsOnCombat() const {
+        return m_bOnCombat;
+    }
+
+	virtual bool IsIdle() const;
+	virtual bool IsAlerted() const;
+
+    //
     virtual int GetButtons() { return m_nButtons; }
     virtual bool IsButtonPressing( int btn ) { return ((m_nButtons & btn)) ? true : false; }
     virtual bool IsButtonPressed( int btn ) { return ((m_afButtonPressed & btn)) ? true : false; }
     virtual bool IsButtonReleased( int btn ) { return ((m_afButtonReleased & btn)) ? true : false; }
 
-    // Principales
+    //
     virtual IBot *GetBotController() const {
         return m_pBotController;
     }
@@ -86,11 +104,11 @@ public:
     virtual void SetBotController( IBot *pBot );
     virtual void SetUpBot();
 
+    //
     virtual int UpdateTransmitState();
 
     virtual void InitialSpawn();
     virtual void Spawn();
-    virtual void EnterToGame( bool forceForBots = false );
 
     virtual void Connected();
 
@@ -102,16 +120,17 @@ public:
     virtual void PostThink();
 	virtual void PushawayThink();
 
+    //
     virtual CBaseEntity *GetEnemy();
     virtual CBaseEntity *GetEnemy() const;
 
-    // Tipo de Jugador
+    //
     virtual const char *GetPlayerModel();
     virtual void SetUpModel() { }
     virtual const char *GetPlayerType();
     virtual gender_t GetPlayerGender();
 
-    // Cadaver
+    //
     virtual CInRagdoll *GetRagdoll();
     virtual bool BecomeRagdollOnClient( const Vector & );
     virtual void CreateRagdollEntity();
@@ -194,12 +213,10 @@ public:
     virtual bool OnlySeeAliveEntities( void ) { return true; }
 
     // Animaciones
-    virtual CPlayerAnimationSystem *AnimationSystem() { return m_pAnimState; }
+    virtual CPlayerAnimationSystem *GetAnimationSystem() { return m_pAnimationSystem; }
     virtual void HandleAnimEvent( animevent_t *event );
 
-    virtual void FixAngles();
     virtual void SetAnimation( PLAYER_ANIM );
-
     virtual void DoAnimationEvent( PlayerAnimEvent_t nEvent, int nData = 0, bool bPredicted = false );
 
     // Sonidos
@@ -220,10 +237,11 @@ public:
     virtual int FlashlightIsOn();
     virtual void FlashlightTurnOn();
     virtual void FlashlightTurnOff();
+    
 
     // Daño
-    virtual CTakeDamageInfo GetLastDamage() { return m_nLastDamageInfo; }
-    virtual IntervalTimer GetLastDamageTimer() { return m_nLastDamageTimer; }
+    virtual CTakeDamageInfo GetLastDamage() { return m_LastDamage; }
+    virtual IntervalTimer GetLastDamageTimer() { return m_LastDamageTimer; }
 
     virtual bool ShouldBleed( const CTakeDamageInfo &info, int hitgroup );
     virtual void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
@@ -289,21 +307,20 @@ public:
     // Correr y Caminar
     virtual void UpdateMovementType();
 
-    virtual bool AllowSprint();
+    virtual bool CanSprint();
     virtual void StartSprint() { m_bSprinting = true; }
     virtual void StopSprint() { m_bSprinting = false; }
     virtual bool IsSprinting() { return m_bSprinting; }
 
-    virtual bool AllowWalk();
-    virtual void StartWalking() { m_bWalking = true; }
-    virtual void StopWalking() { m_bWalking = false; }
-    virtual bool IsWalking() { return m_bWalking; }
+    virtual bool CanSneak();
+    virtual void StartSneaking() { m_bSneaking = true; }
+    virtual void StopSneaking() { m_bSneaking = false; }
+    virtual bool IsSneaking() { return m_bSneaking; }
 
     virtual void Jump();
 
     // Viewmodel
     virtual void CreateViewModel( int viewmodelindex = 0 );
-
     virtual void SetUpHands();
     virtual void CreateHands( int handsindex, int viewmodelparent = 0 );
     virtual const char *GetHandsModel( int handsindex );
@@ -318,7 +335,7 @@ public:
     virtual void UpdateCollisionBounds();
 
     // Escuadron
-    virtual CSquad *GetSquad() { return m_nSquad; }
+    virtual CSquad *GetSquad() { return m_pSquad; }
     virtual void SetSquad( CSquad *pSquad );
     virtual void SetSquad( const char *name );
 
@@ -394,18 +411,19 @@ public:
     virtual Vector Weapon_ShootPosition();
     virtual Vector Weapon_ShootDirection();
 
-    virtual void FireBullets( const FireBulletsInfo_t & );
+    virtual void FireBullets( const FireBulletsInfo_t &info );
+    virtual void OnFireBullets( const FireBulletsInfo_t &info );
     virtual bool ShouldDrawUnderwaterBulletBubbles();
 
 public:
     CNetworkVar( float, m_flClimbingHold );
 
 protected:
-    CPlayerAnimationSystem *m_pAnimState;
-    CTakeDamageInfo m_nLastDamageInfo;
-    IntervalTimer m_nLastDamageTimer;
+    CPlayerAnimationSystem *m_pAnimationSystem;
+    CTakeDamageInfo m_LastDamage;
+    IntervalTimer m_LastDamageTimer;
 
-    CBaseEntity *m_nSpawnSpot;
+    CBaseEntity *m_pSpawner;
     int m_iCurrentConcept;
     
     bool m_bPlayingDeathAnim;
@@ -415,16 +433,16 @@ protected:
 
     IBot *m_pBotController;
 
-    IntervalTimer m_nSlowDamageTimer;
-    IntervalTimer m_nIsUnderAttackTimer;
-    IntervalTimer m_nIsInCombatTimer;
-    IntervalTimer m_nRaiseHelpTimer;
+    IntervalTimer m_SlowDamageTimer;
+    IntervalTimer m_UnderAttackTimer;
+    IntervalTimer m_CombatTimer;
+    IntervalTimer m_RaiseHelpTimer;
 
     CUtlVector<CPlayerComponent *> m_nComponents;
 	CUtlVector<CAttribute *> m_nAttributes;
 
     CAI_Senses *m_pSenses;
-    CSquad *m_nSquad;
+    CSquad *m_pSquad;
 
     CUserCmd *m_InjectedCommand;
 	
@@ -440,15 +458,12 @@ protected:
 
     CNetworkVar( bool, m_bFlashlightEnabled );
     CNetworkVar( bool, m_bSprinting );
-    CNetworkVar( bool, m_bWalking );
-
-    //CNetworkVar( float, m_flStamina );
-    //CNetworkVar( float, m_flStress );
+    CNetworkVar( bool, m_bSneaking );
 
     CNetworkQAngle( m_angEyeAngles );
 
-    CNetworkVar( bool, m_bIsInCombat );
-    CNetworkVar( bool, m_bIsUnderAttack );
+    CNetworkVar( bool, m_bOnCombat );
+    CNetworkVar( bool, m_bUnderAttack );
 
     CNetworkVar( int, m_iPlayerStatus );
     CNetworkVar( int, m_iPlayerState );

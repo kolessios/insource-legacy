@@ -46,9 +46,9 @@ public:
     virtual int GetAimSpeed();
     virtual float GetStiffness();
 
-    virtual bool LookAt( const char *pDesc, CBaseEntity *pTarget, int priority = PRIORITY_VERY_LOW, float duration = 1.0f );
-    virtual bool LookAt( const char *pDesc, CBaseEntity *pTarget, const Vector &vecGoal, int priority = PRIORITY_VERY_LOW, float duration = 1.0f );
-    virtual bool LookAt( const char *pDesc, const Vector &vecGoal, int priority = PRIORITY_VERY_LOW, float duration = 1.0f );
+    virtual bool LookAt( const char *pDesc, CBaseEntity *pTarget, int priority = PRIORITY_VERY_LOW, float duration = 1.0f, float cosTolerance = 1.0f );
+    virtual bool LookAt( const char *pDesc, CBaseEntity *pTarget, const Vector &vecGoal, int priority = PRIORITY_VERY_LOW, float duration = 1.0f, float cosTolerance = 1.0f );
+    virtual bool LookAt( const char *pDesc, const Vector &goal, int priority = PRIORITY_VERY_LOW, float duration = 1.0f, float cosTolerance = 1.0f );
 
     virtual void LookAtThreat();
 
@@ -80,6 +80,8 @@ public:
     virtual void Update();
 
 public:
+    virtual void UpdateCommands();
+
     virtual bool DriveTo( const char *pDesc, const Vector &vecGoal, int priority = PRIORITY_VERY_LOW, float tolerance = -1.0f );
     virtual bool DriveTo( const char *pDesc, CBaseEntity *pTarget, int priority = PRIORITY_VERY_LOW, float tolerance = -1.0f );
     virtual bool DriveTo( const char *pDesc, CNavArea *pTargetArea, int priority = PRIORITY_VERY_LOW, float tolerance = -1.0f );
@@ -94,6 +96,7 @@ public:
     virtual void CheckPath();
     virtual void ComputePath();
 
+    virtual bool IsUnreachable() const;
     virtual bool IsStuck() const;
     virtual float GetStuckDuration() const;
     virtual void ResetStuck();
@@ -114,7 +117,8 @@ public:
     virtual bool IsOnTolerance() const;
 
     virtual bool IsAreaTraversable( const CNavArea *area ) const;
-    virtual bool IsPotentiallyTraversable( const Vector& from, const Vector& to ) const;
+    virtual bool IsAreaTraversable( const CNavArea *from, const CNavArea *to ) const;
+    virtual bool IsTraversable( const Vector &from, const Vector &to ) const;
     virtual bool IsEntityTraversable( CBaseEntity *ent ) const;
 
     virtual void OnLeaveGround( CBaseEntity *pGround ) { }
@@ -317,7 +321,7 @@ public:
     virtual bool ShouldCrouch() const;
     virtual bool ShouldJump() const;
 
-    virtual bool ShouldHuntThreat() const;
+    virtual bool CanHuntThreat() const;
     virtual bool ShouldInvestigateSound() const;
     virtual bool ShouldCover() const;
     virtual bool ShouldGrabWeapon( CBaseWeapon *pWeapon ) const;
@@ -336,14 +340,20 @@ public:
 
     virtual bool CanAttack() const;
     virtual bool CanCrouchAttack() const;
-    //virtual bool ShouldCrouchAttack() const;
+    virtual bool ShouldCrouchAttack() const;
 
-    virtual bool IsEnemyLowPriority() const;
+    virtual bool IsEnemy( CBaseEntity *pEntity ) const;
+    virtual bool IsFriend( CBaseEntity *pEntity ) const;
+    virtual bool IsSelf( CBaseEntity *pEntity ) const;
+
     virtual bool IsBetterEnemy( CBaseEntity *pEnemy, CBaseEntity *pPrevious ) const;
+
     virtual bool CanBeEnemy( CBaseEntity *pEnemy ) const {
         return true;
     }
+
     virtual bool IsDangerousEnemy( CBaseEntity *pEnemy = NULL ) const;
+    virtual bool IsImportantEnemy( CBaseEntity *pEnemy = NULL ) const;
     virtual bool IsPrimaryThreatLost() const;
 
     virtual bool ShouldMustBeCareful() const;
@@ -352,10 +362,21 @@ public:
     virtual bool GetNearestCover( float radius = GET_COVER_RADIUS, Vector *vecCoverSpot = NULL ) const;
     virtual bool IsInCoverPosition() const;
 
+    virtual float GetWeaponIdealRange( CBaseWeapon *pWeapon = NULL ) const;
+
     virtual BCOND ShouldRangeAttack1();
     virtual BCOND ShouldRangeAttack2();
     virtual BCOND ShouldMeleeAttack1();
     virtual BCOND ShouldMeleeAttack2();
+
+    virtual bool IsAbleToSee( CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV ) const;
+    virtual bool IsAbleToSee( const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV ) const;
+
+    virtual bool IsInFieldOfView( CBaseEntity *entity ) const;
+    virtual bool IsInFieldOfView( const Vector &pos ) const;
+
+    virtual bool IsLineOfSightClear( CBaseEntity *entity, CBaseEntity **hit = NULL ) const;
+    virtual bool IsLineOfSightClear( const Vector &pos, CBaseEntity *entityToIgnore = NULL, CBaseEntity **hit = NULL ) const;
 
 public:
     CountdownTimer m_RandomAimTimer;

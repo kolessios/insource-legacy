@@ -113,7 +113,7 @@ void CPlayersSystem::Update()
             continue;
 
         // En combate
-        if ( pPlayer->IsInCombat() )
+        if ( pPlayer->IsOnCombat() )
             ++m_iInCombat;
 
         // Bajo ataque
@@ -343,7 +343,7 @@ bool CPlayersSystem::IsAnyPlayerInCombat( int team )
         if ( !pPlayer->IsAlive() )
             continue;
 
-        if ( pPlayer->IsInCombat() )
+        if ( pPlayer->IsOnCombat() )
             return true;
     }, team);
 

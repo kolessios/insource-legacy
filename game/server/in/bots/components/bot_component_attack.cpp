@@ -7,7 +7,12 @@
 
 #include "bots\bot_manager.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
+#else
+#include "bots\in_utils.h"
+#endif
+
 #include "in_buttons.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -41,17 +46,13 @@ void CBotAttack::FiregunAttack()
     CBaseWeapon *pWeapon = GetHost()->GetActiveBaseWeapon();
     Assert( pWeapon );
 
+    // Check to see if we can crouch for accuracy
     if ( GetDecision()->CanCrouchAttack() ) {
-        float flDistance = GetMemory()->GetPrimaryThreatDistance();
-
-        // Check to see if we can crouch for accuracy
-        if ( GetLocomotion() ) {
-            if ( GetDecision()->CanCrouchAttack() && flDistance >= 140.0f ) {
-                GetLocomotion()->Crouch();
-            }
-            else {
-                GetLocomotion()->StandUp();
-            }
+        if ( GetDecision()->ShouldCrouchAttack() ) {
+            GetLocomotion()->Crouch();
+        }
+        else {
+            GetLocomotion()->StandUp();
         }
     }
 
@@ -61,7 +62,6 @@ void CBotAttack::FiregunAttack()
         
     }
 
-    // Podemos usar el disparo secundario
     // TODO
     if ( HasCondition( BCOND_CAN_RANGE_ATTACK2 ) ) {
         GetBot()->Combat();

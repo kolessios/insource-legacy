@@ -9,8 +9,15 @@
 #pragma once
 #endif
 
+#ifdef INSOURCE_DLL
 #include "in_shareddefs.h"
+#endif
+
 #include "bots\bot_defs.h"
+
+#ifdef time
+#undef time
+#endif
 
 class IBot;
 
@@ -42,7 +49,13 @@ public:
 
     virtual void UpdatePosition( const Vector &pos ) {
         m_vecLastPosition = pos;
+        m_vecIdealPosition = pos;
         m_LastUpdate.Start();
+    }
+
+    // Visibility
+    virtual bool IsVisible() const {
+        return m_bVisible;
     }
 
     virtual void UpdateVisibility( bool visible ) {
@@ -51,11 +64,6 @@ public:
         if ( visible ) {
             m_LastVisible.Start();
         }
-    }
-
-    // Visibility
-    virtual bool IsVisible() const {
-        return m_bVisible;
     }
 
     virtual bool IsVisibleRecently( float seconds ) const {
@@ -75,6 +83,14 @@ public:
     }
 
     // Position
+    virtual const Vector GetLastKnownPosition() const {
+        return m_vecLastPosition;
+    }
+
+    virtual const Vector GetIdealPosition() const {
+        return m_vecIdealPosition;
+    }
+
     virtual bool IsUpdatedRecently( float seconds ) const {
         return m_LastUpdate.IsLessThen( seconds );
     }
@@ -95,12 +111,9 @@ public:
         m_flFrameLastUpdate = gpGlobals->absoluteframetime;
     }
 
+    //
     virtual float GetTimeLeft();
     virtual bool IsLost();
-
-    virtual const Vector GetLastKnownPosition() const {
-        return m_vecLastPosition;
-    }
 
     virtual const HitboxPositions GetHitbox() const {
         return m_Hitbox;
@@ -123,7 +136,8 @@ public:
         return (GetDistance() <= distance);
     }
 
-    virtual int GetRelationship() const;
+    virtual bool IsEnemy() const;
+    virtual bool IsFriend() const;
 
     virtual void Maintain() {
         UpdatePosition( GetLastKnownPosition() );
@@ -139,6 +153,7 @@ protected:
     IBot *m_pBot;
 
     Vector m_vecLastPosition;
+    Vector m_vecIdealPosition;
 
     HitboxPositions m_Hitbox;
     HitboxPositions m_VisibleHitbox;
@@ -199,6 +214,9 @@ public:
         if ( m_flForget <= 0.0f )
             return false;
 
+        if ( !m_LastUpdate.HasStarted() )
+            return false;
+
         return (m_LastUpdate.GetElapsedTime() >= m_flForget);
     }
 
@@ -220,100 +238,81 @@ protected:
 };
 
 //================================================================================
-// Bot difficulty information
+// Bot information
 //================================================================================
-class CBotSkill
+class CBotProfile
 {
 public:
-    CBotSkill();
-    CBotSkill( int skill );
+    CBotProfile();
+    CBotProfile( int skill );
 
     virtual bool IsEasy() {
-        return (GetLevel() == SKILL_EASY);
+        return (GetSkill() == SKILL_EASY);
     }
 
     virtual bool IsMedium() {
-        return (GetLevel() == SKILL_MEDIUM);
+        return (GetSkill() == SKILL_MEDIUM);
     }
 
     virtual bool IsHard() {
-        return (GetLevel() == SKILL_HARD);
+        return (GetSkill() == SKILL_HARD);
     }
 
     virtual bool IsVeryHard() {
-        return (GetLevel() == SKILL_VERY_HARD);
+        return (GetSkill() == SKILL_VERY_HARD);
     }
 
     virtual bool IsUltraHard() {
-        return (GetLevel() == SKILL_ULTRA_HARD);
+        return (GetSkill() == SKILL_ULTRA_HARD);
     }
 
     virtual bool IsRealistic() {
-        return (GetLevel() == SKILL_IMPOSIBLE);
+        return (GetSkill() == SKILL_IMPOSIBLE);
     }
 
     virtual bool IsEasiest() {
-        return (GetLevel() == SKILL_EASIEST);
+        return (GetSkill() == SKILL_EASIEST);
     }
 
     virtual bool IsHardest() {
-        return (GetLevel() == SKILL_HARDEST);
+        return (GetSkill() == SKILL_HARDEST);
     }
 
-    virtual void SetLevel( int skill );
+    virtual void SetSkill( int skill );
 
-    virtual int GetLevel() {
+    virtual int GetSkill() {
         return m_iSkillLevel;
     }
 
-    virtual const char *GetLevelName();
+    virtual const char *GeSkillName();
 
     virtual float GetMemoryDuration() {
-        return m_flEnemyMemoryDuration;
+        return m_flMemoryDuration;
     }
 
     virtual void SetMemoryDuration( float duration ) {
-        m_flEnemyMemoryDuration = duration;
-    }
-
-    virtual float GetPanicDuration() {
-        return m_flPanicDelay;
-    }
-
-    virtual void SetPanicDuration( float duration ) {
-        m_flPanicDelay = duration;
+        m_flMemoryDuration = duration;
     }
 
     virtual int GetMinAimSpeed() {
         return m_iMinAimSpeed;
     }
 
-    virtual void SetMinAimSpeed( int speed ) {
-        m_iMinAimSpeed = speed;
-    }
-
     virtual int GetMaxAimSpeed() {
         return m_iMaxAimSpeed;
     }
 
-    virtual void SetMaxAimSpeed( int speed ) {
-        m_iMaxAimSpeed = speed;
+    virtual void SetAimSpeed( int min, int max ) {
+        m_iMinAimSpeed = min;
+        m_iMaxAimSpeed = max;
     }
 
-    virtual float GetMinAttackRate() {
-        return m_flMinAttackRate;
+    virtual float GetAttackDelay() {
+        return m_flAttackDelay;
     }
 
-    virtual void SetMinAttackRate( float time ) {
-        m_flMinAttackRate = time;
-    }
-
-    virtual float GetMaxAttackRate() {
-        return m_flMaxAttackRate;
-    }
-
-    virtual void SetMaxAttackRate( float time ) {
-        m_flMaxAttackRate = time;
+    virtual void SetAttackDelay( float time ) {
+        m_flAttackDelay = time;
     }
 
     virtual HitboxType GetFavoriteHitbox() {
@@ -332,20 +331,35 @@ public:
         m_flAlertDuration = duration;
     }
 
+    virtual float GetAggression() {
+        return m_flAggression;
+    }
+
+    virtual void SetAggression( float value ) {
+        m_flAggression = value;
+    }
+
+    virtual float GetReactionDelay() {
+        return m_flReactionDelay;
+    }
+
+    virtual void SetReactionDelay( float delay ) {
+        m_flReactionDelay = delay;
+    }
+
 protected:
     int m_iSkillLevel;
-    float m_flEnemyMemoryDuration;
-    float m_flPanicDelay;
+    float m_flMemoryDuration;
+    float m_flAttackDelay;
+    float m_flAlertDuration;
+    float m_flAggression;
+    float m_flReactionDelay;
 
     int m_iMinAimSpeed;
     int m_iMaxAimSpeed;
 
-    float m_flMinAttackRate;
-    float m_flMaxAttackRate;
-
     HitboxType m_iFavoriteHitbox;
-
-    float m_flAlertDuration;
+    
 };
 
 //================================================================================
@@ -369,6 +383,17 @@ struct BotTaskInfo_t
         task = iTask;
         iValue = value;
         flValue = (float)value;
+
+        vecValue.Invalidate();
+        iszValue = NULL_STRING;
+        pszValue = NULL;
+    }
+
+    BotTaskInfo_t( int iTask, bool value )
+    {
+        task = iTask;
+        iValue = (value == true) ? 1 : 0;
+        flValue = (float)iValue;
 
         vecValue.Invalidate();
         iszValue = NULL_STRING;

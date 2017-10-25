@@ -500,7 +500,7 @@ private:
 	typedef CHandle<C_BaseCombatWeapon> CBaseCombatWeaponHandle;
 	CBaseCombatWeaponHandle	m_hLastWeapon;
 	// players own view models, left & right hand
-	CHandle< C_BaseViewModel >	m_hViewModel[ MAX_VIEWMODELS ];		
+	CHandle< C_BaseViewModel >	m_hViewModel[ MAX_VIEWMODELS ];	
 
 public:
 	// For weapon prediction

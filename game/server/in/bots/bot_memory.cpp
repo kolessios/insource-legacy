@@ -5,8 +5,12 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
 #include "in_gamerules.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -27,7 +31,6 @@ void CBot::SetPeaceful( bool enabled )
 }
 
 //================================================================================
-// Devuelve el enemigo actual
 //================================================================================
 CBaseEntity *CBot::GetEnemy() const
 {
@@ -48,7 +51,6 @@ CEntityMemory * CBot::GetPrimaryThreat() const
 }
 
 //================================================================================
-// Establece un nuevo enemigo
 //================================================================================
 void CBot::SetEnemy( CBaseEntity *pEnemy, bool bUpdate )
 {

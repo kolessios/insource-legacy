@@ -145,12 +145,10 @@ BEGIN_NETWORK_TABLE( C_Player, DT_BaseInPlayer )
 
     RecvPropBool( RECVINFO(m_bFlashlightEnabled) ),
     RecvPropBool( RECVINFO(m_bSprinting) ),
-    RecvPropBool( RECVINFO( m_bWalking ) ),
-    //RecvPropFloat( RECVINFO(m_flStamina) ),
-	//RecvPropFloat( RECVINFO(m_flStress) ),
+    RecvPropBool( RECVINFO( m_bSneaking ) ),
 
-    RecvPropBool( RECVINFO(m_bIsInCombat) ),
-    RecvPropBool( RECVINFO(m_bIsUnderAttack) ),
+    RecvPropBool( RECVINFO( m_bOnCombat ) ),
+    RecvPropBool( RECVINFO( m_bUnderAttack ) ),
 
     RecvPropInt( RECVINFO(m_iPlayerStatus) ),
     RecvPropInt( RECVINFO( m_iPlayerState ) ),
@@ -174,8 +172,8 @@ END_RECV_TABLE()
 BEGIN_PREDICTION_DATA( C_Player )
     // Real Prediction
     //DEFINE_PRED_FIELD( m_iOldHealth, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-    DEFINE_PRED_FIELD( m_bIsInCombat, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-    DEFINE_PRED_FIELD( m_bIsUnderAttack, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+    DEFINE_PRED_FIELD( m_bOnCombat, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+    DEFINE_PRED_FIELD( m_bUnderAttack, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
     //DEFINE_PRED_FIELD_TOL( m_flStamina, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.5f ),
     DEFINE_PRED_FIELD_TOL( m_flHelpProgress, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.5f ), // TODO
     DEFINE_PRED_FIELD_TOL( m_flClimbingHold, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.5f ),
@@ -288,10 +286,10 @@ void C_Player::PostThink()
 		UpdateLocalStress();
 
         // Estamos en combate
-        m_bIsInCombat = ( m_nIsInCombatTimer.HasStarted() && m_nIsInCombatTimer.IsLessThen(10.0f) );
+		m_bOnCombat = ( m_OnCombatTimer.HasStarted() && m_OnCombatTimer.IsLessThen(10.0f) );
             
         // Estamos bajo ataque
-        m_bIsUnderAttack = ( m_nIsUnderAttackTimer.HasStarted() && m_nIsUnderAttackTimer.IsLessThen(5.0f) ) ;
+		m_bUnderAttack = ( m_UnderAttackTimer.HasStarted() && m_UnderAttackTimer.IsLessThen(5.0f) ) ;
 
         // Colgando por nuestra vida
         // Predicción en Cliente
@@ -382,8 +380,8 @@ void C_Player::TakeDamage( const CTakeDamageInfo &info )
 	//Msg("%i \n", info.GetDamageType());
 
     // Estamos bajo ataque!
-    m_nIsUnderAttackTimer.Start();
-    m_nIsInCombatTimer.Start();
+    m_UnderAttackTimer.Start();
+    m_OnCombatTimer.Start();
 }
 
 //================================================================================
@@ -723,7 +721,7 @@ void C_Player::DoAnimationEvent( PlayerAnimEvent_t nEvent, int nData, bool bPred
     if ( nEvent == PLAYERANIMEVENT_ATTACK_PRIMARY )
     {
 		// Estamos en combate
-        m_nIsInCombatTimer.Start();
+        m_OnCombatTimer.Start();
 
 		// Mostramos la luz de combate
         ShowMuzzleFlashlight();

@@ -6,7 +6,11 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 #include "nav.h"
 #include "nav_mesh.h"
@@ -54,6 +58,41 @@ void CBotLocomotion::Update()
         m_bJumping = false;
     }
 
+    UpdateCommands();
+
+    // We have nowhere to go
+    if ( !HasDestination() )
+        return;
+
+    // Our decisions tell us that we should not move
+    if ( !GetDecision()->ShouldUpdateNavigation() )
+        return;
+
+    // We check if we have a valid path to reach our destination
+    CheckPath();
+
+    if ( !HasValidPath() )
+        return;
+
+    if ( GetBot()->ShouldShowDebug() ) {
+        GetPathFollower()->Debug( bot_debug_locomotion.GetBool() );
+    }
+    else {
+        GetPathFollower()->Debug( false );
+    }
+
+    if ( !IsUnreachable() ) {
+        GetPathFollower()->Update( m_flTickInterval );
+
+        // We got stuck, we started to move randomly
+        if ( GetDecision()->ShouldWiggle() ) {
+            Wiggle();
+        }
+    }
+}
+
+void CBotLocomotion::UpdateCommands()
+{
     if ( GetDecision()->ShouldSneak() ) {
         InjectButton( IN_WALK );
     }
@@ -67,31 +106,6 @@ void CBotLocomotion::Update()
     if ( GetDecision()->ShouldJump() ) {
         Jump();
     }
-
-    if ( !HasDestination() )
-        return;
-
-    if ( !GetDecision()->ShouldUpdateNavigation() )
-        return;
-
-    CheckPath();
-
-    if ( !HasValidPath() )
-        return;
-
-    if ( GetBot()->ShouldShowDebug() ) {
-        GetPathFollower()->Debug( bot_debug_locomotion.GetBool() );
-    }
-    else {
-        GetPathFollower()->Debug( false );
-    }
-
-    GetPathFollower()->Update( m_flTickInterval );
-
-    // We got stuck, we started to move randomly
-    if ( GetDecision()->ShouldWiggle() ) {
-        Wiggle();
-    }
 }
 
 bool CBotLocomotion::DriveTo( const char * pDesc, const Vector & vecGoal, int priority, float tolerance )
@@ -102,11 +116,16 @@ bool CBotLocomotion::DriveTo( const char * pDesc, const Vector & vecGoal, int pr
     if ( !vecGoal.IsValid() )
         return false;
 
-    if ( GetPriority() > priority )
-        return false;
+    if ( HasDestination() ) {
+        if ( GetPriority() > priority )
+            return false;
+
+        if ( GetDestination().DistTo( vecGoal ) <= 30.0f )
+            return false;
+    }
 
     float flDistance = GetAbsOrigin().DistTo( vecGoal );
-    float flTolerance = GetTolerance();
+    float flTolerance =  (tolerance > 0.0f) ? tolerance : GetTolerance();
 
     if ( flDistance <= flTolerance )
         return false;
@@ -117,8 +136,8 @@ bool CBotLocomotion::DriveTo( const char * pDesc, const Vector & vecGoal, int pr
 
     SetPriority( priority );
     SetTolerance( tolerance );
+    CheckPath();
 
-    //GetBot()->DebugAddMessage( "DriveTo: %s (%i) (tolerance: %.2f)", pDesc, priority, tolerance );
     return true;
 }
 
@@ -164,14 +183,14 @@ void CBotLocomotion::StopDrive()
 {
     // TODO: Maybe here we can do more.
     Reset();
-    GetBot()->DebugAddMessage( "Navigation Stopped" );
+    //GetBot()->DebugAddMessage( "Navigation Stopped" );
 }
 
 void CBotLocomotion::Wiggle()
 {
     if ( !m_WiggleTimer.HasStarted() || m_WiggleTimer.IsElapsed() ) {
         m_WiggleDirection = (NavRelativeDirType)RandomInt( 0, 3 );
-        m_WiggleTimer.Start( RandomFloat( 0.5f, 1.5f ) );
+        m_WiggleTimer.Start( RandomFloat( 0.5f, 2.0f ) );
     }
 
     Vector vecForward, vecRight;
@@ -204,16 +223,27 @@ void CBotLocomotion::Wiggle()
     if ( GetSimpleGroundHeightWithFloor( vecPos, &flGround ) ) {
         GetBot()->InjectMovement( m_WiggleDirection );
     }
+    
+    if ( GetStuckDuration() >= 2.5f ) {
+        GetBot()->InjectButton( IN_DUCK );
 
-    // Sometimes we jump
-    if ( GetStuckDuration() > 3.5f && RandomInt( 0, 100 ) > 80 ) {
-        Jump();
+        // Sometimes we jump
+        if ( RandomInt( 0, 100 ) > 80 ) {
+            Jump();
+        }
     }
 }
 
 bool CBotLocomotion::ShouldComputePath()
 {
     if ( !HasValidPath() )
+        return true;
+
+    // Building a path is very expensive for the engine, we limit this to once every 3s.
+    if ( GetPath()->GetElapsedTimeSinceBuild() < 3.0f )
+        return false;
+
+    if ( IsStuck() && GetStuckDuration() >= 4.0f )
         return true;
 
     const Vector vecGoal = GetDestination();
@@ -249,10 +279,15 @@ void CBotLocomotion::ComputePath()
     Vector from = GetAbsOrigin();
     Vector to = GetDestination();
 
-    BotPathCost cost( GetHost() );
+    CSimpleBotPathCost cost( GetBot() );
 
     GetPathFollower()->Reset();
     GetPath()->Compute( from, to, cost );
+}
+
+bool CBotLocomotion::IsUnreachable() const
+{
+    return GetPath()->IsUnreachable();
 }
 
 bool CBotLocomotion::IsStuck() const
@@ -344,8 +379,7 @@ float CBotLocomotion::GetMaxJumpHeight() const
 
 float CBotLocomotion::GetDeathDropHeight() const
 {
-    // TODO: Find value
-    return 0.0f;
+    return DeathDrop;
 }
 
 float CBotLocomotion::GetRunSpeed() const
@@ -383,38 +417,49 @@ bool CBotLocomotion::IsOnTolerance() const
 
 bool CBotLocomotion::IsAreaTraversable( const CNavArea * area ) const
 {
-    if ( !area )
+    if ( area == NULL )
         return false;
 
     if ( area->IsBlocked( TEAM_ANY ) || area->IsBlocked( GetHost()->GetTeamNumber() ) )
         return false;
 
-    if ( area->HasAvoidanceObstacle() )
-        return false;
-
     // TODO: More checks!
     return true;
 }
 
-bool CBotLocomotion::IsPotentiallyTraversable( const Vector & from, const Vector & to ) const
+bool CBotLocomotion::IsAreaTraversable( const CNavArea * from, const CNavArea * to ) const
 {
-    CNavArea *fromArea = TheNavMesh->GetNearestNavArea( from );
-    CNavArea *toArea = TheNavMesh->GetNearestNavArea( to );
-
-    if ( !fromArea || !toArea )
+    if ( from == NULL || to == NULL )
         return false;
 
-    if ( !IsAreaTraversable( fromArea ) || !IsAreaTraversable( toArea ) )
+    if ( !IsAreaTraversable( from ) || !IsAreaTraversable( to ) )
+        return false;
+
+    if ( !from->IsConnected( to, NUM_DIRECTIONS ) )
         return false;
 
     // Do not go from one jump area to another
-    if ( (fromArea->GetAttributes() & NAV_MESH_JUMP) && (toArea->GetAttributes() & NAV_MESH_JUMP) )
+    if ( (from->GetAttributes() & NAV_MESH_JUMP) && (to->GetAttributes() & NAV_MESH_JUMP) )
         return false;
 
     // TODO: More checks!
     return true;
 }
 
+//================================================================================
+// Returns if we have a valid destination path
+// NOTE: Very heavy duty for the engine, use with care.
+//================================================================================
+bool CBotLocomotion::IsTraversable( const Vector & from, const Vector & to ) const
+{
+    CSimpleBotPathCost pathCost( GetBot() );
+
+    CNavPath testPath;
+    return testPath.Compute( from, to, pathCost );
+}
+
+//================================================================================
+//================================================================================
 bool CBotLocomotion::IsEntityTraversable( CBaseEntity * ent ) const
 {
     // TODO
@@ -669,7 +714,7 @@ bool CBotLocomotion::TraverseLadder( const CNavLadder *ladder, NavTraverseType h
 
         // We move forward to cross the ladder
         GetBot()->InjectMovement( FORWARD );
-        GetBot()->DebugAddMessage( UTIL_VarArgs( "Moving through the ladder... %.2f \n", flDistance ) );
+        //GetBot()->DebugAddMessage( UTIL_VarArgs( "Moving through the ladder... %.2f \n", flDistance ) );
 
         // We are coming down and we almost reach the end of the ladder, 
         // we jump to release!
@@ -742,7 +787,7 @@ void CBotLocomotion::TrackPath( const Vector &pathGoal, float deltaT )
 void CBotLocomotion::OnMoveToSuccess( const Vector &goal )
 {
     StopDrive();
-    GetBot()->DebugAddMessage( "Move Success" );
+    //GetBot()->DebugAddMessage( "Move Success" );
 }
 
 //================================================================================

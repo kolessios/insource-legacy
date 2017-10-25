@@ -220,7 +220,7 @@ void CAlienFX::UpdateStatus()
     //
     if ( pPlayer->IsUnderAttack() )
         SetColor( LFX_ALL_LEFT, LFX_RED | LFX_FULL_BRIGHTNESS );
-    else if ( pPlayer->IsInCombat() )
+    else if ( pPlayer->IsOnCombat() )
         SetColor( LFX_ALL_LEFT, LFX_ORANGE | LFX_FULL_BRIGHTNESS );
     else
         SetColor( LFX_ALL_LEFT, LFX_CYAN | LFX_FULL_BRIGHTNESS );

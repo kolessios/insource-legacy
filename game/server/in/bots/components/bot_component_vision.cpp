@@ -6,7 +6,11 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#ifdef INSOURCE_DLL
 #include "in_utils.h"
+#else
+#include "bots\in_utils.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -25,11 +29,11 @@
 //================================================================================
 void CBotVision::Update()
 {
-    LookNavigation();
+    LookNavigation(); // PRIORITY_LOW
 
     LookAround();
 
-    LookAtThreat();
+    LookAtThreat(); // PRIORITY_HIGH
 
     Process();
 }
@@ -52,37 +56,36 @@ void CBotVision::Process()
         return;
     }
 
-    int speed = GetAimSpeed();
-    CBotCmd *cmd = GetBot()->GetUserCommand();
+    float deltaT = m_flTickInterval;
 
-    QAngle viewAngles( cmd->viewangles );  
-    Vector lookPosition( m_vecLookGoal - GetHost()->EyePosition() );
+    // TODO: Find better values?
+    int speed = GetAimSpeed();
+    float maxAccel = 3000.0f;
+    float stiffness = GetStiffness();
+    float damping = 25.0f;
+
+    if ( !IsIdle() ) {
+        damping = 30.0f;
+    }
+
+    QAngle viewAngles = GetHost()->EyeAngles();
+    Vector lookPosition = m_vecLookGoal - GetHost()->EyePosition();
+
     QAngle lookAngle;
     VectorAngles( lookPosition, lookAngle );
 
     float lookYaw = lookAngle.y;
     float lookPitch = lookAngle.x;
 
-    // Constants
-    // TODO: Find better values?
-    const float damping = 25.0f;
-    const float maxAccel = 3000.0f;
-
-    float deltaT = m_flTickInterval;
-    float stiffness = GetStiffness();
-
     // If we are to this tolerance of being able to aim at our target we do it in an instant way.
-    const float onTargetTolerance = 0.5f;
-
-    // If we are to this tolerance of being able to aim at our target we declare that we are already seeing it.
-    const float aimTolerance = 1.5f;
+    const float onTargetTolerance = 1.0f;
 
     //
     // Yaw
     //
     float angleDiffYaw = AngleNormalize( lookYaw - viewAngles.y );
 
-    if ( angleDiffYaw < onTargetTolerance && angleDiffYaw > -onTargetTolerance || speed == AIM_SPEED_INSTANT ) {
+    if ( speed == AIM_SPEED_INSTANT || angleDiffYaw < onTargetTolerance && angleDiffYaw > -onTargetTolerance ) {
         m_flLookYawVel = 0.0f;
         viewAngles.y = lookYaw;
     }
@@ -106,11 +109,11 @@ void CBotVision::Process()
     float angleDiffPitch = lookPitch - viewAngles.x;
     angleDiffPitch = AngleNormalize( angleDiffPitch );
 
-    if ( angleDiffPitch < onTargetTolerance && angleDiffPitch > -onTargetTolerance || speed == AIM_SPEED_INSTANT ) {
+    /*if ( angleDiffPitch < onTargetTolerance && angleDiffPitch > -onTargetTolerance || speed == AIM_SPEED_INSTANT ) {
         m_flLookPitchVel = 0.0f;
         viewAngles.x = lookPitch;
     }
-    else {
+    else {*/
         // simple angular spring/damper
         // double the stiffness since pitch is only +/- 90 and yaw is +/- 180
         float accel = 2.0f * stiffness * angleDiffPitch - damping * m_flLookPitchVel;
@@ -123,14 +126,14 @@ void CBotVision::Process()
 
         m_flLookPitchVel += deltaT * accel;
         viewAngles.x += deltaT * m_flLookPitchVel;
-    }
+    //}
 
     // We are in tolerance
-    if ( (angleDiffYaw < aimTolerance && angleDiffYaw > -aimTolerance) && (angleDiffPitch < aimTolerance && angleDiffPitch > -aimTolerance) ) {
+    if ( (angleDiffYaw < m_flCosTolerance && angleDiffYaw > -m_flCosTolerance) && (angleDiffPitch < m_flCosTolerance && angleDiffPitch > -m_flCosTolerance) ) {
         m_bAimReady = true;
 
         // We start the timer
-        if ( !m_VisionTimer.HasStarted() && m_flDuration > 0 ) {
+        if ( !m_VisionTimer.HasStarted() ) {
             m_VisionTimer.Start( m_flDuration );
         }
     }
@@ -138,9 +141,15 @@ void CBotVision::Process()
         m_bAimReady = false;
     }
 
-    cmd->viewangles = viewAngles;
-    Utils::DeNormalizeAngle( cmd->viewangles.x );
-    Utils::DeNormalizeAngle( cmd->viewangles.y );
+    // limit range - avoid gimbal lock
+    if ( viewAngles.x < -89.0f ) {
+        viewAngles.x = -89.0f;
+    }
+    else if ( viewAngles.x > 89.0f ) {
+        viewAngles.x = 89.0f;
+    }
+
+    GetHost()->SnapEyeAngles( viewAngles );
 }
 
 //================================================================================
@@ -150,59 +159,43 @@ void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLook
 {
     vecLookAt.Invalidate();
 
-    if ( !pEntity )
+    if ( pEntity == NULL )
         return;
 
     CEntityMemory *memory = NULL;
-    HitboxType favoriteHitbox = GetSkill()->GetFavoriteHitbox();
 
     if ( GetMemory() ) {
         memory = GetMemory()->GetEntityMemory( pEntity );
     }
 
-    // We have information about this entity in our memory!
     if ( memory ) {
-        if ( !memory->GetVisibleHitboxPosition( vecLookAt, favoriteHitbox ) ) {
-            // We do not have a hitbox visible
-            vecLookAt = memory->GetLastKnownPosition();
-        }
-        else {
-            // We update the last position known as the last position of the hitbox
-            memory->UpdatePosition( vecLookAt );
-        }
+        // We have information about this entity in our memory!
+        vecLookAt = memory->GetIdealPosition();
     }
-    // If it is a character, we try to aim to a hitbox
     else if ( pEntity->MyCombatCharacterPointer() ) {
-        // The entity is our main threat, 
-        // but it should be managed with memory, how did we get here?
-        Assert( (GetBot()->GetEnemy() != pEntity) );
-
-        Utils::GetHitboxPosition( pEntity, vecLookAt, favoriteHitbox );
-
-        if ( !GetHost()->IsAbleToSee( vecLookAt, CBaseCombatCharacter::DISREGARD_FOV ) ) {
-            vecLookAt = pEntity->WorldSpaceCenter();
-        }
+        // If it is a character, we try to aim to a hitbox
+        Utils::GetHitboxPosition( pEntity, vecLookAt, GetProfile()->GetFavoriteHitbox() );
     }
     else {
         vecLookAt = pEntity->WorldSpaceCenter();
     }
 
-    // No margin of error is required if we do not have visibility
-    if ( memory && !memory->IsVisible() )
+    // No margin of error is required when shooting inanimate objects
+    if ( pEntity->MyCombatCharacterPointer() == NULL )
         return;
 
     // We added a margin of error when aiming.
-    if ( GetSkill()->GetLevel() < SKILL_HARDEST ) {
+    if ( GetProfile()->GetSkill() < SKILL_HARDEST ) {
         float errorRange = 0.0f;
 
-        if ( GetSkill()->GetLevel() >= SKILL_HARD ) {
-            errorRange = RandomFloat( 0.0f, 3.5f );
+        if ( GetProfile()->GetSkill() >= SKILL_HARD ) {
+            errorRange = RandomFloat( 0.0f, 20.0f );
         }
-        if ( GetSkill()->IsMedium() ) {
-            errorRange = RandomFloat( 2.0f, 8.0f );
+        if ( GetProfile()->IsMedium() ) {
+            errorRange = RandomFloat( 10.0f, 30.0f );
         }
         else {
-            errorRange = RandomFloat( 5.0f, 10.0f );
+            errorRange = RandomFloat( 20.0f, 50.0f );
         }
 
         vecLookAt.x += RandomFloat( -errorRange, errorRange );
@@ -216,7 +209,7 @@ void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLook
 //================================================================================
 int CBotVision::GetAimSpeed()
 {
-    int speed = GetSkill()->GetMinAimSpeed();
+    int speed = GetProfile()->GetMinAimSpeed();
 
     if ( speed == AIM_SPEED_INSTANT ) {
         return AIM_SPEED_INSTANT;
@@ -229,17 +222,19 @@ int CBotVision::GetAimSpeed()
     }
 
     // Adrenaline?
-    if ( !GetSkill()->IsEasy() ) {
+    if ( !GetProfile()->IsEasy() ) {
         if ( IsCombating() ) {
             ++speed;
         }
 
+#ifdef INSOURCE_DLL
         if ( GetHost()->IsUnderAttack() ) {
             ++speed;
         }
+#endif
     }
 
-    speed = clamp( speed, GetSkill()->GetMinAimSpeed(), GetSkill()->GetMaxAimSpeed() );
+    speed = clamp( speed, GetProfile()->GetMinAimSpeed(), GetProfile()->GetMaxAimSpeed() );
     return speed;
 }
 
@@ -252,24 +247,24 @@ float CBotVision::GetStiffness()
 
     switch ( speed ) {
         case AIM_SPEED_VERYLOW:
-            return 90.0f;
+            return 100.0f;
             break;
 
         case AIM_SPEED_LOW:
-            return 110.0f;
+            return 150.0f;
             break;
 
         case AIM_SPEED_NORMAL:
         default:
-            return 150.0f;
+            return 200.0f;
             break;
 
         case AIM_SPEED_FAST:
-            return 180.0f;
+            return 250.0f;
             break;
 
         case AIM_SPEED_VERYFAST:
-            return 200.0f;
+            return 300.0f;
             break;
 
         case AIM_SPEED_INSTANT:
@@ -281,26 +276,26 @@ float CBotVision::GetStiffness()
 //================================================================================
 // Look at the specified entity
 //================================================================================
-bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, int priority, float duration )
+bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, int priority, float duration, float cosTolerance )
 {
-    if ( !pTarget )
+    if ( pTarget == NULL )
         return false;
 
     Vector vecLookAt;
     GetEntityBestAimPosition( pTarget, vecLookAt );
 
-    return LookAt( pDesc, pTarget, vecLookAt, priority, duration );
+    return LookAt( pDesc, pTarget, vecLookAt, priority, duration, cosTolerance );
 }
 
 //================================================================================
 // Look at the specified location stating that it is an entity
 //================================================================================
-bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, const Vector &vecLookAt, int priority, float duration )
+bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, const Vector &goal, int priority, float duration, float cosTolerance )
 {
-    if ( !pTarget )
+    if ( pTarget == NULL )
         return false;
 
-    bool success = LookAt( pDesc, vecLookAt, priority, duration );
+    bool success = LookAt( pDesc, goal, priority, duration, cosTolerance );
 
     if ( success ) {
         m_pLookingAt = pTarget;
@@ -312,27 +307,30 @@ bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, const Vector &
 //================================================================================
 // Look at the specified location
 //================================================================================
-bool CBotVision::LookAt( const char *pDesc, const Vector &vecGoal, int priority, float duration )
+bool CBotVision::LookAt( const char *pDesc, const Vector &vecGoal, int priority, float duration, float cosTolerance )
 {
     if ( !vecGoal.IsValid() )
         return false;
 
+    if ( m_vecLookGoal == vecGoal )
+        return false;
+
     if ( GetPriority() > priority )
         return false;
+
+    duration = MAX( duration, 0.1f );
+    cosTolerance = MAX( cosTolerance, 0.5f );
 
     m_vecLookGoal = vecGoal;
     m_pLookingAt = NULL;
     m_pDescription = pDesc;
     m_bAimReady = false;
     m_flDuration = duration;
+    m_flCosTolerance = cosTolerance;
     m_VisionTimer.Invalidate();
 
     SetPriority( priority );
-
-    // We avoid spam...
-    /*if ( !FStrEq( "Looking Forward", pDesc ) && !FStrEq( "Threat", pDesc ) ) {
-        GetBot()->DebugAddMessage( "LookAt(%s, %.2f %.2f, %i, %.2f)", m_pDescription, m_vecLookGoal.x, m_vecLookGoal.y, priority, duration );
-    }*/
+    return true;
 }
 
 //================================================================================
@@ -351,14 +349,7 @@ void CBotVision::LookAtThreat()
         return;
 
     if ( !GetDecision()->ShouldLookThreat() )
-        return;
-
-    // It's very close! We look directly at its center.
-    // This solves several problems when attempting to aim to a hitbox when it is too close.
-    if ( memory->GetDistance() <= 80.0f ) {
-        LookAt( "Threat Center", memory->GetEntity()->WorldSpaceCenter(), PRIORITY_HIGH, 0.2f );
-        return;
-    }    
+        return;   
 
     LookAt( "Threat", memory->GetEntity(), PRIORITY_HIGH, 0.2f );
 }
@@ -374,7 +365,7 @@ void CBotVision::LookNavigation()
     if ( !GetLocomotion()->HasDestination() )
         return;
 
-    Vector lookAt( GetLocomotion()->GetNextSpot() );
+    Vector lookAt = GetLocomotion()->GetNextSpot();
     lookAt.z = GetHost()->EyePosition().z;
 
     int priority = PRIORITY_LOW;
@@ -401,7 +392,7 @@ void CBotVision::LookAround()
     // We heard a sound that represents danger
     if ( HasCondition( BCOND_HEAR_COMBAT ) || HasCondition( BCOND_HEAR_DANGER ) || HasCondition( BCOND_HEAR_ENEMY ) ) {
         if ( GetDecision()->ShouldLookDangerSpot() ) {
-            LookDanger();
+            LookDanger(); // PRIORITY_HIGH
             return;
         }
     }
@@ -412,19 +403,19 @@ void CBotVision::LookAround()
     // An interesting place:
     // Places where enemies can be covered or revealed.
     if ( GetDecision()->ShouldLookInterestingSpot() ) {
-        LookInterestingSpot();
+        LookInterestingSpot(); // PRIORITY_NORMAL
         return;
     }
 
     // Random place
     if ( GetDecision()->ShouldLookRandomSpot() ) {
-        LookRandomSpot();
+        LookRandomSpot(); // PRIORITY_VERY_LOW
         return;
     }
 
     // We are in a squadron, look at a friend :)
     if ( GetDecision()->ShouldLookSquadMember() ) {
-        LookSquadMember();
+        LookSquadMember(); // PRIORITY_VERY_LOW
         return;
     }
 }
@@ -451,7 +442,14 @@ void CBotVision::LookInterestingSpot()
     if ( !Utils::FindIntestingPosition( &vecSpot, GetHost(), criteria ) )
         return;
 
-    LookAt( "Intesting Spot", vecSpot, PRIORITY_NORMAL, 1.0f );
+    float duration = 2.0f;
+
+    // We are moving, we look fast
+    if ( GetLocomotion() && GetLocomotion()->HasDestination() ) {
+        duration = 0.2f;
+    }
+
+    LookAt( "Intesting Spot", vecSpot, PRIORITY_NORMAL, duration, 3.0f );
 }
 
 //================================================================================
@@ -472,7 +470,7 @@ void CBotVision::LookRandomSpot()
     AngleVectors( viewAngles, &vecForward );
 
     Vector vecPosition = GetHost()->EyePosition();
-    LookAt( "Random Spot", vecPosition + 30 * vecForward, PRIORITY_VERY_LOW );
+    LookAt( "Random Spot", vecPosition + 30 * vecForward, PRIORITY_VERY_LOW, 3.0f );
 }
 
 //================================================================================
@@ -486,7 +484,7 @@ void CBotVision::LookSquadMember()
         return;
     }
 
-    LookAt( "Squad Member", pMember, PRIORITY_VERY_LOW, RandomFloat(1.0f, 3.5f) );
+    LookAt( "Squad Member", pMember, PRIORITY_VERY_LOW, RandomFloat(1.0f, 3.5f), 3.0f );
 }
 
 //================================================================================
@@ -502,5 +500,5 @@ void CBotVision::LookDanger()
     Vector vecLookAt = pSound->GetSoundReactOrigin();
     vecLookAt.z = GetHost()->EyePosition().z;
 
-    LookAt( "Danger Sound", vecLookAt, PRIORITY_HIGH, RandomFloat( 1.0f, 3.5f ) );
+    LookAt( "Danger Sound", vecLookAt, PRIORITY_HIGH, RandomFloat( 1.0f, 3.5f ), 3.0f );
 }

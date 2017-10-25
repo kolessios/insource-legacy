@@ -1,4 +1,6 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "info_director.h"
@@ -67,7 +69,7 @@ void CInfoDirector::InputStartPanic( inputdata_t &inputdata )
 
 	// Si es menor a 1, usemos la que el Director recomienda
 	if ( hordes < 1 ) {
-		hordes = TheDirector->GetPanicHordes();
+		hordes = TheDirector->GetPanicEventHordes();
 	}
 
 	TheDirector->StartPanic( hordes );

@@ -78,9 +78,29 @@
     inline GAME_UI_PANEL & ConstructGameUIPanel() { return * new GAME_UI_PANEL(); }
     class IMatchExtSwarm *g_pMatchExtSwarm = NULL;
 
+#elif defined(GAMEUI_ENGINE)
+
+#include "sdk/basemodpanel.h"
+#include "sdk/basemodui.h"
+typedef BaseModUI::CBaseModPanel GAME_UI_PANEL;
+inline GAME_UI_PANEL & GetGameUiPanel() {
+	return GAME_UI_PANEL::GetSingleton();
+}
+inline GAME_UI_PANEL & ConstructGameUIPanel() {
+	return *new GAME_UI_PANEL();
+}
+class IMatchExtSwarm *g_pMatchExtSwarm = NULL;
+
 #else
 
-#erorr "Implement UI"
+#include "vgui_basepanel.h"
+typedef CBasePanel UI_BASEMOD_PANEL_CLASS;
+inline UI_BASEMOD_PANEL_CLASS & GetUiBaseModPanelClass() {
+	return *BasePanel();
+}
+inline UI_BASEMOD_PANEL_CLASS & ConstructUiBaseModPanelClass() {
+	return *BasePanelSingleton();
+}
 
 #endif
 
@@ -106,6 +126,12 @@ IAchievementMgr *achievementmgr = NULL;
 
 class CGameUI;
 CGameUI *g_pGameUI = NULL;
+
+#ifdef GAMEUI_ENGINE
+class CLoadingDialog;
+vgui::DHANDLE<CLoadingDialog> g_hLoadingDialog;
+vgui::VPANEL g_hLoadingBackgroundDialog = NULL;
+#endif
 
 static CGameUI g_GameUI;
 static WHANDLE g_hMutex = NULL;
@@ -723,7 +749,12 @@ void CGameUI::OnLevelLoadingFinished( bool bError, const char *failureReason, co
 {
     // notify all the modules
     g_VModuleLoader.PostMessageToAllModules( new KeyValues( "LoadingFinished" ) );
+
+#ifdef GAMEUI_ENGINE
+	GetGameUiPanel().OnLevelLoadingFinished( new KeyValues( "LoadingFinished" ) );
+#else
     GetGameUiPanel().OnLevelLoadingFinished( bError, failureReason, extendedReason );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -788,9 +819,12 @@ void CGameUI::OnDisconnectFromServer( uint8 eSteamLoginFailure )
     m_iGameQueryPort = 0;
 
     g_VModuleLoader.PostMessageToAllModules( new KeyValues( "DisconnectedFromGame" ) );
-    GetGameUiPanel().OnDisconnectFromServer( eSteamLoginFailure );
 
-    /*
+#ifndef GAMEUI_ENGINE
+    GetGameUiPanel().OnDisconnectFromServer( eSteamLoginFailure );
+#endif
+
+#ifdef GAMEUI_ENGINE
     if ( eSteamLoginFailure == STEAMLOGINFAILURE_NOSTEAMLOGIN )
     {
         if ( g_hLoadingDialog )
@@ -812,7 +846,7 @@ void CGameUI::OnDisconnectFromServer( uint8 eSteamLoginFailure )
             g_hLoadingDialog->DisplayLoggedInElsewhereError();
         }
     }
-    */
+#endif
 }
 
 //-----------------------------------------------------------------------------
