@@ -9,7 +9,9 @@ Most notable features.
 *Some of these features may be incomplete or have problems in the current version.*
 
 - **Bots:** 
-An A.I. for the creation of Bots. (Players controlled by the computer)
+An A.I. for the creation of Bots. (Players controlled by the computer).
+
+*If you are only interested in the Bots system and want to incorporate them in your own engine modification or in [Source SDK 2013](https://developer.valvesoftware.com/wiki/Source_SDK_2013) look at this [repository](https://github.com/WootsMX/sourcebots).*
 - **Director:** 
 An A.I. for creating NPCs/Bots on the map depending on multiple variables such as players status. (Inspired by the [Director](https://youtu.be/WbHMxo11HcU) of the saga Left 4 Dead)
 - **Channel Sound System:** 
@@ -28,7 +30,8 @@ Game Files
 --------------
 
 For the tests shown in the [videos](https://www.youtube.com/playlist?list=PLOUVJcNedgYFn3BOrz6aRPYpKkpLzQcbV) the mod files "Apocalypse-22" are used.
-You can find the base files [here](https://github.com/WootsMX/Games-Files).
+
+You can find the mod files [here](https://github.com/WootsMX/insource-games).
 
 Dependencies
 --------------
