@@ -103,15 +103,15 @@ void MainMenu::OnCommand( const char *command )
 	bool bOpeningFlyout = false;
 	if ( !Q_stricmp( command, "FlmRunA" ) )
 	{
-		engine->ClientCmd( "map test" );
+		engine->ClientCmd( "map test_render" );
 	}
 	else if ( !Q_stricmp( command, "FlmRunB" ) )
 	{
-		engine->ClientCmd( "map test_cookies" );
+		engine->ClientCmd( "map test_bots" );
 	}
 	else if ( !Q_stricmp( command, "FlmRunC" ) )
 	{
-		engine->ClientCmd( "map test_volumetrics" );
+		engine->ClientCmd( "exec start_assault_demo" );
 	}
 	else if ( !Q_stricmp( command, "commandConsole" ) )
 	{
