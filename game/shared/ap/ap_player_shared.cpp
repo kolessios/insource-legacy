@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "in_gamerules.h"
@@ -23,7 +25,6 @@ extern ConVar sv_player_sprint_speed;
 //================================================================================
 void CAP_Player::CreateAnimationSystem()
 {
-    // Información predeterminada
     MultiPlayerMovementData_t data;
     data.Init();
 
@@ -97,6 +98,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
     switch ( actBase ) {
         case ACT_MP_STAND_IDLE:
         case ACT_MP_IDLE_CALM:
+		case ACT_MP_SWIM_IDLE:
         {
             if ( IsSurvivor() || IsSoldier() ) {
 #ifdef USE_L4D2_MODELS
@@ -124,6 +126,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
 
         case ACT_MP_RUN:
         case ACT_MP_RUN_CALM:
+		case ACT_MP_SWIM:
         {
             if ( IsSurvivor() || IsSoldier() ) {
 #ifdef USE_L4D2_MODELS
