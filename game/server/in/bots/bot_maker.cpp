@@ -204,10 +204,22 @@ void CBotSpawn::SetUpBot()
         GetPlayer()->SetName( m_nBotTargetname );
     }
 
-    GetPlayer()->ChangeTeam( m_iBotTeam );
+	// Random Team
+	if ( m_iBotTeam == 99 ) {
+		GetPlayer()->SetRandomTeam();
+	}
+	else {
+		GetPlayer()->ChangeTeam( m_iBotTeam );
+	}
 
 #ifdef INSOURCE_DLL
-    GetPlayer()->SetPlayerClass( m_iBotClass );
+	// Random Class
+	if ( m_iBotClass == 99 ) {
+		GetPlayer()->SetRandomPlayerClass();
+	}
+	else {
+		GetPlayer()->SetPlayerClass( m_iBotClass );
+	}
 #endif
 
     GetPlayer()->SetOwnerEntity( this );

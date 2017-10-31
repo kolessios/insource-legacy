@@ -193,12 +193,14 @@ enum
     #ifdef APOCALYPSE
         TEAM_HUMANS = LAST_SHARED_TEAM + 1,
         TEAM_SOLDIERS,
-        TEAM_INFECTED
+        TEAM_INFECTED,
     #elif SCP
         TEAM_HUMANS = LAST_SHARED_TEAM + 1,
         TEAM_SOLDIERS,
         TEAM_SCP,
     #endif
+
+	LAST_TEAM
 };
 
 //================================================================================

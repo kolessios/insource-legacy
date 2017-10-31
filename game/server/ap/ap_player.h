@@ -58,8 +58,12 @@ public:
     //
     virtual void EnterPlayerState( int status );
 
+	// Team
+	virtual void SetRandomTeam();
+
     // Clase
     virtual void OnPlayerClass( int playerClass );
+	virtual void SetRandomPlayerClass();
 
     // Equipos
     virtual void ChangeTeam( int iTeamNum );

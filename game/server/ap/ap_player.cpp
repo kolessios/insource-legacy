@@ -321,11 +321,53 @@ void CAP_Player::EnterPlayerState( int status )
 }
 
 //================================================================================
+// Set a random team for the player.
+//================================================================================
+void CAP_Player::SetRandomTeam()
+{
+	ChangeTeam( RandomInt(TEAM_HUMANS, TEAM_SOLDIERS) );
+	// TODO: TEAM_INFECTED = Buggy
+}
+
+//================================================================================
 //================================================================================
 void CAP_Player::OnPlayerClass( int playerClass )
 {
     BaseClass::OnPlayerClass( playerClass );
     Spawn();
+}
+
+//================================================================================
+// Set a random class for the player.
+//================================================================================
+void CAP_Player::SetRandomPlayerClass()
+{
+	switch ( GetTeamNumber() ) {
+		case TEAM_HUMANS:
+		{
+			SetPlayerClass( PLAYER_CLASS_NONE );
+			break;
+		}
+
+		case TEAM_SOLDIERS:
+		{
+			SetPlayerClass( RandomInt( PLAYER_CLASS_SOLDIER_LEVEL1, PLAYER_CLASS_SOLDIER_MEDIC ) );
+			break;
+		}
+
+		case TEAM_INFECTED:
+		{
+			SetPlayerClass( RandomInt( PLAYER_CLASS_INFECTED_COMMON, PLAYER_CLASS_INFECTED_BOSS ) );
+			break;
+		}
+
+		default:
+		{
+			Assert( !"An attempt has been made to establish a random class without a selected team." );
+			SetPlayerClass( PLAYER_CLASS_NONE );
+			break;
+		}
+	}
 }
 
 //================================================================================

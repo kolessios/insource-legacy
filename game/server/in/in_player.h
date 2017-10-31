@@ -286,12 +286,16 @@ public:
     virtual void LeavePlayerState( int status ) { }
     virtual void SetPlayerState( int status );
 
+	// Team
+	virtual void SetRandomTeam() { }
+
     // Clase
     virtual int GetPlayerClass() { return m_iPlayerClass; }
     virtual int GetPlayerClass() const { return m_iPlayerClass; }
 
     virtual void OnPlayerClass( int playerClass ) { }
     virtual void SetPlayerClass( int playerClass );
+	virtual void SetRandomPlayerClass() { }
 
     // Velocidad
     virtual float GetSpeed();
