@@ -230,11 +230,11 @@ void CPlayer::InitialSpawn()
     pl.deadflag = false;
     m_lifeState = LIFE_ALIVE;
 
-    SetPlayerState( PLAYER_STATE_NONE );
-
     CreateExpresser();
     CreateAnimationSystem();
     CreateSenses();
+
+	SetPlayerState( PLAYER_STATE_NONE );
 }
 
 //================================================================================
@@ -1855,7 +1855,7 @@ void CPlayer::EnterPlayerState( int status )
             SetMoveType( MOVETYPE_NONE );
             AddEffects( EF_NODRAW );
             AddSolidFlags( FSOLID_NOT_SOLID );
-            PhysObjectSleep();
+            //PhysObjectSleep();
             StartObserverMode( OBS_MODE_ROAMING );
 
             // Creamos el contexto para el pensamiento de empujar objetos

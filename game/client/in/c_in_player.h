@@ -176,7 +176,7 @@ public:
     C_BaseWeapon *GetBaseWeapon();
 
     // Animaciones
-    virtual CPlayerAnimationSystem *AnimationSystem() { return m_pAnimationSystem; }
+    virtual CPlayerAnimationSystem *GetAnimationSystem() { return m_pAnimationSystem; }
     virtual void CreateAnimationSystem();
 
     virtual void SetAnimation( PLAYER_ANIM );

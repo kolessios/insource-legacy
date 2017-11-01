@@ -139,6 +139,7 @@ int CBaseWeapon::DrawModel( int flags, const RenderableInstance_t & instance )
 //================================================================================
 void CBaseWeapon::AddViewmodelBob( CBaseViewModel *viewmodel, Vector &origin, QAngle &angles )
 {
+	
 }
 
 //================================================================================

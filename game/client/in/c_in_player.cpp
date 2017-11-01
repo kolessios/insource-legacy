@@ -213,8 +213,8 @@ C_Player::C_Player() : m_iv_angEyeAngles( "C_Player::m_iv_angEyeAngles" )
 C_Player::~C_Player()
 {
     // Liberamos el sistema de animación
-    if ( AnimationSystem() )
-        AnimationSystem()->Release();
+    if ( GetAnimationSystem() )
+        GetAnimationSystem()->Release();
 
     // Linternas
     DestroyFlashlight();
@@ -514,8 +514,8 @@ const QAngle& C_Player::GetRenderAngles()
     }
     else
     {
-        if ( AnimationSystem() )
-            return AnimationSystem()->GetRenderAngles();
+        if ( GetAnimationSystem() )
+            return GetAnimationSystem()->GetRenderAngles();
         else
             return BaseClass::GetRenderAngles();
     }
@@ -681,8 +681,8 @@ C_BaseWeapon *C_Player::GetBaseWeapon()
 void C_Player::UpdateClientSideAnimation()
 {
     // Actualizamos el sistema de animaciones
-    if ( AnimationSystem() )
-        AnimationSystem()->Update();
+    if ( GetAnimationSystem() )
+        GetAnimationSystem()->Update();
 
     // Actualizamos Poses
     UpdatePoseParams();
@@ -741,8 +741,8 @@ void C_Player::DoAnimationEvent( PlayerAnimEvent_t nEvent, int nData, bool bPred
     MDLCACHE_CRITICAL_SECTION();
 
     // Procesamos la animación en el cliente
-    if ( AnimationSystem() )
-        AnimationSystem()->DoAnimationEvent( nEvent, nData );
+    if ( GetAnimationSystem() )
+        GetAnimationSystem()->DoAnimationEvent( nEvent, nData );
 }
 
 //================================================================================
@@ -791,8 +791,8 @@ CStudioHdr *C_Player::OnNewModel()
     InitializePoseParams();
 
     // Reset the players animation states, gestures
-    if ( AnimationSystem() )
-        AnimationSystem()->OnNewModel();
+    if ( GetAnimationSystem() )
+        GetAnimationSystem()->OnNewModel();
 
     return pHDR;
 }

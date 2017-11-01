@@ -217,6 +217,10 @@ public:
 
     Activity GetCurrentMainActivity( void ) { return m_eCurrentMainSequenceActivity; }
 
+	LegAnimType_t GetLegAnimType() {
+		return m_LegAnimType;
+	}
+
     void OnNewModel( void );
 
     // Gestures.
@@ -305,6 +309,10 @@ protected:
 
 #endif
 
+public:
+	MultiPlayerMovementData_t m_MovementData;
+	MultiPlayerPoseData_t m_PoseParameterData;
+
 protected:
 
     CBasePlayer    *m_pPlayer;
@@ -313,7 +321,7 @@ protected:
 
     // Pose parameters.
     bool                        m_bPoseParameterInit;
-    MultiPlayerPoseData_t        m_PoseParameterData;
+    
     DebugPlayerAnimData_t        m_DebugAnimData;
 
     bool                        m_bCurrentFeetYawInitialized;
@@ -324,8 +332,6 @@ protected:
     float m_flGoalFeetYaw;
     float m_flCurrentFeetYaw;
     float m_flLastAimTurnTime;
-
-    MultiPlayerMovementData_t    m_MovementData;
 
     // Jumping.
     bool    m_bJumping;

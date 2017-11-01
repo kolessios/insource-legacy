@@ -14,6 +14,7 @@
 
 #include "in/c_in_player.h"
 #else
+#include "in_player.h"
 #include "vguiscreen.h"
 #endif
 
@@ -23,11 +24,10 @@
 #define VIEWMODEL_ANIMATION_PARITY_BITS 3
 #define SCREEN_OVERLAY_MATERIAL "vgui/screens/vgui_overlay"
 
-#if defined( CLIENT_DLL )
-	ConVar viewmodel_offset_x( "viewmodel_offset_x", "0.0", FCVAR_ARCHIVE );	 // the viewmodel offset from default in X
-	ConVar viewmodel_offset_y( "viewmodel_offset_y", "0.0", FCVAR_ARCHIVE );	 // the viewmodel offset from default in Y
-	ConVar viewmodel_offset_z( "viewmodel_offset_z", "0.0", FCVAR_ARCHIVE );	 // the viewmodel offset from default in Z
-#endif
+
+ConVar viewmodel_offset_x( "viewmodel_offset_x", "0.0", FCVAR_ARCHIVE );	 // the viewmodel offset from default in X
+ConVar viewmodel_offset_y( "viewmodel_offset_y", "0.0", FCVAR_ARCHIVE );	 // the viewmodel offset from default in Y
+ConVar viewmodel_offset_z( "viewmodel_offset_z", "0.0", FCVAR_ARCHIVE );	 // the viewmodel offset from default in Z
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -406,7 +406,7 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
         return;
 
 	// UNDONE: Calc this on the server?  Disabled for now as it seems unnecessary to have this info on the server
-#if defined( CLIENT_DLL )
+//#if defined( CLIENT_DLL )
 	QAngle vmangoriginal = eyeAngles;
 	QAngle vmangles = eyeAngles;
 	Vector vmorigin = eyePosition;
@@ -456,7 +456,45 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 	SetLocalOrigin( vmorigin );
 	SetLocalAngles( vmangles );
 
-#endif
+//#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseViewModel::AddViewModelBob( CBasePlayer * owner, Vector & eyePosition, QAngle & eyeAngles )
+{
+	CPlayer *pPlayer = ToInPlayer(owner);
+
+	// The player needs to have a animation system.
+	if ( !pPlayer->GetAnimationSystem() ) {
+		return;
+	}
+
+	// This function is only compatible with the parameters move_x and move_y
+	if ( pPlayer->GetAnimationSystem()->GetLegAnimType() != LEGANIM_9WAY ) {
+		return;
+	}
+
+	// We obtain the name "move_x" and verify if the viewmodel can use this function.
+	const char *szPoseName = pPlayer->GetAnimationSystem()->m_MovementData.m_nMoveXPoseName;
+	int bobParameter = LookupPoseParameter( szPoseName );
+
+	if ( bobParameter < 0 ) {
+		return;
+	}
+
+	if ( pPlayer->GetAnimationSystem()->m_PoseParameterData.m_iMoveX < 0 ) {
+		return;
+	}
+
+	// We obtain the player's movement values and use the highest value.
+	float moveX = pPlayer->GetPoseParameter( pPlayer->GetAnimationSystem()->m_PoseParameterData.m_iMoveX );
+	float moveY = pPlayer->GetPoseParameter( pPlayer->GetAnimationSystem()->m_PoseParameterData.m_iMoveY );
+	float bobValue = MAX( abs(moveX), abs(moveY) );
+
+	// Viewmodel bob!
+	SetPoseParameter( bobParameter, bobValue );
 }
 
 //-----------------------------------------------------------------------------
