@@ -45,12 +45,23 @@ public:
         return (IsFollowing() && IsEnabled());
     }
 
+    virtual bool IsFollowingInactive()
+    {
+        return (IsFollowing() && !IsEnabled());
+    }
+
     virtual bool IsEnabled() {
         return m_bEnabled;
     }
 
-    virtual void SetEnabled( bool enabled ) {
-        m_bEnabled = enabled;
+    virtual void Enable()
+    {
+        m_bEnabled = true;
+    }
+
+    virtual void Disable()
+    {
+        m_bEnabled = false;
     }
 
 protected:

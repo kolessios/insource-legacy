@@ -45,7 +45,7 @@ DECLARE_DEBUG_COMMAND( bot_mimic, "0", "" )
 DECLARE_DEBUG_COMMAND( bot_aim_player, "0", "" )
 DECLARE_DEBUG_COMMAND( bot_primary_attack, "0", "" )
 
-DECLARE_DEBUG_COMMAND( bot_sendcmd, "", 0, "Forces bots to send the specified command." );
+DECLARE_DEBUG_COMMAND( bot_sendcmd, "", "Forces bots to send the specified command." );
 DECLARE_DEBUG_COMMAND( bot_team, "0", "Force all bots created with bot_add to change to the specified team" )
 
 DECLARE_DEBUG_COMMAND( bot_notarget, "0", "" )
@@ -152,6 +152,8 @@ void CBot::Spawn()
     m_iRepeatedDamageTimes = 0;
     m_flDamageAccumulated = 0.0f;
 
+    m_bConditionsBlocked = false;
+
     if ( GetMemory() ) {
         GetMemory()->UpdateDataMemory( MEMORY_SPAWN_POSITION, GetAbsOrigin() );
     }
@@ -179,7 +181,9 @@ void CBot::Update()
 
     Upkeep();
 
-    if ( CanRunAI() ) RunAI();
+    if ( CanRunAI() ) {
+        RunAI();
+    }
 
     PlayerMove( m_cmd );
 }
@@ -272,6 +276,8 @@ void CBot::RunAI()
 {
     m_RunTimer.Start();
 
+    ClearConditions();
+
     BlockConditions();
 
     ApplyDebugCommands();
@@ -286,6 +292,10 @@ void CBot::RunAI()
 
     UpdateSchedule();
 
+    // We change to the best weapon for this situation
+    // TODO: A better place to put this.
+    GetDecision()->SwitchToBestWeapon();
+
     m_RunTimer.End();
 
     DebugDisplay();
@@ -299,10 +309,12 @@ void CBot::UpdateComponents( bool important )
 
     FOR_EACH_COMPONENT
     {
-        if ( important && !m_nComponents[it]->ItsImportant() )
+        if ( important && !m_nComponents[it]->ItsImportant() ) {
             continue;
-        else if ( !important && m_nComponents[it]->ItsImportant() )
+        }
+        else if ( !important && m_nComponents[it]->ItsImportant() ) {
             continue;
+        }
         
         timer.Start();
         m_nComponents[it]->Update();

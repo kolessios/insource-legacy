@@ -204,5 +204,10 @@ void CEntityMemory::UpdateHitboxAndVisibility()
     }
 
     // We update the ideal position
-    GetVisibleHitboxPosition( m_vecIdealPosition, m_pBot->GetProfile()->GetFavoriteHitbox() );
+    if ( IsEnemy() ) {
+        GetVisibleHitboxPosition(m_vecIdealPosition, m_pBot->GetProfile()->GetFavoriteHitbox());
+    }
+    else {
+        m_vecIdealPosition = GetEntity()->WorldSpaceCenter();
+    }
 }

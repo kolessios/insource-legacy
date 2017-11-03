@@ -89,12 +89,17 @@ void CBotLocomotion::Update()
             Wiggle();
         }
     }
+
+    // TODO: This should be done in the Path Follower
+    if ( GetDistanceToDestination() <= GetTolerance() ) {
+        StopDrive();
+    }
 }
 
 void CBotLocomotion::UpdateCommands()
 {
     if ( GetDecision()->ShouldSneak() ) {
-        InjectButton( IN_WALK );
+        //InjectButton( IN_WALK );
     }
     else if ( GetDecision()->ShouldRun() ) {
         InjectButton( IN_SPEED );
@@ -333,8 +338,7 @@ CBaseEntity * CBotLocomotion::GetGround() const
 Vector & CBotLocomotion::GetGroundNormal() const
 {
     if ( !IsOnGround() ) {
-        Vector vecNormal( vec3_invalid );
-        return vecNormal;
+        return Vector(vec3_invalid);
     }
 
     Vector vecFloor( GetFeet() );
@@ -358,8 +362,7 @@ float CBotLocomotion::GetTolerance() const
 
 Vector & CBotLocomotion::GetVelocity() const
 {
-    Vector vecVelocity( GetHost()->GetAbsVelocity() );
-    return vecVelocity;
+    return Vector(GetHost()->GetAbsVelocity());
 }
 
 float CBotLocomotion::GetSpeed() const

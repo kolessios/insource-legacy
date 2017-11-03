@@ -474,6 +474,9 @@ enum
     BTASK_SET_FAIL_SCHEDULE,            // If the schedule fails, the indicated schedule will run
     BTASK_SET_SCHEDULE,                 // Running the specified schedule at the end of the active
 
+    BTASK_PAUSE_FOLLOW,                 // We stop following someone
+    BTASK_RESUME_FOLLOW,                // Return to follow
+
 	BLAST_TASK,
 
 	BCUSTOM_TASK = 999
@@ -497,10 +500,10 @@ static const char *g_BotTasks[BLAST_TASK] =
 
 	"HUNT_ENEMY",
 
-    "GET_SPAWN",
-	"GET_SPOT_ASIDE",
-	"GET_COVER",
-	"GET_FAR_COVER",
+    "SAVE_SPAWN_POSITION",
+	"SAVE_ASIDE_SPOT",
+	"SAVE_COVER_SPOT",
+	"SAVE_FAR_COVER_SPOT",
 
     "AIM",
 
@@ -515,7 +518,13 @@ static const char *g_BotTasks[BLAST_TASK] =
     "RELOAD_SAFE",
     "HEAL",
 
-    "CALL_FOR_BACKUP"
+    "CALL_FOR_BACKUP",
+
+    "SET_FAIL_SCHEDULE",
+    "SET_SCHEDULE",
+    
+    "PAUSE_FOLLOW",
+    "RESUME_FOLLOW"
 };
 
 //================================================================================

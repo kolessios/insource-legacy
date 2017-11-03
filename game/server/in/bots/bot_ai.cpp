@@ -26,6 +26,14 @@ void CBot::SetCondition( BCOND condition )
 }
 
 //================================================================================
+// Clear all conditions
+//================================================================================
+void CBot::ClearConditions()
+{
+    m_nConditions.ClearAll();
+}
+
+//================================================================================
 // Forgets a condition
 //================================================================================
 void CBot::ClearCondition( BCOND condition )
@@ -38,7 +46,7 @@ void CBot::ClearCondition( BCOND condition )
 //================================================================================
 bool CBot::HasCondition( BCOND condition ) const
 {
-    if ( IsConditionsAllowed() ) {
+    if ( !IsConditionsAllowed() ) {
         Assert( !"Attempt to verify a condition before gathering!" );
         return false;
     }
@@ -251,6 +259,7 @@ void CBot::GatherConditions()
     GatherEnemyConditions();
     GatherAttackConditions();
     GatherLocomotionConditions();
+    GatherOtherConditions();
 }
 
 //================================================================================
@@ -296,10 +305,6 @@ void CBot::GatherHealthConditions()
 void CBot::GatherWeaponConditions()
 {
     VPROF_BUDGET( "GatherWeaponConditions", VPROF_BUDGETGROUP_BOTS );
-
-    // We change to the best weapon for this situation
-    // TODO: A better place to put this.
-    GetDecision()->SwitchToBestWeapon();
 
     CBaseWeapon *pWeapon = GetHost()->GetActiveBaseWeapon();
 
@@ -354,12 +359,26 @@ void CBot::GatherWeaponConditions()
             SetCondition( BCOND_LOW_SECONDARY_AMMO );
     }
 
+    UnblockConditions();
+
     // You have no ammunition of any kind, you are defenseless
-    if ( HasCondition( BCOND_EMPTY_PRIMARY_AMMO ) &&
-         HasCondition( BCOND_EMPTY_CLIP1_AMMO ) &&
-         HasCondition( BCOND_EMPTY_SECONDARY_AMMO ) &&
-         HasCondition( BCOND_EMPTY_CLIP2_AMMO ) )
-        SetCondition( BCOND_HELPLESS );
+    if ( HasCondition(BCOND_EMPTY_PRIMARY_AMMO) &&
+        HasCondition(BCOND_EMPTY_CLIP1_AMMO) &&
+        HasCondition(BCOND_EMPTY_SECONDARY_AMMO) &&
+        HasCondition(BCOND_EMPTY_CLIP2_AMMO) ) {
+        SetCondition(BCOND_HELPLESS);
+    }
+
+    if ( GetMemory() ) {
+        CBaseWeapon *pWeapon = ToBaseWeapon(GetDataMemoryEntity("VisibleWeapon"));
+
+        if ( GetDecision()->ShouldGrabWeapon(pWeapon) ) {
+            GetMemory()->UpdateDataMemory("BestWeapon", pWeapon, 20.0f);
+            SetCondition(BCOND_BETTER_WEAPON_AVAILABLE);
+        }
+    }
+
+    BlockConditions();
 }
 
 //================================================================================
@@ -443,6 +462,8 @@ void CBot::GatherAttackConditions()
 {
     VPROF_BUDGET("SelectAttackConditions", VPROF_BUDGETGROUP_BOTS);
 
+    UnblockConditions();
+
     BCOND condition = GetDecision()->ShouldRangeAttack1();
 
     if ( condition != BCOND_NONE )
@@ -462,6 +483,8 @@ void CBot::GatherAttackConditions()
 
     if ( condition != BCOND_NONE )
         SetCondition( condition );
+
+    BlockConditions();
 }
 
 //================================================================================
@@ -474,6 +497,23 @@ void CBot::GatherLocomotionConditions()
     if ( GetLocomotion()->HasDestination() ) {
         if ( GetLocomotion()->IsUnreachable() ) {
             SetCondition( BCOND_GOAL_UNREACHABLE );
+        }
+    }
+}
+
+//================================================================================
+// Gets new conditions
+//================================================================================
+void CBot::GatherOtherConditions()
+{
+    // We want to always know if any of our friends is down
+    if ( GetDecision()->ShouldKnownDejectedFriends() ) {
+        CPlayer *pDejected = GetDecision()->GetClosestDejectedFriend();
+
+        if ( pDejected ) {
+            GetMemory()->UpdateEntityMemory(pDejected, pDejected->GetAbsOrigin());
+            GetMemory()->UpdateDataMemory("DejectedFriend", pDejected, 30.0f);
+            SetCondition(BCOND_SEE_DEJECTED_FRIEND);
         }
     }
 }

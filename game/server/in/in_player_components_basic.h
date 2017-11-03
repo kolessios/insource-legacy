@@ -15,7 +15,7 @@
 class CPlayerHealthComponent : public CPlayerComponent
 {
 public:
-    DECLARE_COMPONENT( PLAYER_COMPONENT_HEALTH );
+    DECLARE_PLAYER_COMPONENT( PLAYER_COMPONENT_HEALTH );
 
     virtual void Init();
     virtual void Update();
@@ -30,7 +30,7 @@ public:
 class CPlayerEffectsComponent : public CPlayerComponent
 {
 public:
-    DECLARE_COMPONENT( PLAYER_COMPONENT_EFFECTS );
+    DECLARE_PLAYER_COMPONENT( PLAYER_COMPONENT_EFFECTS );
 
     virtual void Update();
 };
@@ -41,7 +41,7 @@ public:
 class CPlayerDejectedComponent : public CPlayerComponent
 {
 public:
-    DECLARE_COMPONENT( PLAYER_COMPONENT_DEJECTED );
+    DECLARE_PLAYER_COMPONENT( PLAYER_COMPONENT_DEJECTED );
 
     virtual void Update();
 

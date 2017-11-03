@@ -312,7 +312,7 @@ bool C_AP_Player::CreateMuzzleLight()
     pLight->Init();
     pLight->SetShadows( true, false, 0, 4.0f );
     pLight->SetFar( GetFlashlightFarZ() + 500.0f );
-    pLight->SetColor( 224, 209, 108, 455 );
+    pLight->SetColor( 224, 209, 108, 255 );
     return true;
 }
 

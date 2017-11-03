@@ -190,6 +190,7 @@ public:
     virtual void GatherEnemyConditions() = 0;
     virtual void GatherAttackConditions() = 0;
     virtual void GatherLocomotionConditions() = 0;
+    virtual void GatherOtherConditions() = 0;
 
     virtual CBaseEntity *GetEnemy() const = 0;
     virtual CEntityMemory *GetPrimaryThreat() const = 0;

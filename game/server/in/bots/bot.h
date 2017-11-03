@@ -74,6 +74,7 @@ public:
     virtual void Combat();
 
     virtual void SetCondition( BCOND condition );
+    virtual void ClearConditions();
     virtual void ClearCondition( BCOND condition );
     virtual bool HasCondition( BCOND condition ) const;
 
@@ -107,6 +108,7 @@ public:
     virtual void GatherEnemyConditions();
     virtual void GatherAttackConditions();
     virtual void GatherLocomotionConditions();
+    virtual void GatherOtherConditions();
 
     virtual CBaseEntity *GetEnemy() const;
     virtual CEntityMemory *GetPrimaryThreat() const;
@@ -163,15 +165,14 @@ public:
     // Functions to debug if attempts have been made to use conditions before collecting them.
     virtual void BlockConditions() {
         m_bConditionsBlocked = true;
-        m_nConditions.ClearAll();
     }
 
     virtual void UnblockConditions() {
-        m_bConditionsBlocked = true;
+        m_bConditionsBlocked = false;
     }
 
     virtual bool IsConditionsAllowed() const {
-        return (!m_nConditions.IsAllClear() && m_bConditionsBlocked == false);
+        return (m_bConditionsBlocked == false);
     }
 
 private:
@@ -347,7 +348,7 @@ public:
         }
 
         // add in the danger of this path - danger is per unit length travelled
-        cost += dist * baseDangerFactor * area->GetDanger( m_pBot->GetHost()->GetTeamNumber() );
+        cost += dist * dangerFactor * area->GetDanger( m_pBot->GetHost()->GetTeamNumber() );
 
         return cost;
     }

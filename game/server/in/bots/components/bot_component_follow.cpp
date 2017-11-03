@@ -39,6 +39,10 @@ void CBotFollow::Update()
         return;
     }
 
+    if ( GetMemory() ) {
+        GetMemory()->UpdateEntityMemory(pEntity, pEntity->GetAbsOrigin());
+    }
+
     GetLocomotion()->Approach( pEntity, GetTolerance(), PRIORITY_FOLLOWING );
 }
 
@@ -58,7 +62,13 @@ void CBotFollow::Start( CBaseEntity *pEntity, bool enabled )
     }
 
     m_Entity = pEntity;
-    SetEnabled( enabled );
+
+    if ( enabled ) {
+        Enable();
+    }
+    else {
+        Disable();
+    }
 }
 
 //================================================================================

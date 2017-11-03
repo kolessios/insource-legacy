@@ -86,13 +86,23 @@ public:
         m_WiggleDirection = BACKWARD;
         m_WiggleTimer.Invalidate();
 
-        m_NavPath = new CNavPath();
+        if ( !m_NavPath ) {
+            m_NavPath = new CNavPath();
+        }
+        else {
+            m_NavPath->Invalidate();
+        }
 
-        m_NavPathFollower = new CNavPathFollower();
-        m_NavPathFollower->Reset();
-        m_NavPathFollower->SetPath( m_NavPath );
-        m_NavPathFollower->SetImprov( this );
-        m_NavPathFollower->SetFollowPathExactly( false );
+        if ( !m_NavPathFollower ) {
+            m_NavPathFollower = new CNavPathFollower();
+            m_NavPathFollower->Reset();
+            m_NavPathFollower->SetPath(m_NavPath);
+            m_NavPathFollower->SetImprov(this);
+            m_NavPathFollower->SetFollowPathExactly(false);
+        }
+        else {
+            m_NavPathFollower->Reset();
+        }
     }
 
     virtual bool HasDestination() const {
@@ -164,8 +174,8 @@ protected:
     bool m_bDisabled;
     float m_flTolerance;
 
-    CNavPath *m_NavPath;
-    CNavPathFollower *m_NavPathFollower;
+    CNavPath *m_NavPath = NULL;
+    CNavPathFollower *m_NavPathFollower = NULL;
 
     Vector m_vecDestination;
     Vector m_vecNextSpot;

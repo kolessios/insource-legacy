@@ -79,9 +79,12 @@ void CBot::OnLooked( CBaseEntity *pSightEnt )
         if ( pSightEnt->IsPlayer() ) {
             CPlayer *pSightPlayer = ToInPlayer( pSightEnt );
 
-            if ( GetDecision()->ShouldHelpDejectedFriend( pSightPlayer ) ) {
-                GetMemory()->UpdateDataMemory( "DejectedFriend", pSightEnt, 30.0f );
-                SetCondition( BCOND_SEE_DEJECTED_FRIEND );
+            // We need to have vision to see that he is dejected.
+            if ( !GetDecision()->ShouldKnownDejectedFriends() ) {
+                if ( GetDecision()->ShouldHelpDejectedFriend(pSightPlayer) ) {
+                    GetMemory()->UpdateDataMemory("DejectedFriend", pSightEnt, 30.0f);
+                    SetCondition(BCOND_SEE_DEJECTED_FRIEND);
+                }
             }
         }
     }
@@ -91,10 +94,7 @@ void CBot::OnLooked( CBaseEntity *pSightEnt )
             CBaseWeapon *pWeapon = ToBaseWeapon( pSightEnt );
             Assert( pWeapon );
 
-            if ( GetDecision()->ShouldGrabWeapon( pWeapon ) ) {
-                GetMemory()->UpdateDataMemory( "BestWeapon", pSightEnt, 30.0f );
-                SetCondition( BCOND_BETTER_WEAPON_AVAILABLE );
-            }
+            GetMemory()->UpdateDataMemory("VisibleWeapon", pSightEnt, 5.0f);
         }
     }
 }
@@ -112,7 +112,7 @@ void CBot::OnListened()
     while ( pCurrentSound ) {
         if ( pCurrentSound->IsSoundType( SOUND_DANGER ) ) {
             if ( pCurrentSound->IsSoundType( SOUND_CONTEXT_BULLET_IMPACT ) ) {
-                SetCondition( BCOND_HEAR_MOVE_AWAY );
+                //SetCondition( BCOND_HEAR_MOVE_AWAY );
 
                 if ( pCurrentSound->IsSoundType( SOUND_CONTEXT_FROM_SNIPER ) ) {
                     SetCondition( BCOND_HEAR_BULLET_IMPACT_SNIPER );
@@ -131,9 +131,9 @@ void CBot::OnListened()
         }
 
         if ( pCurrentSound->IsSoundType( SOUND_COMBAT ) ) {
-            if ( pCurrentSound->IsSoundType( SOUND_CONTEXT_GUNFIRE ) ) {
+            /*if ( pCurrentSound->IsSoundType( SOUND_CONTEXT_GUNFIRE ) ) {
                 SetCondition( BCOND_HEAR_SPOOKY );
-            }
+              }*/
 
             SetCondition( BCOND_HEAR_COMBAT );
         }

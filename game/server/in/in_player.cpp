@@ -48,8 +48,8 @@
 //================================================================================
 
 extern ISoundEmitterSystemBase *soundemitterbase;
-extern bool IsInCommentaryMode( void );
-extern float DamageForce( const Vector &size, float damage );
+extern bool IsInCommentaryMode(void);
+extern float DamageForce(const Vector &size, float damage);
 
 #define PUSHAWAY_THINK_CONTEXT	"PlayerPushawayThink"
 
@@ -58,84 +58,84 @@ extern float DamageForce( const Vector &size, float damage );
 //================================================================================
 
 // Modelo del Jugador
-DECLARE_REPLICATED_COMMAND( sv_player_model, "models/player.mdl", "" )
+DECLARE_REPLICATED_COMMAND(sv_player_model, "models/player.mdl", "")
 
 // Debug
-DECLARE_CHEAT_COMMAND( sv_player_debug, "0", "Muestra informacion de un Jugador" )
+DECLARE_CHEAT_COMMAND(sv_player_debug, "0", "Muestra informacion de un Jugador")
 
 // Linterna
-DECLARE_NOTIFY_COMMAND( sv_muzzleflashlight_realistic, "1", "Muestra el Muzzleflash como una luz dinamica." )
-DECLARE_NOTIFY_COMMAND( sv_flashlight_realistic, "1", "Muestra la linterna como una luz dinamica." )
-DECLARE_NOTIFY_COMMAND( sv_flashlight_weapon, "1", "La linterna debe provenir del arma." )
+DECLARE_NOTIFY_COMMAND(sv_muzzleflashlight_realistic, "1", "Muestra el Muzzleflash como una luz dinamica.")
+DECLARE_NOTIFY_COMMAND(sv_flashlight_realistic, "1", "Muestra la linterna como una luz dinamica.")
+DECLARE_NOTIFY_COMMAND(sv_flashlight_weapon, "1", "La linterna debe provenir del arma.")
 
 //================================================================================
 // Información y Red
 //================================================================================
 
-extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
+extern void SendProxy_Origin(const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID);
 
 // Local Players
-BEGIN_SEND_TABLE_NOBASE( CPlayer, DT_BaseInLocalPlayerExclusive )
-    // send a hi-res origin to the local player for use in prediction
-    SendPropVector( SENDINFO(m_vecOrigin), -1,  SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+BEGIN_SEND_TABLE_NOBASE(CPlayer, DT_BaseInLocalPlayerExclusive)
+// send a hi-res origin to the local player for use in prediction
+SendPropVector(SENDINFO(m_vecOrigin), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin),
 END_SEND_TABLE()
 
 // Other Players
-BEGIN_SEND_TABLE_NOBASE( CPlayer, DT_InBaseNonLocalPlayerExclusive )
-    // send a low-res origin to other players
-    SendPropVector( SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_LOWPRECISION|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
+BEGIN_SEND_TABLE_NOBASE(CPlayer, DT_InBaseNonLocalPlayerExclusive)
+// send a low-res origin to other players
+SendPropVector(SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_LOWPRECISION | SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin),
 END_SEND_TABLE()
 
-IMPLEMENT_SERVERCLASS_ST( CPlayer, DT_BaseInPlayer )
+IMPLEMENT_SERVERCLASS_ST(CPlayer, DT_BaseInPlayer)
     // Excluimos el envio de información del sistema de animaciones.
     // Este será procesado en el cliente por el [GetAnimationSystem] 
-    SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
-    SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
-    SendPropExclude( "DT_BaseAnimating", "m_flPoseParameter" ),
-    SendPropExclude( "DT_BaseAnimating", "m_flPlaybackRate" ),    
-    SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),    
-    SendPropExclude( "DT_BaseAnimatingOverlay", "overlay_vars" ),    
-    SendPropExclude( "DT_ServerAnimationData" , "m_flCycle" ),    
-    SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
+    SendPropExclude("DT_BaseEntity", "m_angRotation"),
+    SendPropExclude("DT_BaseEntity", "m_vecOrigin"),
+    SendPropExclude("DT_BaseAnimating", "m_flPoseParameter"),
+    SendPropExclude("DT_BaseAnimating", "m_flPlaybackRate"),
+    SendPropExclude("DT_BaseAnimating", "m_nSequence"),
+    SendPropExclude("DT_BaseAnimatingOverlay", "overlay_vars"),
+    SendPropExclude("DT_ServerAnimationData", "m_flCycle"),
+    SendPropExclude("DT_AnimTimeMustBeFirst", "m_flAnimTime"),
 
-    SendPropBool( SENDINFO(m_bMovementDisabled) ),
-    SendPropBool( SENDINFO(m_bAimingDisabled) ),
-    SendPropInt( SENDINFO( m_iButtonsDisabled ) ),
-    SendPropInt( SENDINFO( m_iButtonsForced ) ),
+    SendPropBool(SENDINFO(m_bMovementDisabled)),
+    SendPropBool(SENDINFO(m_bAimingDisabled)),
+    SendPropInt(SENDINFO(m_iButtonsDisabled)),
+    SendPropInt(SENDINFO(m_iButtonsForced)),
 
-    SendPropInt( SENDINFO(m_iOldHealth) ),
+    SendPropInt(SENDINFO(m_iOldHealth)),
 
-    SendPropBool( SENDINFO(m_bFlashlightEnabled) ),
-    SendPropBool( SENDINFO(m_bSprinting) ),
-    SendPropBool( SENDINFO( m_bSneaking ) ),
+    SendPropBool(SENDINFO(m_bFlashlightEnabled)),
+    SendPropBool(SENDINFO(m_bSprinting)),
+    SendPropBool(SENDINFO(m_bSneaking)),
 
-    SendPropBool( SENDINFO(m_bOnCombat) ),
-    SendPropBool( SENDINFO(m_bUnderAttack) ),
+    SendPropBool(SENDINFO(m_bOnCombat)),
+    SendPropBool(SENDINFO(m_bUnderAttack)),
 
-    SendPropInt( SENDINFO(m_iPlayerStatus) ),
-    SendPropInt( SENDINFO( m_iPlayerState ) ),
-    SendPropInt( SENDINFO( m_iPlayerClass ) ),
+    SendPropInt(SENDINFO(m_iPlayerStatus)),
+    SendPropInt(SENDINFO(m_iPlayerState)),
+    SendPropInt(SENDINFO(m_iPlayerClass)),
 
-    SendPropInt( SENDINFO(m_iDejectedTimes) ),
+    SendPropInt(SENDINFO(m_iDejectedTimes)),
 
-    SendPropFloat( SENDINFO(m_flHelpProgress), 32, 0, 0.0f, 100.0f ),
-    SendPropFloat( SENDINFO(m_flClimbingHold), 32, 0, 0.0f, 100.0f ),
+    SendPropFloat(SENDINFO(m_flHelpProgress), 32, 0, 0.0f, 100.0f),
+    SendPropFloat(SENDINFO(m_flClimbingHold), 32, 0, 0.0f, 100.0f),
 
-    SendPropInt( SENDINFO(m_iEyeAngleZ) ),
-    SendPropBool( SENDINFO(m_bIsBot) ),
+    SendPropInt(SENDINFO(m_iEyeAngleZ)),
+    SendPropBool(SENDINFO(m_bIsBot)),
 
-    SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 11, SPROP_CHANGES_OFTEN ),
-    SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 11, SPROP_CHANGES_OFTEN ),
+    SendPropAngle(SENDINFO_VECTORELEM(m_angEyeAngles, 0), 11, SPROP_CHANGES_OFTEN),
+    SendPropAngle(SENDINFO_VECTORELEM(m_angEyeAngles, 1), 11, SPROP_CHANGES_OFTEN),
 
     // Data that only gets sent to the local player.
-    SendPropDataTable( "localdata", 0, &REFERENCE_SEND_TABLE(DT_BaseInLocalPlayerExclusive), SendProxy_SendLocalDataTable ),
+    SendPropDataTable("localdata", 0, &REFERENCE_SEND_TABLE(DT_BaseInLocalPlayerExclusive), SendProxy_SendLocalDataTable),
 
     // Data that gets sent to all other players
-    SendPropDataTable( "nonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_InBaseNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable ),
+    SendPropDataTable("nonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_InBaseNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable),
 END_SEND_TABLE()
 
-BEGIN_DATADESC( CPlayer )
-	DEFINE_THINKFUNC( PushawayThink )
+BEGIN_DATADESC(CPlayer)
+    DEFINE_THINKFUNC(PushawayThink)
 END_DATADESC()
 
 //================================================================================
@@ -175,8 +175,8 @@ bool CPlayer::IsIdle() const
         return GetBotController()->IsIdle();
     }
 
-	// Si no nos estan atacando ni estamos en combate
-	return ( !IsUnderAttack() && !IsOnCombat() );
+    // Si no nos estan atacando ni estamos en combate
+    return (!IsUnderAttack() && !IsOnCombat());
 }
 
 //================================================================================
@@ -188,14 +188,14 @@ bool CPlayer::IsAlerted() const
         return GetBotController()->IsAlerted();
     }
 
-	// Nos estan atacando o estamos en combate!
-	return ( IsUnderAttack() || IsOnCombat());
+    // Nos estan atacando o estamos en combate!
+    return (IsUnderAttack() || IsOnCombat());
 }
 
 //================================================================================
 // Establece la I.A. que controlara al Jugador
 //================================================================================
-void CPlayer::SetBotController( IBot *pBot )
+void CPlayer::SetBotController(IBot *pBot)
 {
     if ( m_pBotController ) {
         delete m_pBotController;
@@ -209,7 +209,7 @@ void CPlayer::SetBotController( IBot *pBot )
 //================================================================================
 void CPlayer::SetUpBot()
 {
-    SetBotController( new CBot(this) );
+    SetBotController(new CBot(this));
 }
 
 //================================================================================
@@ -234,7 +234,7 @@ void CPlayer::InitialSpawn()
     CreateAnimationSystem();
     CreateSenses();
 
-	SetPlayerState( PLAYER_STATE_NONE );
+    SetPlayerState(PLAYER_STATE_NONE);
 }
 
 //================================================================================
@@ -272,24 +272,24 @@ void CPlayer::Spawn()
     m_RaiseHelpTimer.Invalidate();
     m_LastDamageTimer.Invalidate();
 
-    AddFlag( FL_AIMTARGET );
+    AddFlag(FL_AIMTARGET);
 
-    SetSquad( (CSquad *)NULL );
-    SetPlayerStatus( PLAYER_STATUS_NONE );
+    SetSquad((CSquad *)NULL);
+    SetPlayerStatus(PLAYER_STATUS_NONE);
 
     if ( GetPlayerState() == PLAYER_STATE_NONE ) {
-        SetPlayerState( PLAYER_STATE_WELCOME );
+        SetPlayerState(PLAYER_STATE_WELCOME);
     }
     else if ( GetTeamNumber() != TEAM_UNASSIGNED ) {
-        SetPlayerState( PLAYER_STATE_ACTIVE );
+        SetPlayerState(PLAYER_STATE_ACTIVE);
     }
 
     if ( GetBotController() ) {
         GetBotController()->Spawn();
     }
 
-    SetThink( &CPlayer::PlayerThink );
-    SetNextThink( gpGlobals->curtime + 0.1f );
+    SetThink(&CPlayer::PlayerThink);
+    SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 //================================================================================
@@ -300,9 +300,9 @@ void CPlayer::Connected()
 
 //================================================================================
 //================================================================================
-void CPlayer::PostConstructor( const char *szClassname )
+void CPlayer::PostConstructor(const char *szClassname)
 {
-    BaseClass::PostConstructor( szClassname );
+    BaseClass::PostConstructor(szClassname);
 }
 
 //================================================================================
@@ -312,15 +312,15 @@ void CPlayer::Precache()
 {
     BaseClass::Precache();
 
-    PrecacheModel( "models/player.mdl" );
-    PrecacheModel( GetPlayerModel() );
+    PrecacheModel("models/player.mdl");
+    PrecacheModel(GetPlayerModel());
 
     // Luces
-    PrecacheModel( "sprites/light_glow01.vmt" );
-    PrecacheModel( "sprites/spotlight01_proxyfade.vmt" );
-    PrecacheModel( "sprites/glow_test02.vmt" );
-    PrecacheModel( "sprites/light_glow03.vmt" );
-    PrecacheModel( "sprites/glow01.vmt" );
+    PrecacheModel("sprites/light_glow01.vmt");
+    PrecacheModel("sprites/spotlight01_proxyfade.vmt");
+    PrecacheModel("sprites/glow_test02.vmt");
+    PrecacheModel("sprites/light_glow03.vmt");
+    PrecacheModel("sprites/glow01.vmt");
 
     // Sonidos
     PrecacheScriptSound("Player.FlashlightOn");
@@ -355,7 +355,7 @@ void CPlayer::PreThink()
         vTempAngles[PITCH] -= 360.0f;
     }
 
-    SetLocalAngles( vTempAngles );
+    SetLocalAngles(vTempAngles);
 
     // Seguimos vivos
     if ( IsAlive() && IsActive() ) {
@@ -365,7 +365,7 @@ void CPlayer::PreThink()
     }
 
     BaseClass::PreThink();
-    SetLocalAngles( vOldAngles );
+    SetLocalAngles(vOldAngles);
 }
 
 //================================================================================
@@ -378,15 +378,14 @@ void CPlayer::PostThink()
 
     // ¿Estamos siendo controlados por la I.A.?
     // Esto servirá al cliente para no permitir los inputs del jugador
-    m_bIsBot = (GetBotController() ) ? true : false;
+    m_bIsBot = (GetBotController()) ? true : false;
 
-    if ( IsAlive() && IsActive() )
-    {
+    if ( IsAlive() && IsActive() ) {
         UpdateComponents();
         UpdateAttributes();
 
-        m_bOnCombat = ( m_CombatTimer.HasStarted() && m_CombatTimer.IsLessThen(10.0f) );
-        m_bUnderAttack = ( m_UnderAttackTimer.HasStarted() && m_UnderAttackTimer.IsLessThen(5.0f) ) ;
+        m_bOnCombat = (m_CombatTimer.HasStarted() && m_CombatTimer.IsLessThen(10.0f));
+        m_bUnderAttack = (m_UnderAttackTimer.HasStarted() && m_UnderAttackTimer.IsLessThen(5.0f));
 
         if ( m_bIsBot && !m_bOnCombat ) {
             m_bOnCombat = GetBotController()->IsAlerted() || GetBotController()->IsCombating();
@@ -404,17 +403,17 @@ void CPlayer::PostThink()
 
     QAngle angles = GetLocalAngles();
     angles[PITCH] = 0;
-    SetLocalAngles( angles );
+    SetLocalAngles(angles);
 
     DebugDisplay();
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::PushawayThink() 
+void CPlayer::PushawayThink()
 {
-	PerformObstaclePushaway( this );
-	SetNextThink( gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, PUSHAWAY_THINK_CONTEXT );
+    PerformObstaclePushaway(this);
+    SetNextThink(gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, PUSHAWAY_THINK_CONTEXT);
 }
 
 //================================================================================
@@ -424,7 +423,7 @@ CBaseEntity *CPlayer::GetEnemy()
     if ( GetBotController() ) {
         return GetBotController()->GetEnemy();
     }
-    
+
     return BaseClass::GetEnemy();
 }
 
@@ -435,7 +434,7 @@ CBaseEntity *CPlayer::GetEnemy() const
     if ( GetBotController() ) {
         return GetBotController()->GetEnemy();
     }
-    
+
     return BaseClass::GetEnemy();
 }
 
@@ -467,13 +466,13 @@ gender_t CPlayer::GetPlayerGender()
 //================================================================================
 CInRagdoll *CPlayer::GetRagdoll()
 {
-    return dynamic_cast< CInRagdoll *>( m_nRagdoll.Get() );
+    return dynamic_cast< CInRagdoll *>(m_nRagdoll.Get());
 }
 
 //================================================================================
 // Transforma el jugador en un cadaver
 //================================================================================
-bool CPlayer::BecomeRagdollOnClient( const Vector &force )
+bool CPlayer::BecomeRagdollOnClient(const Vector &force)
 {
     if ( !CanBecomeRagdoll() )
         return false;
@@ -481,18 +480,18 @@ bool CPlayer::BecomeRagdollOnClient( const Vector &force )
     // Have to do this dance because m_vecForce is a network vector
     // and can't be sent to ClampRagdollForce as a Vector *
     Vector vecClampedForce;
-    ClampRagdollForce( force, &vecClampedForce );
+    ClampRagdollForce(force, &vecClampedForce);
     m_vecForce = vecClampedForce;
 
     // Remove our flame entity if it's attached to us
     /*CEntityFlame *pFireChild = dynamic_cast<CEntityFlame *>( GetEffectEntity() );
     if ( pFireChild )
     {
-        pFireChild->SetThink( &CBaseEntity::SUB_Remove );
-        pFireChild->SetNextThink( gpGlobals->curtime + 0.1f );
+    pFireChild->SetThink( &CBaseEntity::SUB_Remove );
+    pFireChild->SetNextThink( gpGlobals->curtime + 0.1f );
     }*/
 
-    AddFlag( FL_TRANSRAGDOLL );
+    AddFlag(FL_TRANSRAGDOLL);
     m_bClientSideRagdoll = true;
     return true;
 }
@@ -501,12 +500,12 @@ bool CPlayer::BecomeRagdollOnClient( const Vector &force )
 //================================================================================
 void CPlayer::CreateRagdollEntity()
 {
-	// El último daño ha especificado que sin cadaver
-	if ( (GetLastDamage().GetDamageType() & DMG_REMOVENORAGDOLL) != 0 )
-		return;
+    // El último daño ha especificado que sin cadaver
+    if ( (GetLastDamage().GetDamageType() & DMG_REMOVENORAGDOLL) != 0 )
+        return;
 
     // TODO
-    BecomeRagdollOnClient( GetLastDamage().GetDamageForce() );
+    BecomeRagdollOnClient(GetLastDamage().GetDamageForce());
     return;
 
     CInRagdoll *pRagdoll = GetRagdoll();
@@ -516,14 +515,14 @@ void CPlayer::CreateRagdollEntity()
         DestroyRagdoll();
         pRagdoll = NULL;
     }
-    
+
     // Creamos un nuevo ragdoll
     if ( !pRagdoll ) {
-        pRagdoll = dynamic_cast< CInRagdoll * >( CreateEntityByName("in_ragdoll") );
+        pRagdoll = dynamic_cast< CInRagdoll * >(CreateEntityByName("in_ragdoll"));
     }
 
     if ( pRagdoll ) {
-        pRagdoll->Init( this );
+        pRagdoll->Init(this);
         m_nRagdoll = pRagdoll;
     }
 }
@@ -537,20 +536,20 @@ void CPlayer::DestroyRagdoll()
     // Nuestro cadaver existe
     if ( !pRagdoll )
         return;
-    
-    pRagdoll->SUB_StartFadeOut( 1.0f );
+
+    pRagdoll->SUB_StartFadeOut(1.0f);
 }
 
 //================================================================================
 // Devuelve el objeto del componente por ID
 //================================================================================
-CPlayerComponent * CPlayer::GetComponent( int id )
+CPlayerComponent * CPlayer::GetComponent(int id)
 {
-    FOR_EACH_VEC( m_nComponents, key )
+    FOR_EACH_VEC(m_nComponents, key)
     {
-        CPlayerComponent *pComponent = m_nComponents.Element( key );
+        CPlayerComponent *pComponent = m_nComponents.Element(key);
 
-        if ( !pComponent ) 
+        if ( !pComponent )
             continue;
 
         if ( pComponent->GetID() == id )
@@ -563,7 +562,7 @@ CPlayerComponent * CPlayer::GetComponent( int id )
 //================================================================================
 // Agrega un componente a partir de su ID
 //================================================================================
-void CPlayer::AddComponent( int id )
+void CPlayer::AddComponent(int id)
 {
     CPlayerComponent *pComponent = NULL;
 
@@ -581,27 +580,27 @@ void CPlayer::AddComponent( int id )
             break;
     }
 
-    AssertMsg( pComponent, "AddComponent(id) not handled!" );
+    AssertMsg(pComponent, "AddComponent(id) not handled!");
 
     if ( !pComponent ) {
         return;
     }
 
-    AddComponent( pComponent );
+    AddComponent(pComponent);
 }
 
 //================================================================================
 // Agrega una característica al Jugador
 //================================================================================
-void CPlayer::AddComponent( CPlayerComponent *pComponent ) 
+void CPlayer::AddComponent(CPlayerComponent *pComponent)
 {
     // Ya lo tenemos
-    if ( GetComponent( pComponent->GetID() ) )
+    if ( GetComponent(pComponent->GetID()) )
         return;
 
-    pComponent->SetParent( this );
+    pComponent->SetParent(this);
     pComponent->Init();
-    m_nComponents.AddToTail( pComponent );
+    m_nComponents.AddToTail(pComponent);
 }
 
 //================================================================================
@@ -618,152 +617,152 @@ void CPlayer::CreateComponents()
 //================================================================================
 // Corre el pensamiento de las características
 //================================================================================
-void CPlayer::UpdateComponents() 
+void CPlayer::UpdateComponents()
 {
-    FOR_EACH_VEC( m_nComponents, key ) 
+    FOR_EACH_VEC(m_nComponents, key)
     {
         CPlayerComponent *pFeature = m_nComponents.Element(key);
         pFeature->Update();
-    }    
+    }
 }
 
 //================================================================================
 // Agrega un atributo por su nombre
 //================================================================================
-void CPlayer::AddAttribute( const char *name )
+void CPlayer::AddAttribute(const char *name)
 {
     // Ya lo tenemos
-    if ( GetAttribute( name ) )
+    if ( GetAttribute(name) )
         return;
 
-    CAttribute *pAttribute = TheAttributeSystem->GetAttribute( name );
-    AssertMsg1( pAttribute, "The attribute %s does not exist!", name );
+    CAttribute *pAttribute = TheAttributeSystem->GetAttribute(name);
+    AssertMsg1(pAttribute, "The attribute %s does not exist!", name);
 
     if ( !pAttribute ) {
         return;
     }
 
-    AddAttribute( pAttribute );
+    AddAttribute(pAttribute);
 }
 
 //================================================================================
 // Agrega un atributo
 //================================================================================
-void CPlayer::AddAttribute( CAttribute *pAttribute ) 
+void CPlayer::AddAttribute(CAttribute *pAttribute)
 {
-	if ( !pAttribute )
-		return;
+    if ( !pAttribute )
+        return;
 
-	m_nAttributes.AddToTail( pAttribute );
+    m_nAttributes.AddToTail(pAttribute);
 }
 
 //================================================================================
 // Crea los atributos del jugador
 //================================================================================
-void CPlayer::CreateAttributes() 
+void CPlayer::CreateAttributes()
 {
-	// Cada juego decide que atributos agregar
-	//AddAttribute("health");
-	//AddAttribute("stamina");
-	//AddAttribute("stress");
-	//AddAttribute("shield");
+    // Cada juego decide que atributos agregar
+    //AddAttribute("health");
+    //AddAttribute("stamina");
+    //AddAttribute("stress");
+    //AddAttribute("shield");
 }
 
 //================================================================================
 // Pre-Actualiza los atributos
 //================================================================================
-void CPlayer::PreUpdateAttributes() 
+void CPlayer::PreUpdateAttributes()
 {
-	FOR_EACH_VEC( m_nAttributes, it )
-	{
-		m_nAttributes[it]->PreUpdate();
-	}
+    FOR_EACH_VEC(m_nAttributes, it)
+    {
+        m_nAttributes[it]->PreUpdate();
+    }
 }
 
 //================================================================================
 // Actualiza los atributos
 //================================================================================
-void CPlayer::UpdateAttributes() 
+void CPlayer::UpdateAttributes()
 {
-	FOR_EACH_VEC( m_nAttributes, it )
-	{
-		m_nAttributes[it]->Update();
-	}
+    FOR_EACH_VEC(m_nAttributes, it)
+    {
+        m_nAttributes[it]->Update();
+    }
 }
 
 //================================================================================
 // Agrega un modificador a los atributos
 //================================================================================
-void CPlayer::AddAttributeModifier( const char *name ) 
+void CPlayer::AddAttributeModifier(const char *name)
 {
-	AttributeInfo info;
+    AttributeInfo info;
 
-	// El modificador no existe
-	if ( !TheAttributeSystem->GetModifierInfo(name, info) )
-		return;
+    // El modificador no existe
+    if ( !TheAttributeSystem->GetModifierInfo(name, info) )
+        return;
 
-	CAttribute *pAttribute = GetAttribute( info.affects );
+    CAttribute *pAttribute = GetAttribute(info.affects);
 
-	if ( !pAttribute )
-		return;
+    if ( !pAttribute )
+        return;
 
-	pAttribute->AddModifier( info );
+    pAttribute->AddModifier(info);
 }
 
 //================================================================================
 // Devuelve el [CAttribute] por su nombre
 //================================================================================
-CAttribute *CPlayer::GetAttribute( const char *name ) 
+CAttribute *CPlayer::GetAttribute(const char *name)
 {
-	FOR_EACH_VEC( m_nAttributes, it ) 
+    FOR_EACH_VEC(m_nAttributes, it)
     {
-        CAttribute *pAttribute = m_nAttributes.Element( it );
-        
-		if ( FStrEq(pAttribute->GetID(), name) )
-			return pAttribute;
+        CAttribute *pAttribute = m_nAttributes.Element(it);
+
+        if ( FStrEq(pAttribute->GetID(), name) )
+            return pAttribute;
     }
 
-	return NULL;
+    return NULL;
 }
 
 //================================================================================
 // Devuelve el arma actual del jugador
 //================================================================================
-CBaseWeapon *CPlayer::GetActiveBaseWeapon() 
+CBaseWeapon *CPlayer::GetActiveBaseWeapon()
 {
-    return ToBaseWeapon( GetActiveWeapon() );
+    return ToBaseWeapon(GetActiveWeapon());
 }
 
 //================================================================================
 // Otorga el objeto especificado al jugador
 //================================================================================
-CBaseEntity * CPlayer::GiveNamedItem( const char *name, int subType, bool removeIfNotCarried )
+CBaseEntity * CPlayer::GiveNamedItem(const char *name, int subType, bool removeIfNotCarried)
 {
     // If I already own this type don't create one
-    if ( Weapon_OwnsThisType( name, subType ) )
+    if ( Weapon_OwnsThisType(name, subType) )
         return NULL;
 
-    CBaseEntity *pEntity = CreateEntityByName( name );
+    CBaseEntity *pEntity = CreateEntityByName(name);
 
     if ( !pEntity ) {
-        Msg( "NULL Ent in GiveNamedItem!\n" );
+        Msg("NULL Ent in GiveNamedItem!\n");
         return NULL;
     }
 
-    pEntity->SetLocalOrigin( GetLocalOrigin() );
-    pEntity->AddSpawnFlags( SF_NORESPAWN );
+    pEntity->SetLocalOrigin(GetLocalOrigin());
+    pEntity->AddSpawnFlags(SF_NORESPAWN);
 
     CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon *>(pEntity);
 
-    DispatchSpawn( pEntity );
+    DispatchSpawn(pEntity);
 
     if ( pWeapon ) {
-        pWeapon->SetSubType( subType );
-        Weapon_Equip( pWeapon );
+        pWeapon->SetSubType(subType);
+        Weapon_Equip(pWeapon);
     }
     else {
         if ( pEntity && !(pEntity->IsMarkedForDeletion()) ) {
-            pEntity->Touch( this );
+            pEntity->Touch(this);
         }
     }
 
@@ -776,32 +775,32 @@ CBaseEntity * CPlayer::GiveNamedItem( const char *name, int subType, bool remove
 //================================================================================
 void CPlayer::CreateExpresser()
 {
-    m_pExpresser = new CMultiplayer_Expresser( this );
+    m_pExpresser = new CMultiplayer_Expresser(this);
     if ( !m_pExpresser ) return;
-    m_pExpresser->Connect( this );
+    m_pExpresser->Connect(this);
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
+void CPlayer::ModifyOrAppendCriteria(AI_CriteriaSet& criteriaSet)
 {
-    BaseClass::ModifyOrAppendCriteria( criteriaSet );
-    ModifyOrAppendPlayerCriteria( criteriaSet );
+    BaseClass::ModifyOrAppendCriteria(criteriaSet);
+    ModifyOrAppendPlayerCriteria(criteriaSet);
 }
 
 //================================================================================
 //================================================================================
-bool CPlayer::SpeakIfAllowed( AIConcept_t concept, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter ) 
-{ 
+bool CPlayer::SpeakIfAllowed(AIConcept_t concept, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter)
+{
     if ( !IsAlive() )
         return false;
 
-    return Speak( concept, modifiers, pszOutResponseChosen, bufsize, filter );
+    return Speak(concept, modifiers, pszOutResponseChosen, bufsize, filter);
 }
 
 //================================================================================
 //================================================================================
-bool CPlayer::SpeakConcept( AI_Response &response, int iConcept )
+bool CPlayer::SpeakConcept(AI_Response &response, int iConcept)
 {
     // Save the current concept.
     m_iCurrentConcept = iConcept;
@@ -811,18 +810,18 @@ bool CPlayer::SpeakConcept( AI_Response &response, int iConcept )
 
 //================================================================================
 //================================================================================
-bool CPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter )
+bool CPlayer::SpeakConceptIfAllowed(int iConcept, const char *modifiers, char *pszOutResponseChosen, size_t bufsize, IRecipientFilter *filter)
 {
     // Save the current concept.
     m_iCurrentConcept = iConcept;
-    return SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, filter );
+    return SpeakIfAllowed(g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, filter);
 }
 
 //================================================================================
 //================================================================================
-bool CPlayer::CanHearAndReadChatFrom( CBasePlayer *pPlayer )
+bool CPlayer::CanHearAndReadChatFrom(CBasePlayer *pPlayer)
 {
-    return CBasePlayer::CanHearAndReadChatFrom( pPlayer );
+    return CBasePlayer::CanHearAndReadChatFrom(pPlayer);
 }
 
 //================================================================================
@@ -831,16 +830,16 @@ bool CPlayer::CanHearAndReadChatFrom( CBasePlayer *pPlayer )
 void CPlayer::CreateSenses()
 {
     m_pSenses = new CAI_Senses;
-    m_pSenses->SetOuter( this );
+    m_pSenses->SetOuter(this);
 }
 
 //================================================================================
 // Establece la distancia máxima de visión
 //================================================================================
-void CPlayer::SetDistLook( float flDistLook )
+void CPlayer::SetDistLook(float flDistLook)
 {
     if ( GetSenses() ) {
-        GetSenses()->SetDistLook( flDistLook );
+        GetSenses()->SetDistLook(flDistLook);
     }
 }
 
@@ -855,14 +854,14 @@ int CPlayer::GetSoundInterests()
 //================================================================================
 // Devuelve prioridad de sonido
 //================================================================================
-int CPlayer::GetSoundPriority( CSound *pSound )
+int CPlayer::GetSoundPriority(CSound *pSound)
 {
     if ( pSound->IsSoundType(SOUND_COMBAT) ) {
         return SOUND_PRIORITY_HIGH;
     }
 
     if ( pSound->IsSoundType(SOUND_DANGER) ) {
-        if ( pSound->IsSoundType(SOUND_CONTEXT_FROM_SNIPER | SOUND_CONTEXT_EXPLOSION ) ) {
+        if ( pSound->IsSoundType(SOUND_CONTEXT_FROM_SNIPER | SOUND_CONTEXT_EXPLOSION) ) {
             return SOUND_PRIORITY_HIGHEST;
         }
         else if ( pSound->IsSoundType(SOUND_CONTEXT_GUNFIRE | SOUND_CONTEXT_BULLET_IMPACT) ) {
@@ -882,14 +881,14 @@ int CPlayer::GetSoundPriority( CSound *pSound )
 //================================================================================
 // Devuelve si el jugador puede oir el sonido
 //================================================================================
-bool CPlayer::QueryHearSound( CSound *pSound )
+bool CPlayer::QueryHearSound(CSound *pSound)
 {
     CBaseEntity *pOwner = pSound->m_hOwner.Get();
 
     if ( pOwner == this )
         return false;
 
-    if ( pSound->IsSoundType( SOUND_PLAYER ) && !pOwner ) {
+    if ( pSound->IsSoundType(SOUND_PLAYER) && !pOwner ) {
         return false;
     }
 
@@ -902,7 +901,7 @@ bool CPlayer::QueryHearSound( CSound *pSound )
     if ( pOwner ) {
         // Solo escuchemos sonidos provocados por nuestros aliados si son de combate.
         if ( TheGameRules->PlayerRelationship(this, pOwner) == GR_ALLY ) {
-            if ( pSound->IsSoundType(SOUND_COMBAT) && !pSound->IsSoundType( SOUND_CONTEXT_GUNFIRE ) ) {
+            if ( pSound->IsSoundType(SOUND_COMBAT) && !pSound->IsSoundType(SOUND_CONTEXT_GUNFIRE) ) {
                 return true;
             }
 
@@ -910,7 +909,7 @@ bool CPlayer::QueryHearSound( CSound *pSound )
         }
     }
 
-    if ( ShouldIgnoreSound( pSound ) ) {
+    if ( ShouldIgnoreSound(pSound) ) {
         return false;
     }
 
@@ -920,10 +919,10 @@ bool CPlayer::QueryHearSound( CSound *pSound )
 //================================================================================
 // Devuelve si el jugador puede declarar que ha visto la entidad especificada
 //================================================================================
-bool CPlayer::QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFear )
+bool CPlayer::QuerySeeEntity(CBaseEntity *pEntity, bool bOnlyHateOrFear)
 {
     if ( bOnlyHateOrFear ) {
-        Disposition_t disposition = IRelationType( pEntity );
+        Disposition_t disposition = IRelationType(pEntity);
         return (disposition == D_HT || disposition == D_FR);
     }
 
@@ -933,10 +932,10 @@ bool CPlayer::QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFear )
 //================================================================================
 // Al mirar entidades
 //================================================================================
-void CPlayer::OnLooked( int iDistance )
+void CPlayer::OnLooked(int iDistance)
 {
     if ( GetBotController() ) {
-        GetBotController()->OnLooked( iDistance );
+        GetBotController()->OnLooked(iDistance);
     }
 }
 
@@ -952,30 +951,30 @@ void CPlayer::OnListened()
 
 //================================================================================
 //================================================================================
-CSound *CPlayer::GetLoudestSoundOfType( int iType )
+CSound *CPlayer::GetLoudestSoundOfType(int iType)
 {
-    return CSoundEnt::GetLoudestSoundOfType( iType, EarPosition() );
+    return CSoundEnt::GetLoudestSoundOfType(iType, EarPosition());
 }
 
 //================================================================================
 // Devuelve si podemos ver el origen del sonido
 //================================================================================
-bool CPlayer::SoundIsVisible( CSound *pSound )
+bool CPlayer::SoundIsVisible(CSound *pSound)
 {
-    return IsAbleToSee( pSound->GetSoundReactOrigin(), CBaseCombatCharacter::DISREGARD_FOV );
+    return IsAbleToSee(pSound->GetSoundReactOrigin(), CBaseCombatCharacter::DISREGARD_FOV);
 }
 
 //================================================================================
 // Devuelve el mejor sonido
 //================================================================================
-CSound* CPlayer::GetBestSound( int validTypes )
+CSound* CPlayer::GetBestSound(int validTypes)
 {
-    CSound *pResult = GetSenses()->GetClosestSound( false, validTypes );
+    CSound *pResult = GetSenses()->GetClosestSound(false, validTypes);
 
     if ( pResult == NULL ) {
-        DevMsg( "NULL Return from GetBestSound\n" );
+        DevMsg("NULL Return from GetBestSound\n");
     }
-    
+
     return pResult;
 }
 
@@ -984,10 +983,10 @@ CSound* CPlayer::GetBestSound( int validTypes )
 //================================================================================
 CSound* CPlayer::GetBestScent()
 {
-    CSound *pResult = GetSenses()->GetClosestSound( true );
+    CSound *pResult = GetSenses()->GetClosestSound(true);
 
     if ( pResult == NULL ) {
-        DevMsg( "NULL Return from GetBestScent\n" );
+        DevMsg("NULL Return from GetBestScent\n");
     }
 
     return pResult;
@@ -995,66 +994,66 @@ CSound* CPlayer::GetBestScent()
 
 //================================================================================
 //================================================================================
-void CPlayer::HandleAnimEvent( animevent_t *event )
+void CPlayer::HandleAnimEvent(animevent_t *event)
 {
-    if ( event->Event() == AE_PLAYER_FOOTSTEP_LEFT || event->Event() == AE_PLAYER_FOOTSTEP_RIGHT  ) {
+    if ( event->Event() == AE_PLAYER_FOOTSTEP_LEFT || event->Event() == AE_PLAYER_FOOTSTEP_RIGHT ) {
         FootstepSound();
         return;
-    }	
+    }
 
-    CBasePlayer::HandleAnimEvent( event );
-    BaseClass::HandleAnimEvent( event );
+    CBasePlayer::HandleAnimEvent(event);
+    BaseClass::HandleAnimEvent(event);
 }
 
 //================================================================================
 // [DEPRECATED] Establece la animación actual
 // Ahora mismo solo sirve para traducir animaciones del sistema anterior al nuevo
 //================================================================================
-void CPlayer::SetAnimation( PLAYER_ANIM nAnim )
+void CPlayer::SetAnimation(PLAYER_ANIM nAnim)
 {
     if ( nAnim == PLAYER_WALK || nAnim == PLAYER_IDLE ) return;
 
     if ( nAnim == PLAYER_RELOAD ) {
-        DoAnimationEvent( PLAYERANIMEVENT_RELOAD, 0, true );
+        DoAnimationEvent(PLAYERANIMEVENT_RELOAD, 0, true);
     }
     else if ( nAnim == PLAYER_JUMP ) {
         // TODO: Por alguna razón esto no se ejecuta en cliente
-        DoAnimationEvent( PLAYERANIMEVENT_JUMP, 0, false );
+        DoAnimationEvent(PLAYERANIMEVENT_JUMP, 0, false);
     }
     else {
-        Assert( !"CPlayer::SetAnimation OBSOLETE!" );
+        Assert(!"CPlayer::SetAnimation OBSOLETE!");
     }
 }
 
 //================================================================================
 // Reproduce una animación
 //================================================================================
-void CPlayer::DoAnimationEvent( PlayerAnimEvent_t pEvent, int nData, bool bPredicted )
+void CPlayer::DoAnimationEvent(PlayerAnimEvent_t pEvent, int nData, bool bPredicted)
 {
-    if ( !GetAnimationSystem() ) 
+    if ( !GetAnimationSystem() )
         return;
 
     // Procesamos la animación en el servidor
     // y después la enviamos al cliente con una entidad temporal.
-    GetAnimationSystem()->DoAnimationEvent( pEvent, nData );
-    SendPlayerAnimation( this, pEvent, nData, bPredicted );
+    GetAnimationSystem()->DoAnimationEvent(pEvent, nData);
+    SendPlayerAnimation(this, pEvent, nData, bPredicted);
 }
 
 //================================================================================
 // Emite un sonido especial usando la configuración del jugador (Tipo y género)
 // TODO: Probablemente ya no es necesario...
 //================================================================================
-void CPlayer::EmitPlayerSound( const char *pSoundName )
+void CPlayer::EmitPlayerSound(const char *pSoundName)
 {
     CSoundParameters params;
-    const char *pSound = UTIL_VarArgs( "%s.%s", GetPlayerType(), pSoundName ); // @TODO
+    const char *pSound = UTIL_VarArgs("%s.%s", GetPlayerType(), pSoundName); // @TODO
 
-    // El sonido no existe
-    if ( !soundemitterbase->GetParametersForSound( pSound, params, GetPlayerGender() ) )
+                                                                             // El sonido no existe
+    if ( !soundemitterbase->GetParametersForSound(pSound, params, GetPlayerGender()) )
         return;
 
     CRecipientFilter filter;
-    filter.AddRecipientsByPAS( GetAbsOrigin() );
+    filter.AddRecipientsByPAS(GetAbsOrigin());
 
     EmitSound_t sound;
     sound.m_nChannel = params.channel;
@@ -1064,17 +1063,17 @@ void CPlayer::EmitPlayerSound( const char *pSoundName )
     sound.m_nPitch = params.pitch;
     sound.m_pOrigin = &GetAbsOrigin();
 
-    EmitSound( filter, entindex(), sound );
-    CSoundEnt::InsertSound( SOUND_PLAYER, GetAbsOrigin(), PLAYER_SOUND_RADIUS, 0.5f, this );
+    EmitSound(filter, entindex(), sound);
+    CSoundEnt::InsertSound(SOUND_PLAYER, GetAbsOrigin(), PLAYER_SOUND_RADIUS, 0.5f, this);
 }
 
 //================================================================================
 // Para de reproducir un sonido especial de Jugador
 //================================================================================
-void CPlayer::StopPlayerSound( const char *pSoundName )
+void CPlayer::StopPlayerSound(const char *pSoundName)
 {
     const char *pSound = UTIL_VarArgs("%s.%s", GetPlayerType(), pSoundName); // @TODO
-    StopSound( pSound );
+    StopSound(pSound);
 }
 
 //================================================================================
@@ -1082,19 +1081,19 @@ void CPlayer::StopPlayerSound( const char *pSoundName )
 //================================================================================
 void CPlayer::FootstepSound()
 {
-    float flVolume = (IsSprinting()) ? RandomFloat( 200.0f, 400.0f ) : RandomFloat(100.0f, 200.0f);
+    float flVolume = (IsSprinting()) ? RandomFloat(200.0f, 400.0f) : RandomFloat(100.0f, 200.0f);
 
     if ( IsSneaking() ) {
         flVolume = RandomFloat(30.0f, 100.0f);
     }
 
-    CSoundEnt::InsertSound( SOUND_PLAYER | SOUND_CONTEXT_FOOTSTEP, GetAbsOrigin(), flVolume, 0.2f, this, SOUNDENT_CHANNEL_FOOTSTEP );
+    CSoundEnt::InsertSound(SOUND_PLAYER | SOUND_CONTEXT_FOOTSTEP, GetAbsOrigin(), flVolume, 0.2f, this, SOUNDENT_CHANNEL_FOOTSTEP);
 }
 
 //================================================================================
 // Emite un sonido al recibir daño
 //================================================================================
-void CPlayer::PainSound( const CTakeDamageInfo &info )
+void CPlayer::PainSound(const CTakeDamageInfo &info)
 {
     EmitSound("Player.Pain");
 }
@@ -1102,19 +1101,19 @@ void CPlayer::PainSound( const CTakeDamageInfo &info )
 //================================================================================
 // Emite un sonido al morir
 //================================================================================
-void CPlayer::DeathSound( const CTakeDamageInfo &info )
+void CPlayer::DeathSound(const CTakeDamageInfo &info)
 {
-    if ( !TheGameRules->FCanPlayDeathSound(info) ) 
+    if ( !TheGameRules->FCanPlayDeathSound(info) )
         return;
 
     EmitSound("Player.Death");
-	CSoundEnt::InsertSound( SOUND_CARCASS, GetAbsOrigin(), 1024.0f, 5.0f, this );
+    CSoundEnt::InsertSound(SOUND_CARCASS, GetAbsOrigin(), 1024.0f, 5.0f, this);
 }
 
 //================================================================================
 // Establece si el jugador puede usar la linterna
 //================================================================================
-void CPlayer::SetFlashlightEnabled( bool bState )
+void CPlayer::SetFlashlightEnabled(bool bState)
 {
     m_bFlashlightEnabled = bState;
 }
@@ -1124,7 +1123,7 @@ void CPlayer::SetFlashlightEnabled( bool bState )
 //================================================================================
 int CPlayer::FlashlightIsOn()
 {
-    return IsEffectActive( EF_DIMLIGHT );
+    return IsEffectActive(EF_DIMLIGHT);
 }
 
 //================================================================================
@@ -1138,7 +1137,7 @@ void CPlayer::FlashlightTurnOn()
     if ( !TheGameRules->FAllowFlashlight() || !m_bFlashlightEnabled )
         return;
 
-    AddEffects( EF_DIMLIGHT );
+    AddEffects(EF_DIMLIGHT);
     EmitSound("Player.FlashlightOn");
 }
 
@@ -1150,14 +1149,14 @@ void CPlayer::FlashlightTurnOff()
     if ( !FlashlightIsOn() || !m_bFlashlightEnabled )
         return;
 
-    RemoveEffects( EF_DIMLIGHT );
+    RemoveEffects(EF_DIMLIGHT);
     EmitSound("Player.FlashlightOff");
 }
 
 //================================================================================
 // Muestra los efectos de haber recibido el daño especificado
 //================================================================================
-void CPlayer::DamageEffect( const CTakeDamageInfo &info )
+void CPlayer::DamageEffect(const CTakeDamageInfo &info)
 {
     float flDamage = info.GetDamage();
     int fDamageType = info.GetDamageType();
@@ -1182,7 +1181,7 @@ void CPlayer::DamageEffect( const CTakeDamageInfo &info )
     // Rasguño
     else if ( fDamageType & DMG_SLASH ) {
         // If slash damage shoot some blood
-        SpawnBlood( EyePosition(), g_vecAttackDir, BloodColor(), flDamage );
+        SpawnBlood(EyePosition(), g_vecAttackDir, BloodColor(), flDamage);
     }
 
     // Plasma
@@ -1193,10 +1192,10 @@ void CPlayer::DamageEffect( const CTakeDamageInfo &info )
 
         // Very small screen shake
         if ( IsAlive() ) {
-            ViewPunch( QAngle( random->RandomInt( -0.1, 0.1 ), random->RandomInt( -0.1, 0.1 ), random->RandomInt( -0.1, 0.1 ) ) );
+            ViewPunch(QAngle(random->RandomInt(-0.1, 0.1), random->RandomInt(-0.1, 0.1), random->RandomInt(-0.1, 0.1)));
         }
 
-        EmitSound( "Player.PlasmaDamage" );
+        EmitSound("Player.PlasmaDamage");
     }
 
     // Choque electrico
@@ -1205,8 +1204,8 @@ void CPlayer::DamageEffect( const CTakeDamageInfo &info )
         flags = FFADE_MODULATE;
         fxColor = LFX_YELLOW | LFX_FULL_BRIGHTNESS;
 
-        g_pEffects->Sparks( info.GetDamagePosition(), 2, 2 );
-        UTIL_Smoke( info.GetDamagePosition(), random->RandomInt( 10, 15 ), 10 );
+        g_pEffects->Sparks(info.GetDamagePosition(), 2, 2);
+        UTIL_Smoke(info.GetDamagePosition(), random->RandomInt(10, 15), 10);
     }
 
     // Veneno
@@ -1217,19 +1216,19 @@ void CPlayer::DamageEffect( const CTakeDamageInfo &info )
 
     // Sonic
     else if ( fDamageType & DMG_SONIC ) {
-        EmitSound( "Player.SonicDamage" );
+        EmitSound("Player.SonicDamage");
     }
 
     // Bala
     else if ( fDamageType & DMG_BULLET ) {
-        ViewPunch( QAngle( random->RandomInt( -0.1, 0.1 ), random->RandomInt( -0.1, 0.1 ), random->RandomInt( -0.1, 0.1 ) ) );
-        EmitSound( "Flesh.BulletImpact" );
+        ViewPunch(QAngle(random->RandomInt(-0.1, 0.1), random->RandomInt(-0.1, 0.1), random->RandomInt(-0.1, 0.1)));
+        EmitSound("Flesh.BulletImpact");
     }
 
     // Explosión
     else if ( fDamageType & DMG_BLAST ) {
         if ( IsAlive() ) {
-            OnDamagedByExplosion( info );
+            OnDamagedByExplosion(info);
         }
     }
 
@@ -1244,29 +1243,29 @@ void CPlayer::DamageEffect( const CTakeDamageInfo &info )
         }
 #endif
 
-        UTIL_ScreenFade( this, backgroundColor, 0.4f, 0.1f, flags );
-        Utils::AlienFX_SetColor( this, LFX_ALL, fxColor, 0.5f );
+        UTIL_ScreenFade(this, backgroundColor, 0.4f, 0.1f, flags);
+        Utils::AlienFX_SetColor(this, LFX_ALL, fxColor, 0.5f);
     }
 
-    CSoundEnt::InsertSound( SOUND_PLAYER | SOUND_COMBAT | SOUND_CONTEXT_INJURY, GetAbsOrigin(), PLAYER_SOUND_RADIUS, 0.3f, this, SOUNDENT_CHANNEL_INJURY );
+    CSoundEnt::InsertSound(SOUND_PLAYER | SOUND_COMBAT | SOUND_CONTEXT_INJURY, GetAbsOrigin(), PLAYER_SOUND_RADIUS, 0.3f, this, SOUNDENT_CHANNEL_INJURY);
 }
 
 //================================================================================
 // Devuelve si el jugador puede procesar el daño.
 // Si la respuesta es false, no se procesara ningún efecto, sonido, etc.
 //================================================================================
-bool CPlayer::CanTakeDamage( const CTakeDamageInfo &info )
+bool CPlayer::CanTakeDamage(const CTakeDamageInfo &info)
 {
     CTakeDamageInfo dinfo = info;
     IServerVehicle *pVehicle = GetVehicle();
 
     if ( pVehicle ) {
-        if ( !pVehicle->PassengerShouldReceiveDamage( dinfo ) )
+        if ( !pVehicle->PassengerShouldReceiveDamage(dinfo) )
             return false;
     }
 
     if ( IsInCommentaryMode() ) {
-        if ( !ShouldTakeDamageInCommentaryMode( info ) )
+        if ( !ShouldTakeDamageInCommentaryMode(info) )
             return false;
     }
 
@@ -1279,7 +1278,7 @@ bool CPlayer::CanTakeDamage( const CTakeDamageInfo &info )
     if ( m_takedamage != DAMAGE_YES )
         return false;
 
-    if ( !TheGameRules->FPlayerCanTakeDamage( this, info.GetAttacker(), info ) )
+    if ( !TheGameRules->FPlayerCanTakeDamage(this, info.GetAttacker(), info) )
         return false;
 
     return true;
@@ -1288,12 +1287,12 @@ bool CPlayer::CanTakeDamage( const CTakeDamageInfo &info )
 //================================================================================
 // We have received damage
 //================================================================================
-int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
+int CPlayer::OnTakeDamage(const CTakeDamageInfo &inputInfo)
 {
     CTakeDamageInfo info = inputInfo;
 
     // We are invulnerable
-    if ( !CanTakeDamage( info ) )
+    if ( !CanTakeDamage(info) )
         return 0;
 
     int response = 1;
@@ -1311,25 +1310,25 @@ int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
     switch ( m_lifeState ) {
         case LIFE_ALIVE:
         {
-            response = OnTakeDamage_Alive( info );
+            response = OnTakeDamage_Alive(info);
             break;
         }
 
         case LIFE_DYING:
         {
-            response = OnTakeDamage_Dying( info );
+            response = OnTakeDamage_Dying(info);
             break;
         }
 
         case LIFE_DEAD:
         {
-            response = OnTakeDamage_Dead( info );
+            response = OnTakeDamage_Dead(info);
             break;
         }
 
         default:
         {
-            Assert( 0 );
+            Assert(0);
             false;
         }
     }
@@ -1338,7 +1337,7 @@ int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
     if ( response == 0 )
         return 0;
 
-    ApplyDamage( info );
+    ApplyDamage(info);
     return 1;
 }
 
@@ -1348,38 +1347,38 @@ int CPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 // Aquí se debe aplicar todo lo necesario ANTES de la reducción de salud, si 
 // se devuelve 0 entonces no se hará reducción de salud pero si efectos especiales.
 //================================================================================
-int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
+int CPlayer::OnTakeDamage_Alive(CTakeDamageInfo &info)
 {
     // We report damage to the Bots system and squadron.
     if ( GetBotController() ) {
-        GetBotController()->OnTakeDamage( info );
+        GetBotController()->OnTakeDamage(info);
     }
 
     if ( GetSquad() ) {
-        GetSquad()->ReportTakeDamage( this, info );
+        GetSquad()->ReportTakeDamage(this, info);
     }
 
     // The game rules allow us to adjust the damage. (Armor, place of impact, etc.)
-    TheGameRules->AdjustPlayerDamageTaken( this, info );
+    TheGameRules->AdjustPlayerDamageTaken(this, info);
 
     m_UnderAttackTimer.Start();
     m_CombatTimer.Start();
 
     // This type of damage slows us down
-    if ( TheGameRules->Damage_CausesSlowness( info ) ) {
+    if ( TheGameRules->Damage_CausesSlowness(info) ) {
         m_SlowDamageTimer.Start();
     }
 
     // This type of damage can knock us down
-    if ( TheGameRules->FPlayerCanDejected( this, info ) ) {
+    if ( TheGameRules->FPlayerCanDejected(this, info) ) {
         int newHealth = GetHealth() - info.GetDamage();
 
         if ( newHealth <= 0 ) {
             if ( GetPlayerStatus() == PLAYER_STATUS_CLIMBING ) {
-                SetPlayerStatus( PLAYER_STATUS_FALLING );
+                SetPlayerStatus(PLAYER_STATUS_FALLING);
             }
             else {
-                SetPlayerStatus( PLAYER_STATUS_DEJECTED );
+                SetPlayerStatus(PLAYER_STATUS_DEJECTED);
             }
 
             return 0;
@@ -1388,16 +1387,16 @@ int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
 
     /*
     if ( info.GetAttacker() && (info.GetDamageType() & DMG_BULLET) == 0 ) {
-        Vector vecDir = info.GetAttacker()->WorldSpaceCenter() - Vector( 0, 0, 10 ) - WorldSpaceCenter();
-        VectorNormalize( vecDir );
+    Vector vecDir = info.GetAttacker()->WorldSpaceCenter() - Vector( 0, 0, 10 ) - WorldSpaceCenter();
+    VectorNormalize( vecDir );
 
-        if ( (GetMoveType() == MOVETYPE_WALK) && (!info.GetAttacker()->IsSolidFlagSet( FSOLID_TRIGGER )) ) {
-            Vector force = vecDir * -DamageForce( WorldAlignSize(), info.GetBaseDamage() );
-            if ( force.z > 250.0f ) {
-                force.z = 250.0f;
-            }
-            ApplyAbsVelocityImpulse( force );
-        }
+    if ( (GetMoveType() == MOVETYPE_WALK) && (!info.GetAttacker()->IsSolidFlagSet( FSOLID_TRIGGER )) ) {
+    Vector force = vecDir * -DamageForce( WorldAlignSize(), info.GetBaseDamage() );
+    if ( force.z > 250.0f ) {
+    force.z = 250.0f;
+    }
+    ApplyAbsVelocityImpulse( force );
+    }
     }*/
 
     return 1;
@@ -1406,7 +1405,7 @@ int CPlayer::OnTakeDamage_Alive( CTakeDamageInfo &info )
 //================================================================================
 // Aplica el daño al jugador, se ejecuta después de haber pasado las validaciones
 //================================================================================
-void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
+void CPlayer::ApplyDamage(const CTakeDamageInfo &info)
 {
     if ( !IsAlive() )
         return;
@@ -1414,66 +1413,66 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
     // Play an animation depending on the location of the impact.
     switch ( LastHitGroup() ) {
         case HITGROUP_GENERIC:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH);
             break;
 
         case HITGROUP_HEAD:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH_HEAD );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH_HEAD);
             break;
 
         case HITGROUP_CHEST:
         case HITGROUP_STOMACH:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH_CHEST );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH_CHEST);
             break;
 
         case HITGROUP_LEFTARM:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH_LEFTARM );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH_LEFTARM);
             break;
 
         case HITGROUP_RIGHTARM:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH_RIGHTARM );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH_RIGHTARM);
             break;
 
         case HITGROUP_LEFTLEG:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH_LEFTLEG );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH_LEFTLEG);
             break;
 
         case HITGROUP_RIGHTLEG:
-            DoAnimationEvent( PLAYERANIMEVENT_FLINCH_RIGHTLEG );
+            DoAnimationEvent(PLAYERANIMEVENT_FLINCH_RIGHTLEG);
             break;
     }
 
     if ( info.GetDamage() > 0 ) {
         if ( info.GetAttacker() ) {
             if ( info.GetAttacker()->IsPlayer() ) {
-                DebugAddMessage( "Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetPlayerName() );
+                DebugAddMessage("Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetPlayerName());
             }
             else {
-                DebugAddMessage( "Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetClassname() );
+                DebugAddMessage("Taking %.2f damage from %s", info.GetDamage(), info.GetAttacker()->GetClassname());
             }
         }
 
-        if ( IsNetClient() && !ShouldThrottleUserMessage( "Damage" ) ) {
-            CUserAndObserversRecipientFilter user( this );
+        if ( IsNetClient() && !ShouldThrottleUserMessage("Damage") ) {
+            CUserAndObserversRecipientFilter user(this);
             user.MakeReliable();
 
-            UserMessageBegin( user, "Damage" );
-            WRITE_BYTE( info.GetBaseDamage() );
-            WRITE_FLOAT( info.GetDamagePosition().x );
-            WRITE_FLOAT( info.GetDamagePosition().y );
-            WRITE_FLOAT( info.GetDamagePosition().z );
+            UserMessageBegin(user, "Damage");
+            WRITE_BYTE(info.GetBaseDamage());
+            WRITE_FLOAT(info.GetDamagePosition().x);
+            WRITE_FLOAT(info.GetDamagePosition().y);
+            WRITE_FLOAT(info.GetDamagePosition().z);
             MessageEnd();
         }
     }
 
-    DamageEffect( info );
+    DamageEffect(info);
 
     // grab the vector of the incoming attack. ( pretend that the inflictor is a little lower than it really is, so the body will tend to fly upward a bit).
     Vector vecDir = vec3_origin;
 
     if ( info.GetInflictor() ) {
-        vecDir = info.GetInflictor()->WorldSpaceCenter() - Vector( 0, 0, 10 ) - WorldSpaceCenter();
-        VectorNormalize( vecDir );
+        vecDir = info.GetInflictor()->WorldSpaceCenter() - Vector(0, 0, 10) - WorldSpaceCenter();
+        VectorNormalize(vecDir);
     }
 
     g_vecAttackDir = vecDir;
@@ -1493,39 +1492,39 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
         // This is kind of hacky but necessary until we setup DamageType as an enum.
         int iDamage = (DMG_PARALYZE << i);
 
-        if ( (info.GetDamageType() & iDamage) && g_pGameRules->Damage_IsTimeBased( iDamage ) )
+        if ( (info.GetDamageType() & iDamage) && g_pGameRules->Damage_IsTimeBased(iDamage) )
             m_rgbTimeBasedDamage[i] = 0;
     }
 
     m_bitsDamageType |= info.GetDamageType(); // Save this so we can report it to the client
     m_bitsHUDDamage = -1;  // make sure the damage bits get resent
 
-    PainSound( info );
+    PainSound(info);
 
     if ( info.GetDamage() <= 0 )
         return;
 
     // Aplicamos la reducción de vida
     m_iHealth = m_iHealth - info.GetDamage();
-    m_iHealth = clamp( m_iHealth, 0, GetMaxHealth() );
+    m_iHealth = clamp(m_iHealth, 0, GetMaxHealth());
 
     // fire global game event
-    IGameEvent * event = gameeventmanager->CreateEvent( "player_hurt", false );
+    IGameEvent * event = gameeventmanager->CreateEvent("player_hurt", false);
 
     if ( event ) {
-        event->SetInt( "userid", GetUserID() );
-        event->SetInt( "health", m_iHealth );
-        event->SetInt( "priority", 5 );	// HLTV event priority, not transmitted
+        event->SetInt("userid", GetUserID());
+        event->SetInt("health", m_iHealth);
+        event->SetInt("priority", 5);	// HLTV event priority, not transmitted
 
         if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() ) {
-            CBasePlayer *player = ToBasePlayer( info.GetAttacker() );
-            event->SetInt( "attacker", player->GetUserID() ); // hurt by other player
+            CBasePlayer *player = ToBasePlayer(info.GetAttacker());
+            event->SetInt("attacker", player->GetUserID()); // hurt by other player
         }
         else {
-            event->SetInt( "attacker", 0 ); // hurt by "world"
+            event->SetInt("attacker", 0); // hurt by "world"
         }
 
-        gameeventmanager->FireEvent( event );
+        gameeventmanager->FireEvent(event);
     }
 
     if ( m_iHealth == 0 ) {
@@ -1533,7 +1532,7 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
             m_iHealth = 1;
         }
         else {
-            Event_Killed( info );
+            Event_Killed(info);
         }
     }
 }
@@ -1544,11 +1543,11 @@ void CPlayer::ApplyDamage( const CTakeDamageInfo &info )
 void CPlayer::DropResources()
 {
     if ( GetActiveWeapon() ) {
-        int dropRule = TheGameRules->DeadPlayerWeapons( this );
+        int dropRule = TheGameRules->DeadPlayerWeapons(this);
 
         switch ( dropRule ) {
             case GR_PLR_DROP_GUN_ACTIVE:
-                Weapon_Drop( GetActiveWeapon(), NULL, NULL );
+                Weapon_Drop(GetActiveWeapon(), NULL, NULL);
                 break;
 
             case GR_PLR_DROP_GUN_ALL:
@@ -1562,21 +1561,21 @@ void CPlayer::DropResources()
 // [Evento] Hemos muerto
 // Hacemos todo lo necesario para manejar nuestra muerte
 //================================================================================
-void CPlayer::Event_Killed( const CTakeDamageInfo &info )
+void CPlayer::Event_Killed(const CTakeDamageInfo &info)
 {
-    CSound *pSound = CSoundEnt::SoundPointerForIndex( CSoundEnt::ClientSoundIndex( edict() ) );
+    CSound *pSound = CSoundEnt::SoundPointerForIndex(CSoundEnt::ClientSoundIndex(edict()));
     IPhysicsObject *pPhysics = VPhysicsGetObject();
-    
-    RumbleEffect( RUMBLE_STOP_ALL, 0, RUMBLE_FLAGS_NONE );
 
-    SetPlayerState( PLAYER_STATE_DEAD );
-    SnapEyeAnglesZ( 0 );
-    SetFOV( this, 0, 0 );
+    RumbleEffect(RUMBLE_STOP_ALL, 0, RUMBLE_FLAGS_NONE);
+
+    SetPlayerState(PLAYER_STATE_DEAD);
+    SnapEyeAnglesZ(0);
+    SetFOV(this, 0, 0);
 
     ClearUseEntity();
 
     if ( pPhysics ) {
-        pPhysics->EnableCollisions( false );
+        pPhysics->EnableCollisions(false);
         pPhysics->RecheckContactPoints();
     }
 
@@ -1584,53 +1583,53 @@ void CPlayer::Event_Killed( const CTakeDamageInfo &info )
         pSound->Reset();
     }
 
-    EmitSound( "BaseCombatCharacter.StopWeaponSounds" );
+    EmitSound("BaseCombatCharacter.StopWeaponSounds");
     m_iHealth = 0;
     ClearLastKnownArea();
 
-    TheGameRules->PlayerKilled( this, info );
-    SendOnKilledGameEvent( info );
+    TheGameRules->PlayerKilled(this, info);
+    SendOnKilledGameEvent(info);
 
     if ( GetBotController() ) {
-        GetBotController()->OnDeath( info );
+        GetBotController()->OnDeath(info);
     }
 
     if ( GetSquad() ) {
-        GetSquad()->ReportDeath( this, info );
+        GetSquad()->ReportDeath(this, info);
     }
 
-    if ( ShouldGib( info ) ) {
-        Event_Gibbed( info );
+    if ( ShouldGib(info) ) {
+        Event_Gibbed(info);
     }
     else {
-        Event_Dying( info );
+        Event_Dying(info);
     }
 
     // Establecemos la función de pensamiento
-    SetThink( &CPlayer::PlayerDeathThink );
-    SetNextThink( gpGlobals->curtime + 0.1f );
+    SetThink(&CPlayer::PlayerDeathThink);
+    SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 //================================================================================
 // Hemos explotado en pedazitos
 //================================================================================
-bool CPlayer::Event_Gibbed( const CTakeDamageInfo &info ) 
+bool CPlayer::Event_Gibbed(const CTakeDamageInfo &info)
 {
-	m_lifeState = LIFE_DEAD;
-	return BaseClass::Event_Gibbed( info );
+    m_lifeState = LIFE_DEAD;
+    return BaseClass::Event_Gibbed(info);
 }
 
 //================================================================================
 // Estamos en proceso de morir (quizá en la animación)
 //================================================================================
-void CPlayer::Event_Dying( const CTakeDamageInfo &info )
+void CPlayer::Event_Dying(const CTakeDamageInfo &info)
 {
     m_lifeState = LIFE_DYING;
-    DeathSound( info );
+    DeathSound(info);
 
     // Reproducimos la animación al morir
-    if ( TheGameRules->CanPlayDeathAnim( this, info ) ) {
-        DoAnimationEvent( PLAYERANIMEVENT_DIE );
+    if ( TheGameRules->CanPlayDeathAnim(this, info) ) {
+        DoAnimationEvent(PLAYERANIMEVENT_DIE);
         m_bPlayingDeathAnim = true;
     }
 }
@@ -1640,7 +1639,7 @@ void CPlayer::Event_Dying( const CTakeDamageInfo &info )
 //================================================================================
 void CPlayer::PlayerDeathThink()
 {
-    SetNextThink( gpGlobals->curtime + 0.1f );
+    SetNextThink(gpGlobals->curtime + 0.1f);
 
     // Reproduciendo animación de muerte...
     if ( m_lifeState == LIFE_DYING ) {
@@ -1654,13 +1653,13 @@ void CPlayer::PlayerDeathThink()
                 return;
             }
             else {
-                Assert( !"m_iRespawnFrames > 60!" );
+                Assert(!"m_iRespawnFrames > 60!");
             }
         }
 
         CreateRagdollEntity();
-        SetGroundEntity( NULL );
-        AddEffects( EF_NODRAW );
+        SetGroundEntity(NULL);
+        AddEffects(EF_NODRAW);
 
         // Hemos muerto
         m_lifeState = LIFE_DEAD;
@@ -1670,8 +1669,8 @@ void CPlayer::PlayerDeathThink()
 
         // Notificamos a nuestro dueño
         if ( pOwner ) {
-            pOwner->DeathNotice( this );
-            SetOwnerEntity( NULL );
+            pOwner->DeathNotice(this);
+            SetOwnerEntity(NULL);
         }
 
         return;
@@ -1679,8 +1678,8 @@ void CPlayer::PlayerDeathThink()
 
     // Paramos todas las animaciones
     StopAnimation();
-    AddEffects( EF_NOINTERP );
-    SetPlaybackRate( 0.0f );
+    AddEffects(EF_NOINTERP);
+    SetPlaybackRate(0.0f);
 
     // Pensamiento al estar muerto
     PlayerDeathPostThink();
@@ -1691,7 +1690,7 @@ void CPlayer::PlayerDeathThink()
 //================================================================================
 void CPlayer::PlayerDeathPostThink()
 {
-    if ( TheGameRules->FPlayerCanGoSpectate( this ) ) {
+    if ( TheGameRules->FPlayerCanGoSpectate(this) ) {
         Spectate();
     }
 
@@ -1701,7 +1700,7 @@ void CPlayer::PlayerDeathPostThink()
 
     m_lifeState = LIFE_RESPAWNABLE;
 
-    if ( TheGameRules->FPlayerCanRespawnNow( this ) ) {
+    if ( TheGameRules->FPlayerCanRespawnNow(this) ) {
         Spawn();
     }
 }
@@ -1709,7 +1708,7 @@ void CPlayer::PlayerDeathPostThink()
 //================================================================================
 // El jugador ha entrado en una nueva condición
 //================================================================================
-void CPlayer::OnPlayerStatus( int oldStatus, int status )
+void CPlayer::OnPlayerStatus(int oldStatus, int status)
 {
     switch ( status ) {
         // Normal
@@ -1718,16 +1717,16 @@ void CPlayer::OnPlayerStatus( int oldStatus, int status )
             // Restauramos acciones y movimiento
             RestoreButtons();
             EnableMovement();
-            SetMoveType( MOVETYPE_WALK );
-            SetViewOffset( VEC_VIEW );
+            SetMoveType(MOVETYPE_WALK);
+            SetViewOffset(VEC_VIEW);
 
             // Restauramos la salud anterior
             if ( m_iOldHealth > 0 ) {
-                SetHealth( m_iOldHealth );
+                SetHealth(m_iOldHealth);
             }
             else {
                 if ( oldStatus > PLAYER_STATUS_NONE && oldStatus != PLAYER_STATUS_FALLING ) {
-                    SetHealth( (GetMaxHealth() / 3) );
+                    SetHealth((GetMaxHealth() / 3));
                 }
             }
 
@@ -1742,8 +1741,8 @@ void CPlayer::OnPlayerStatus( int oldStatus, int status )
             m_iOldHealth = -1;
 
             // Cámara
-            RemoveFlag( FL_DUCKING );
-            SetViewOffset( VEC_DEJECTED_VIEWHEIGHT );
+            RemoveFlag(FL_DUCKING);
+            SetViewOffset(VEC_DEJECTED_VIEWHEIGHT);
             break;
         }
 
@@ -1755,11 +1754,11 @@ void CPlayer::OnPlayerStatus( int oldStatus, int status )
             m_flHelpProgress = 0.0f;
 
             // No podemos disparar
-            DisableButtons( IN_ATTACK | IN_ATTACK2 | IN_RELOAD );
+            DisableButtons(IN_ATTACK | IN_ATTACK2 | IN_RELOAD);
 
             // Flotando
-            SetMoveType( MOVETYPE_FLY );
-            SetAbsVelocity( Vector( 0, 0, 0 ) );
+            SetMoveType(MOVETYPE_FLY);
+            SetAbsVelocity(Vector(0, 0, 0));
 
             // Guardamos nuestra salud actual
             if ( m_iOldHealth <= 0 ) {
@@ -1772,7 +1771,7 @@ void CPlayer::OnPlayerStatus( int oldStatus, int status )
         // Cayendoooo
         case PLAYER_STATUS_FALLING:
         {
-            SetMoveType( MOVETYPE_WALK );
+            SetMoveType(MOVETYPE_WALK);
             m_iOldHealth = -1;
             break;
         }
@@ -1781,18 +1780,18 @@ void CPlayer::OnPlayerStatus( int oldStatus, int status )
     // Incapacitación
     if ( status == PLAYER_STATUS_DEJECTED || status == PLAYER_STATUS_CLIMBING ) {
         // Desactivamos movimiento y acciones
-        DisableButtons( IN_JUMP | IN_DUCK );
+        DisableButtons(IN_JUMP | IN_DUCK);
         DisableMovement();
 
         // Establecemos salud máxima, esta irá disminuyendo lentamente
-        SetHealth( GetMaxHealth() );
+        SetHealth(GetMaxHealth());
     }
 }
 
 //================================================================================
 // Establece la condición del jugador
 //================================================================================
-void CPlayer::SetPlayerStatus( int status )
+void CPlayer::SetPlayerStatus(int status)
 {
     if ( status == m_iPlayerStatus )
         return;
@@ -1801,21 +1800,21 @@ void CPlayer::SetPlayerStatus( int status )
         ++m_iDejectedTimes;
     }
 
-    OnPlayerStatus( m_iPlayerStatus, status );
+    OnPlayerStatus(m_iPlayerStatus, status);
     m_iPlayerStatus = status;
 }
 
 //================================================================================
 // Alguién me esta ayudando
 //================================================================================
-void CPlayer::RaiseFromDejected( CPlayer *pRescuer )
+void CPlayer::RaiseFromDejected(CPlayer *pRescuer)
 {
     if ( !IsDejected() )
         return;
 
     // Iniciamos la animación
     if ( m_flHelpProgress == 0 ) {
-        DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_TERROR_INCAP_TO_STAND );
+        DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_TERROR_INCAP_TO_STAND);
     }
 
     // Progreso
@@ -1825,41 +1824,41 @@ void CPlayer::RaiseFromDejected( CPlayer *pRescuer )
     // Aumentamos nuestra visión poco a poco
     Vector vecView = VEC_DEJECTED_VIEWHEIGHT;
     vecView.z += 0.47 * m_flHelpProgress;
-    SetViewOffset( vecView );
+    SetViewOffset(vecView);
 
     // ¡Arriba!
     if ( m_flHelpProgress > 100 ) {
-        SetPlayerStatus( PLAYER_STATUS_NONE );
+        SetPlayerStatus(PLAYER_STATUS_NONE);
     }
 }
 
 //================================================================================
 // El jugador ha entrado en un nuevo estado
 //================================================================================
-void CPlayer::EnterPlayerState( int status )
+void CPlayer::EnterPlayerState(int status)
 {
     switch ( status ) {
         // Hemos entrado al servidor
         case PLAYER_STATE_WELCOME:
         {
             // Equipo y clase sin definir
-            ChangeTeam( TEAM_UNASSIGNED );
-            SetPlayerClass( PLAYER_CLASS_NONE );
+            ChangeTeam(TEAM_UNASSIGNED);
+            SetPlayerClass(PLAYER_CLASS_NONE);
 
             // Sin linterna
-            SetFlashlightEnabled( false );
-            RemoveEffects( EF_DIMLIGHT );
+            SetFlashlightEnabled(false);
+            RemoveEffects(EF_DIMLIGHT);
 
             // Somos un fantasma
-            SetModel( "models/player.mdl" );
-            SetMoveType( MOVETYPE_NONE );
-            AddEffects( EF_NODRAW );
-            AddSolidFlags( FSOLID_NOT_SOLID );
+            SetModel("models/player.mdl");
+            SetMoveType(MOVETYPE_NONE);
+            AddEffects(EF_NODRAW);
+            AddSolidFlags(FSOLID_NOT_SOLID);
             //PhysObjectSleep();
-            StartObserverMode( OBS_MODE_ROAMING );
+            StartObserverMode(OBS_MODE_ROAMING);
 
             // Creamos el contexto para el pensamiento de empujar objetos
-            SetContextThink( &CPlayer::PushawayThink, TICK_NEVER_THINK, PUSHAWAY_THINK_CONTEXT );
+            SetContextThink(&CPlayer::PushawayThink, TICK_NEVER_THINK, PUSHAWAY_THINK_CONTEXT);
             break;
         }
 
@@ -1867,7 +1866,7 @@ void CPlayer::EnterPlayerState( int status )
         case PLAYER_STATE_ACTIVE:
         {
             //
-            SetModel( GetPlayerModel() );
+            SetModel(GetPlayerModel());
             SetUpModel();
             SetUpHands();
 
@@ -1877,25 +1876,25 @@ void CPlayer::EnterPlayerState( int status )
             CreateAttributes();
 
             // Ya podemos interactuar con el mundo
-            SetMoveType( MOVETYPE_WALK );
-            RemoveEffects( EF_NODRAW );
-            RemoveSolidFlags( FSOLID_NOT_SOLID );
+            SetMoveType(MOVETYPE_WALK);
+            RemoveEffects(EF_NODRAW);
+            RemoveSolidFlags(FSOLID_NOT_SOLID);
             PhysObjectWake();
 
-            DoAnimationEvent( PLAYERANIMEVENT_SPAWN );
+            DoAnimationEvent(PLAYERANIMEVENT_SPAWN);
 
             // Modo Historia: Somos el líder del escuadron de jugador
             if ( !TheGameRules->IsMultiplayer() && !IsBot() ) {
-                SetSquad( "player" );
-                GetSquad()->SetLeader( this );
+                SetSquad("player");
+                GetSquad()->SetLeader(this);
             }
 
-            SetFOV( this, 0, 0 );
-            SetRenderColor( 255, 255, 255 );
-            SetDistLook( 3000.0f );
+            SetFOV(this, 0, 0);
+            SetRenderColor(255, 255, 255);
+            SetDistLook(3000.0f);
 
             // Empezamos a empujar objetos
-            SetNextThink( gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, PUSHAWAY_THINK_CONTEXT );
+            SetNextThink(gpGlobals->curtime + PUSHAWAY_THINK_INTERVAL, PUSHAWAY_THINK_CONTEXT);
             break;
         }
 
@@ -1927,8 +1926,8 @@ void CPlayer::EnterPlayerState( int status )
             m_flDeathTime = gpGlobals->curtime;
 
             // Somos un fantasma
-            SetMoveType( MOVETYPE_NONE );
-            AddSolidFlags( FSOLID_NOT_SOLID );
+            SetMoveType(MOVETYPE_NONE);
+            AddSolidFlags(FSOLID_NOT_SOLID);
 
             // Tiramos nuestros recursos
             DropResources();
@@ -1937,7 +1936,7 @@ void CPlayer::EnterPlayerState( int status )
                 PackDeadPlayerItems();
 
             // Dejamos de empujar objetos
-            SetNextThink( TICK_NEVER_THINK, PUSHAWAY_THINK_CONTEXT );
+            SetNextThink(TICK_NEVER_THINK, PUSHAWAY_THINK_CONTEXT);
         }
     }
 }
@@ -1945,73 +1944,73 @@ void CPlayer::EnterPlayerState( int status )
 //================================================================================
 // Establece el estado del jugador
 //================================================================================
-void CPlayer::SetPlayerState( int status )
+void CPlayer::SetPlayerState(int status)
 {
     DebugAddMessage("%s -> %s\n", g_PlayerStateNames[m_iPlayerState], g_PlayerStateNames[status]);
 
-    LeavePlayerState( m_iPlayerState );
+    LeavePlayerState(m_iPlayerState);
     m_iPlayerState = status;
-    EnterPlayerState( status );
+    EnterPlayerState(status);
 }
 
 //================================================================================
 // Establece la clase del jugador
 //================================================================================
-void CPlayer::SetPlayerClass( int playerClass )
+void CPlayer::SetPlayerClass(int playerClass)
 {
     m_iPlayerClass = playerClass;
-    OnPlayerClass( playerClass );
+    OnPlayerClass(playerClass);
 }
 
 //================================================================================
 //================================================================================
-float CPlayer::GetStamina() 
+float CPlayer::GetStamina()
 {
-	if ( !GetAttribute("stamina") )
-		return 0.0f;
+    if ( !GetAttribute("stamina") )
+        return 0.0f;
 
-	return GetAttribute("stamina")->GetValue();
+    return GetAttribute("stamina")->GetValue();
 }
 
 //================================================================================
 //================================================================================
-float CPlayer::GetStress() 
+float CPlayer::GetStress()
 {
-	if ( !GetAttribute("stress") )
-		return 0.0f;
+    if ( !GetAttribute("stress") )
+        return 0.0f;
 
-	return GetAttribute("stress")->GetValue();
+    return GetAttribute("stress")->GetValue();
 }
 
 //================================================================================
 // Crea el viewmodel, el modelo en primera persona
 //================================================================================
-void CPlayer::CreateViewModel( int index )
+void CPlayer::CreateViewModel(int index)
 {
-    Assert( index >= 0 && index < MAX_VIEWMODELS );
+    Assert(index >= 0 && index < MAX_VIEWMODELS);
 
-    if ( GetViewModel( index ) )
+    if ( GetViewModel(index) )
         return;
 
-    CPredictedViewModel *vm = (CPredictedViewModel *)CreateEntityByName( "predicted_viewmodel" );
+    CPredictedViewModel *vm = (CPredictedViewModel *)CreateEntityByName("predicted_viewmodel");
 
     if ( vm ) {
-        vm->SetAbsOrigin( GetAbsOrigin() );
-        vm->SetOwner( this );
-        vm->SetIndex( index );
+        vm->SetAbsOrigin(GetAbsOrigin());
+        vm->SetOwner(this);
+        vm->SetIndex(index);
 
-        DispatchSpawn( vm );
-        vm->FollowEntity( this, false );
-        vm->AddEffects( EF_NODRAW );
+        DispatchSpawn(vm);
+        vm->FollowEntity(this, false);
+        vm->AddEffects(EF_NODRAW);
 
-        m_hViewModel.Set( index, vm );
+        m_hViewModel.Set(index, vm);
     }
 }
 
 //================================================================================
 // Devuelve el modelo que se usará para las manos
 //================================================================================
-const char * CPlayer::GetHandsModel( int handsindex )
+const char * CPlayer::GetHandsModel(int handsindex)
 {
     return NULL;
 }
@@ -2026,40 +2025,40 @@ void CPlayer::SetUpHands()
 //================================================================================
 // Crea las manos, un viewmodel que es parte del viewmodel principal
 //================================================================================
-void CPlayer::CreateHands( int handsindex, int viewmodelparent )
+void CPlayer::CreateHands(int handsindex, int viewmodelparent)
 {
-    Assert( handsindex >= 1 && handsindex < MAX_VIEWMODELS );
+    Assert(handsindex >= 1 && handsindex < MAX_VIEWMODELS);
 
-    if ( !GetViewModel( viewmodelparent ) )
+    if ( !GetViewModel(viewmodelparent) )
         return;
 
-    CBaseViewModel *hands = GetViewModel( handsindex );
-    CBaseViewModel *vm = GetViewModel( viewmodelparent );
+    CBaseViewModel *hands = GetViewModel(handsindex);
+    CBaseViewModel *vm = GetViewModel(viewmodelparent);
 
     // Ya existe, actualizamos el modelo
     if ( hands ) {
-        hands->SetModel( GetHandsModel( handsindex ) );
+        hands->SetModel(GetHandsModel(handsindex));
         return;
     }
 
-    if ( !GetHandsModel( handsindex ) )
+    if ( !GetHandsModel(handsindex) )
         return;
-    
-    hands = (CBaseViewModel *)CreateEntityByName( "predicted_viewmodel" );
+
+    hands = (CBaseViewModel *)CreateEntityByName("predicted_viewmodel");
 
     if ( hands ) {
-        hands->SetAbsOrigin( GetAbsOrigin() );
-        hands->SetOwner( this );
-        hands->SetIndex( handsindex );
+        hands->SetAbsOrigin(GetAbsOrigin());
+        hands->SetOwner(this);
+        hands->SetIndex(handsindex);
 
-        DispatchSpawn( hands );
+        DispatchSpawn(hands);
 
-        hands->SetModel( GetHandsModel( handsindex ) );
-        hands->SetOwnerViewModel( vm );
-        hands->SetOwnerEntity( this );
-        hands->AddEffects( EF_NODRAW );
+        hands->SetModel(GetHandsModel(handsindex));
+        hands->SetOwnerViewModel(vm);
+        hands->SetOwnerEntity(this);
+        hands->AddEffects(EF_NODRAW);
 
-        m_hViewModel.Set( handsindex, hands );
+        m_hViewModel.Set(handsindex, hands);
     }
 }
 
@@ -2073,52 +2072,52 @@ void CPlayer::Jump()
 //================================================================================
 // Establece el escuadron del jugador
 //================================================================================
-void CPlayer::SetSquad( CSquad *pSquad )
+void CPlayer::SetSquad(CSquad *pSquad)
 {
     if ( m_pSquad ) {
-        m_pSquad->RemoveMember( this );
+        m_pSquad->RemoveMember(this);
     }
 
     m_pSquad = pSquad;
 
     if ( m_pSquad ) {
-        m_pSquad->AddMember( this );
+        m_pSquad->AddMember(this);
     }
 }
 
 //================================================================================
 // Establece o crea el escuadron del jugador
 //================================================================================
-void CPlayer::SetSquad( const char *name ) 
+void CPlayer::SetSquad(const char *name)
 {
-    CSquad *pSquad = TheSquads->GetOrCreateSquad( name );
-    SetSquad( pSquad );
+    CSquad *pSquad = TheSquads->GetOrCreateSquad(name);
+    SetSquad(pSquad);
 }
 
 //================================================================================
 // [pMember] es el nuevo líder de nuestro escuadron
 //================================================================================
-void CPlayer::OnNewLeader( CPlayer *pMember ) 
+void CPlayer::OnNewLeader(CPlayer *pMember)
 {
 }
 
 //================================================================================
 // Un miembro de nuestro escuadron ha recibido daño
 //================================================================================
-void CPlayer::OnMemberTakeDamage( CPlayer *pMember, const CTakeDamageInfo & info ) 
+void CPlayer::OnMemberTakeDamage(CPlayer *pMember, const CTakeDamageInfo & info)
 {
     if ( GetBotController() ) {
-        GetBotController()->OnMemberTakeDamage( pMember, info );
+        GetBotController()->OnMemberTakeDamage(pMember, info);
     }
 }
 
 //================================================================================
 // Un miembro de nuestro escuadron ha muerto
 //================================================================================
-void CPlayer::OnMemberDeath( CPlayer * pMember, const CTakeDamageInfo & info ) 
+void CPlayer::OnMemberDeath(CPlayer * pMember, const CTakeDamageInfo & info)
 {
     if ( GetBotController() ) {
-        GetBotController()->OnMemberDeath( pMember, info );
+        GetBotController()->OnMemberDeath(pMember, info);
     }
 
     // Estrés por muerte
@@ -2129,17 +2128,17 @@ void CPlayer::OnMemberDeath( CPlayer * pMember, const CTakeDamageInfo & info )
 //================================================================================
 // Un miembro de nuestro escuadron ha visto un enemigo
 //================================================================================
-void CPlayer::OnMemberReportEnemy( CPlayer *pMember, CBaseEntity *pEnemy ) 
+void CPlayer::OnMemberReportEnemy(CPlayer *pMember, CBaseEntity *pEnemy)
 {
     if ( GetBotController() ) {
-        GetBotController()->OnMemberReportEnemy( pMember, pEnemy );
+        GetBotController()->OnMemberReportEnemy(pMember, pEnemy);
     }
 }
 
 //================================================================================
 // Devuelve si la entidad es visible por el jugador y esta dentro del campo de visión
 //================================================================================
-bool CPlayer::FEyesVisible( CBaseEntity *pEntity, int traceMask, CBaseEntity **ppBlocker )
+bool CPlayer::FEyesVisible(CBaseEntity *pEntity, int traceMask, CBaseEntity **ppBlocker)
 {
     if ( pEntity == this )
         return false;
@@ -2147,13 +2146,13 @@ bool CPlayer::FEyesVisible( CBaseEntity *pEntity, int traceMask, CBaseEntity **p
     if ( !FInViewCone(pEntity) )
         return false;
 
-    return BaseClass::FVisible( pEntity, traceMask, ppBlocker );
+    return BaseClass::FVisible(pEntity, traceMask, ppBlocker);
 }
 
 //================================================================================
 // Devuelve si la posición es visible por el jugador y esta dentro del campo de visión
 //================================================================================
-bool CPlayer::FEyesVisible( const Vector &vecTarget, int traceMask, CBaseEntity **ppBlocker )
+bool CPlayer::FEyesVisible(const Vector &vecTarget, int traceMask, CBaseEntity **ppBlocker)
 {
     if ( !vecTarget.IsValid() )
         return false;
@@ -2161,15 +2160,15 @@ bool CPlayer::FEyesVisible( const Vector &vecTarget, int traceMask, CBaseEntity 
     if ( !FInViewCone(vecTarget) )
         return false;
 
-    return CBasePlayer::FVisible( vecTarget, traceMask, ppBlocker );
+    return CBasePlayer::FVisible(vecTarget, traceMask, ppBlocker);
 }
 
 //================================================================================
 // Devuelve el valor de un comando, sea servidor o del cliente
 //================================================================================
-const char *CPlayer::GetCommandValue( const char *pCommand )
+const char *CPlayer::GetCommandValue(const char *pCommand)
 {
-    ConVarRef command( pCommand );
+    ConVarRef command(pCommand);
 
     // Es un comando de servidor...
     if ( command.IsValid() ) {
@@ -2177,41 +2176,41 @@ const char *CPlayer::GetCommandValue( const char *pCommand )
     }
 
     // Obtenemos el comando desde el cliente
-    return engine->GetClientConVarValue( entindex(), pCommand );
+    return engine->GetClientConVarValue(entindex(), pCommand);
 }
 
 //================================================================================
 // Ejecuta un comando como si fuera escrito en la consola
 //================================================================================
-void CPlayer::ExecuteCommand( const char *pCommand )
+void CPlayer::ExecuteCommand(const char *pCommand)
 {
-    engine->ClientCommand( edict(), pCommand );
+    engine->ClientCommand(edict(), pCommand);
 }
 
 //================================================================================
 //================================================================================
-float CPlayer::GetApproximateFallDamage( float height ) const
+float CPlayer::GetApproximateFallDamage(float height) const
 {
     // empirically discovered height values
     const float slope = 0.2178f;
     const float intercept = 26.0f;
 
     float damage = slope * height - intercept;
-    return MAX( 0.0f, damage );
+    return MAX(0.0f, damage);
 }
 
 //================================================================================
 // Devuelve si este jugador podrá usar el autoaim
 //================================================================================
-bool CPlayer::ShouldAutoaim() 
+bool CPlayer::ShouldAutoaim()
 {
-	if ( IsBot() )
-		return false;
+    if ( IsBot() )
+        return false;
 
-	if ( TheGameRules->GetAutoAimMode() == AUTOAIM_NONE )
-		return false;
+    if ( TheGameRules->GetAutoAimMode() == AUTOAIM_NONE )
+        return false;
 
-	return true;
+    return true;
 }
 
 //================================================================================
@@ -2223,7 +2222,7 @@ int CPlayer::GetDifficultyLevel()
         return GetBotController()->GetProfile()->GetSkill();
     }
 
-    if ( TheGameRules->HasDirector() && NameMatches( "director_*" ) ) {
+    if ( TheGameRules->HasDirector() && NameMatches("director_*") ) {
         return TheDirector->GetAngry();
     }
 
@@ -2238,7 +2237,7 @@ int CPlayer::GetDifficultyLevel()
 void CPlayer::Kick()
 {
     // Le quitamos todas las cosas
-    RemoveAllItems( true );
+    RemoveAllItems(true);
 
     // Lo matamos para eliminar linternas y otras cosas
     if ( IsAlive() ) {
@@ -2249,62 +2248,62 @@ void CPlayer::Kick()
     //GetPlayerInfo()->GetNetworkIDString();
 
     //engine->ServerCommand( UTIL_VarArgs( "kick %s\n", GetPlayerName() ) );
-    engine->ServerCommand( UTIL_VarArgs("kickid %i\n", GetPlayerInfo()->GetUserID() ) );
-    Msg( "Kicking Player (%i) %s (%s)\n", GetPlayerInfo()->GetUserID(), GetPlayerName(), GetPlayerInfo()->GetNetworkIDString() );
+    engine->ServerCommand(UTIL_VarArgs("kickid %i\n", GetPlayerInfo()->GetUserID()));
+    Msg("Kicking Player (%i) %s (%s)\n", GetPlayerInfo()->GetUserID(), GetPlayerName(), GetPlayerInfo()->GetNetworkIDString());
 }
 
 //================================================================================
 // Ejecuta una posesión demoniaca sobre este jugador
 //================================================================================
-bool CPlayer::Possess( CPlayer *pOther )
+bool CPlayer::Possess(CPlayer *pOther)
 {
     if ( !pOther )
         return false;
 
     //
-    edict_t *otherSoul    = pOther->edict();    // Abigail
-    edict_t *mySoul       = edict();            // Sniper
+    edict_t *otherSoul = pOther->edict();    // Abigail
+    edict_t *mySoul = edict();            // Sniper
 
-    // Algo salio mal...
+                                          // Algo salio mal...
     if ( !otherSoul || !mySoul )
         return false;
 
     bool otherIsBot = pOther->IsBot();
-    bool myIsBot    = IsBot();
+    bool myIsBot = IsBot();
 
-    RemoveFlag( FL_FAKECLIENT );
-    pOther->RemoveFlag( FL_FAKECLIENT );
+    RemoveFlag(FL_FAKECLIENT);
+    pOther->RemoveFlag(FL_FAKECLIENT);
 
     // Intercambiamos FL_FAKECLIENT
     if ( myIsBot )
-        pOther->AddFlag( FL_FAKECLIENT );
+        pOther->AddFlag(FL_FAKECLIENT);
 
     if ( otherIsBot )
-        AddFlag( FL_FAKECLIENT );
+        AddFlag(FL_FAKECLIENT);
 
     // Intercambiamos la I.A.
     IBot *pOtherBot = pOther->GetBotController();
-    IBot *pMyBot    = GetBotController();
+    IBot *pMyBot = GetBotController();
 
-    SetBotController( pOtherBot );
-    pOther->SetBotController( pMyBot );
+    SetBotController(pOtherBot);
+    pOther->SetBotController(pMyBot);
 
     // Backup
     //edict_t oldPlayerEdict    = *playerSoul;
     //edict_t oldBotEdict        = *botSoul;
 
     // Cambio!!
-    edict_t ootherSoul  = *otherSoul;
-    *otherSoul          = *mySoul;
-    *mySoul             = ootherSoul;
+    edict_t ootherSoul = *otherSoul;
+    *otherSoul = *mySoul;
+    *mySoul = ootherSoul;
 
     //
-    CPlayer *pMyPlayer      = ToInPlayer(CBaseEntity::Instance( otherSoul ));   // Sniper
-    CPlayer *pOtherPlayer   = ToInPlayer(CBaseEntity::Instance( mySoul ));      // Abigail
+    CPlayer *pMyPlayer = ToInPlayer(CBaseEntity::Instance(otherSoul));   // Sniper
+    CPlayer *pOtherPlayer = ToInPlayer(CBaseEntity::Instance(mySoul));      // Abigail
 
-    //
-    pMyPlayer->NetworkProp()->SetEdict( otherSoul );
-    pOtherPlayer->NetworkProp()->SetEdict( mySoul );
+                                                                            //
+    pMyPlayer->NetworkProp()->SetEdict(otherSoul);
+    pOtherPlayer->NetworkProp()->SetEdict(mySoul);
 
     return true;
 }
@@ -2312,7 +2311,7 @@ bool CPlayer::Possess( CPlayer *pOther )
 //================================================================================
 // Comienza el modo espectador
 //================================================================================
-void CPlayer::Spectate( CPlayer *pTarget )
+void CPlayer::Spectate(CPlayer *pTarget)
 {
     if ( IsObserver() )
         return;
@@ -2323,22 +2322,22 @@ void CPlayer::Spectate( CPlayer *pTarget )
     EnableAiming();
 
     if ( IsAlive() ) {
-        RemoveAllItems( true );
+        RemoveAllItems(true);
         CommitSuicide();
     }
 
     PhysObjectSleep();
 
-    UTIL_ScreenFade( this, { 0,0,0,0 }, 0.001f, 0.0f, FFADE_OUT );
-    SetNextThink( TICK_NEVER_THINK, PUSHAWAY_THINK_CONTEXT );
+    UTIL_ScreenFade(this, {0,0,0,0}, 0.001f, 0.0f, FFADE_OUT);
+    SetNextThink(TICK_NEVER_THINK, PUSHAWAY_THINK_CONTEXT);
 
     if ( pTarget ) {
-        SetObserverTarget( pTarget );
+        SetObserverTarget(pTarget);
     }
 
     // Empezamos el modo espectador
-    SetPlayerState( PLAYER_STATE_SPECTATOR );
-    StartObserverMode( m_iObserverLastMode );
+    SetPlayerState(PLAYER_STATE_SPECTATOR);
+    StartObserverMode(m_iObserverLastMode);
 }
 
 //================================================================================
@@ -2371,9 +2370,9 @@ bool CPlayer::IsLocalPlayerWatchingMe()
 //================================================================================
 CPlayer * CPlayer::GetActivePlayer()
 {
-	// Estamos viendo a un Jugador
+    // Estamos viendo a un Jugador
     if ( IsObserver() && GetObserverMode() == OBS_MODE_CHASE && GetObserverTarget() )
-        return ToInPlayer( GetObserverTarget() );
+        return ToInPlayer(GetObserverTarget());
 
     return this;
 }
@@ -2382,13 +2381,12 @@ CPlayer * CPlayer::GetActivePlayer()
 //================================================================================
 void CPlayer::ImpulseCommands()
 {
-    switch ( m_nImpulse )
-    {
+    switch ( m_nImpulse ) {
         case 100:
         {
             if ( FlashlightIsOn() )
                 FlashlightTurnOff();
-            else 
+            else
                 FlashlightTurnOn();
 
             break;
@@ -2402,7 +2400,7 @@ extern int gEvilImpulse101;
 
 //================================================================================
 //================================================================================
-void CPlayer::CheatImpulseCommands( int iImpulse )
+void CPlayer::CheatImpulseCommands(int iImpulse)
 {
     if ( !sv_cheats->GetBool() )
         return;
@@ -2415,52 +2413,52 @@ void CPlayer::CheatImpulseCommands( int iImpulse )
             EquipSuit();
 
             // Give the player everything!
-            GiveAmmo( 999, "AMMO_TYPE_SNIPERRIFLE" );
-            GiveAmmo( 999, "AMMO_TYPE_ASSAULTRIFLE" );
-            GiveAmmo( 999, "AMMO_TYPE_PISTOL" );
-            GiveAmmo( 999, "AMMO_TYPE_SHOTGUN" );
+            GiveAmmo(999, "AMMO_TYPE_SNIPERRIFLE");
+            GiveAmmo(999, "AMMO_TYPE_ASSAULTRIFLE");
+            GiveAmmo(999, "AMMO_TYPE_PISTOL");
+            GiveAmmo(999, "AMMO_TYPE_SHOTGUN");
 
-            GiveNamedItem( "weapon_cubemap" );
+            GiveNamedItem("weapon_cubemap");
 
 #ifdef USE_L4D2_MODELS
-            GiveNamedItem( "weapon_rifle_ak47" );
-            GiveNamedItem( "weapon_rifle_m16" );
-            GiveNamedItem( "weapon_smg" );
-            GiveNamedItem( "weapon_pistol_p220" );
-            GiveNamedItem( "weapon_shotgun_combat" );
-            GiveNamedItem( "weapon_rifle_sniper" );
+            GiveNamedItem("weapon_rifle_ak47");
+            GiveNamedItem("weapon_rifle_m16");
+            GiveNamedItem("weapon_smg");
+            GiveNamedItem("weapon_pistol_p220");
+            GiveNamedItem("weapon_shotgun_combat");
+            GiveNamedItem("weapon_rifle_sniper");
 #else
-            GiveNamedItem( "weapon_smg1" );
-            GiveNamedItem( "weapon_357" );
-            GiveNamedItem( "weapon_ar2" );
-            GiveNamedItem( "weapon_pistol" );
-            GiveNamedItem( "weapon_shotgun" );
+            GiveNamedItem("weapon_smg1");
+            GiveNamedItem("weapon_357");
+            GiveNamedItem("weapon_ar2");
+            GiveNamedItem("weapon_pistol");
+            GiveNamedItem("weapon_shotgun");
 #endif
 
-            SetHealth( 100 );
+            SetHealth(100);
 
             gEvilImpulse101 = false;
             break;
         }
 
         default:
-            BaseClass::CheatImpulseCommands( iImpulse );
+            BaseClass::CheatImpulseCommands(iImpulse);
     }
 }
 
 //================================================================================
 // Procesa un comando enviado directamente desde el cliente
 //================================================================================
-bool CPlayer::ClientCommand( const CCommand &args )
+bool CPlayer::ClientCommand(const CCommand &args)
 {
     // Convertirse en espectador
-    if ( FStrEq( args[0], "spectate" ) ) {
+    if ( FStrEq(args[0], "spectate") ) {
         Spectate();
         return true;
     }
 
     // Hacer respawn
-    if ( FStrEq( args[0], "respawn" ) ) {
+    if ( FStrEq(args[0], "respawn") ) {
         //if ( ShouldRunRateLimitedCommand(args) )
         {
             if ( IsAlive() ) {
@@ -2474,39 +2472,39 @@ bool CPlayer::ClientCommand( const CCommand &args )
     }
 
     // Unirse a un equipo
-    if ( FStrEq( args[0], "jointeam" ) ) {
+    if ( FStrEq(args[0], "jointeam") ) {
         if ( args.ArgC() < 2 ) {
-            Warning( "Player sent bad jointeam syntax \n" );
+            Warning("Player sent bad jointeam syntax \n");
             return false;
         }
 
         //if ( ShouldRunRateLimitedCommand(args) )
         {
-            int iTeam = atoi( args[1] );
-            ChangeTeam( iTeam );
+            int iTeam = atoi(args[1]);
+            ChangeTeam(iTeam);
         }
 
         return true;
     }
 
     // Unirse a una clase
-    if ( FStrEq( args[0], "joinclass" ) ) {
+    if ( FStrEq(args[0], "joinclass") ) {
         if ( args.ArgC() < 2 ) {
-            Warning( "Player sent bad jointeam syntax \n" );
+            Warning("Player sent bad jointeam syntax \n");
             return false;
         }
 
         //if ( ShouldRunRateLimitedCommand(args) )
         {
-            int iTeam = atoi( args[1] );
-            SetPlayerClass( iTeam );
+            int iTeam = atoi(args[1]);
+            SetPlayerClass(iTeam);
         }
 
         return true;
     }
 
     // Hacer que la I.A. controle a mi personaje
-    if ( FStrEq( args[0], "control_bot" ) ) {
+    if ( FStrEq(args[0], "control_bot") ) {
         SetUpBot();
 
         if ( GetBotController() ) {
@@ -2520,12 +2518,22 @@ bool CPlayer::ClientCommand( const CCommand &args )
     }
 
     // Volver a tomar el control del personaje
-    if ( FStrEq( args[0], "control_human" ) ) {
-        SetBotController( NULL );
+    if ( FStrEq(args[0], "control_human") ) {
+        SetBotController(NULL);
         return true;
     }
-    
-    return BaseClass::ClientCommand( args );
+
+    // Dejected
+    if ( FStrEq(args[0], "dejected") ) {
+        SetPlayerStatus(PLAYER_STATUS_DEJECTED);
+        return true;
+    }
+    if ( FStrEq(args[0], "climbing") ) {
+        SetPlayerStatus(PLAYER_STATUS_CLIMBING);
+        return true;
+    }
+
+    return BaseClass::ClientCommand(args);
 }
 
 //================================================================================
@@ -2542,7 +2550,7 @@ const char *CPlayer::GetSpawnEntityName()
 CBaseEntity *CPlayer::EntSelectSpawnPoint()
 {
     // Devolvemos el punto de spawn para el Jugador
-    if ( m_pSpawner && TheGameRules->IsSpawnMode( SPAWN_MODE_UNIQUE ) ) {
+    if ( m_pSpawner && TheGameRules->IsSpawnMode(SPAWN_MODE_UNIQUE) ) {
         return m_pSpawner;
     }
 
@@ -2552,40 +2560,40 @@ CBaseEntity *CPlayer::EntSelectSpawnPoint()
     CUtlVector<CBaseEntity *> nSpawnList;
 
     do {
-        pSpot = gEntList.FindEntityByClassname( pSpot, pSpawnPointName );
+        pSpot = gEntList.FindEntityByClassname(pSpot, pSpawnPointName);
 
         if ( !pSpot )
             continue;
 
         // Punto de creación inválido
-        if ( !TheGameRules->IsSpawnPointValid( pSpot, this ) )
+        if ( !TheGameRules->IsSpawnPointValid(pSpot, this) )
             continue;
 
         // Cada jugador tiene asignado un punto de Spawn
-        if ( TheGameRules->IsSpawnMode( SPAWN_MODE_UNIQUE ) ) {
+        if ( TheGameRules->IsSpawnMode(SPAWN_MODE_UNIQUE) ) {
             // Ya esta ocupado
-            if ( !TheGameRules->CanUseSpawnPoint( pSpot ) )
+            if ( !TheGameRules->CanUseSpawnPoint(pSpot) )
                 continue;
 
             // Lo ocupamos
             m_pSpawner = pSpot;
-            TheGameRules->UseSpawnPoint( pSpot );
+            TheGameRules->UseSpawnPoint(pSpot);
 
             return pSpot;
         }
 
         // Posible punto de spawn
-        nSpawnList.AddToTail( pSpot );
+        nSpawnList.AddToTail(pSpot);
     }
     while ( pSpot );
 
     // Al azar
-    if ( TheGameRules->IsSpawnMode( SPAWN_MODE_RANDOM ) && nSpawnList.Count() > 0 ) {
-        return nSpawnList[RandomInt( 0, (nSpawnList.Count() - 1) )];
+    if ( TheGameRules->IsSpawnMode(SPAWN_MODE_RANDOM) && nSpawnList.Count() > 0 ) {
+        return nSpawnList[RandomInt(0, (nSpawnList.Count() - 1))];
     }
 
     // Ha ocurrido un problema, usamos el primero que haya
-    return gEntList.FindEntityByClassname( NULL, pSpawnPointName );
+    return gEntList.FindEntityByClassname(NULL, pSpawnPointName);
 }
 
 //================================================================================
@@ -2610,14 +2618,14 @@ void CPlayer::PhysObjectWake()
 
 //================================================================================
 //================================================================================
-void CPlayer::DisableButtons( int nButtons )
+void CPlayer::DisableButtons(int nButtons)
 {
     m_iButtonsDisabled |= nButtons;
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::EnableButtons( int nButtons )
+void CPlayer::EnableButtons(int nButtons)
 {
     m_iButtonsDisabled &= ~nButtons;
 }
@@ -2632,49 +2640,48 @@ void CPlayer::RestoreButtons()
 
 //================================================================================
 //================================================================================
-void CPlayer::ForceButtons( int nButtons )
+void CPlayer::ForceButtons(int nButtons)
 {
     m_iButtonsForced |= nButtons;
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::UnforceButtons( int nButtons )
+void CPlayer::UnforceButtons(int nButtons)
 {
     m_iButtonsForced &= ~nButtons;
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+void CPlayer::Use(CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value)
 {
-    BaseClass::Use( pActivator, pCaller, useType, value );
+    BaseClass::Use(pActivator, pCaller, useType, value);
 
     // Otro jugador nos esta "usando"
-    if ( pActivator && pActivator->IsPlayer() )
-    {
-        CPlayer *pRescuer = ToInPlayer( pActivator );
+    if ( pActivator && pActivator->IsPlayer() ) {
+        CPlayer *pRescuer = ToInPlayer(pActivator);
 
         // Incapacitados, nos estan ayudando...
         if ( IsDejected() && !pRescuer->IsDejected() ) {
-            RaiseFromDejected( pRescuer );
+            RaiseFromDejected(pRescuer);
         }
     }
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::Touch( CBaseEntity *pOther ) 
+void CPlayer::Touch(CBaseEntity *pOther)
 {
-    BaseClass::Touch( pOther );
+    BaseClass::Touch(pOther);
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::InjectMovement( NavRelativeDirType direction )
+void CPlayer::InjectMovement(NavRelativeDirType direction)
 {
     if ( GetBotController() ) {
-        GetBotController()->InjectMovement( direction );
+        GetBotController()->InjectMovement(direction);
         return;
     }
 
@@ -2688,7 +2695,7 @@ void CPlayer::InjectMovement( NavRelativeDirType direction )
         case FORWARD:
         default:
             m_InjectedCommand->forwardmove = 450.0f;
-            InjectButton( IN_FORWARD );
+            InjectButton(IN_FORWARD);
             break;
 
         case UP:
@@ -2701,28 +2708,27 @@ void CPlayer::InjectMovement( NavRelativeDirType direction )
 
         case BACKWARD:
             m_InjectedCommand->forwardmove = -450.0f;
-            InjectButton( IN_BACK );
+            InjectButton(IN_BACK);
             break;
 
         case LEFT:
             m_InjectedCommand->sidemove = -450.0f;
-            InjectButton( IN_LEFT );
+            InjectButton(IN_LEFT);
             break;
 
         case RIGHT:
             m_InjectedCommand->sidemove = 450.0f;
-            InjectButton( IN_RIGHT );
+            InjectButton(IN_RIGHT);
             break;
     }
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::InjectButton( int btn ) 
+void CPlayer::InjectButton(int btn)
 {
-    if ( GetBotController() )
-    {
-        GetBotController()->InjectButton( btn );
+    if ( GetBotController() ) {
+        GetBotController()->InjectButton(btn);
         return;
     }
 
@@ -2737,7 +2743,7 @@ void CPlayer::InjectButton( int btn )
 
 //================================================================================
 //================================================================================
-void CPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
+void CPlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 {
     // Un humano dejando que la I.A. controle su personaje
     if ( !IsBot() && GetBotController() ) {
@@ -2754,13 +2760,16 @@ void CPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
             ucmd->viewangles = cmd->viewangles;
             //ucmd->weaponselect = cmd->weaponselect;
             //ucmd->weaponsubtype = cmd->weaponsubtype;
-            SnapEyeAngles( cmd->viewangles );
+            //SnapEyeAngles(cmd->viewangles);
+
+            SnapEyeAngles(ucmd->viewangles);
+            VectorCopy(pl.v_angle, ucmd->viewangles);
         }
     }
 
     // Visión desactivada
     if ( IsAimingDisabled() ) {
-        VectorCopy( pl.v_angle, ucmd->viewangles );
+        VectorCopy(pl.v_angle, ucmd->viewangles);
     }
 
     // Movimiento desactivado
@@ -2780,7 +2789,7 @@ void CPlayer::PlayerRunCommand( CUserCmd *ucmd, IMoveHelper *moveHelper )
         m_InjectedCommand = NULL;
     }
 
-    BaseClass::PlayerRunCommand( ucmd, moveHelper );
+    BaseClass::PlayerRunCommand(ucmd, moveHelper);
 }
 
 //================================================================================
@@ -2798,46 +2807,46 @@ int CPlayer::ObjectCaps()
 
 //================================================================================
 //================================================================================
-void CPlayer::SnapEyeAnglesZ( int angle )
+void CPlayer::SnapEyeAnglesZ(int angle)
 {
     m_iEyeAngleZ = angle;
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::DebugAddMessage( char *format, ... )
+void CPlayer::DebugAddMessage(char *format, ...)
 {
     va_list varg;
     char buffer[1024];
 
-    va_start( varg, format );
-    vsprintf( buffer, format, varg );
-    va_end( varg );
+    va_start(varg, format);
+    vsprintf(buffer, format, varg);
+    va_end(varg);
 
     DebugMessage message;
     message.m_age.Start();
-    Q_strncpy( message.m_string, buffer, 1024 );
+    Q_strncpy(message.m_string, buffer, 1024);
 
-    m_debugMessages.AddToHead( message );
-    DevMsg( "[%s] %s \n", GetPlayerName(), message.m_string );
+    m_debugMessages.AddToHead(message);
+    DevMsg("[%s] %s \n", GetPlayerName(), message.m_string);
 
     if ( m_debugMessages.Count() >= 10 )
-        m_debugMessages.RemoveMultipleFromTail( 1 );
+        m_debugMessages.RemoveMultipleFromTail(1);
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::DebugDisplay() 
+void CPlayer::DebugDisplay()
 {
     if ( sv_player_debug.GetInt() == 0 )
         return;
 
-	CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( sv_player_debug.GetInt() ) );
+    CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(sv_player_debug.GetInt()));
 
     if ( !pPlayer )
         return;
 
-	bool display = false;
+    bool display = false;
 
     if ( IsLocalPlayerWatchingMe() )
         display = true;
@@ -2845,69 +2854,69 @@ void CPlayer::DebugDisplay()
     else if ( pPlayer == this && pPlayer->IsAlive() )
         display = true;
 
-	if ( !display )
-		return;	
+    if ( !display )
+        return;
 
     m_flDebugPosition = 0.13f;
 
-    DebugScreenText( UTIL_VarArgs("%s (%s)", GetPlayerName(), g_PlayerStateNames[GetPlayerState()]) );
-    DebugScreenText( UTIL_VarArgs( "Health: %i / %i", GetHealth(), GetMaxHealth() ) );
+    DebugScreenText(UTIL_VarArgs("%s (%s)", GetPlayerName(), g_PlayerStateNames[GetPlayerState()]));
+    DebugScreenText(UTIL_VarArgs("Health: %i / %i", GetHealth(), GetMaxHealth()));
     DebugScreenText("");
 
-    DebugScreenText( UTIL_VarArgs("Is Bot: %i", IsBot()) );
-    DebugScreenText( UTIL_VarArgs("Has Bot Controller: %s", (GetBotController()) ? "Yes" : "No" ) );
-    DebugScreenText( UTIL_VarArgs("Climbing Hold: %.2f", m_flClimbingHold.Get()) );
-    DebugScreenText( UTIL_VarArgs("Help Progress: %.2f", m_flHelpProgress.Get()) );
+    DebugScreenText(UTIL_VarArgs("Is Bot: %i", IsBot()));
+    DebugScreenText(UTIL_VarArgs("Has Bot Controller: %s", (GetBotController()) ? "Yes" : "No"));
+    DebugScreenText(UTIL_VarArgs("Climbing Hold: %.2f", m_flClimbingHold.Get()));
+    DebugScreenText(UTIL_VarArgs("Help Progress: %.2f", m_flHelpProgress.Get()));
 
     DebugScreenText("");
-    DebugScreenText( UTIL_VarArgs("Sprinting: %i", m_bSprinting) );
-    DebugScreenText( UTIL_VarArgs("Movement Disabled: %i", m_bMovementDisabled) );
-    DebugScreenText( UTIL_VarArgs("Aiming Disabled: %i", m_bAimingDisabled) );
+    DebugScreenText(UTIL_VarArgs("Sprinting: %i", m_bSprinting));
+    DebugScreenText(UTIL_VarArgs("Movement Disabled: %i", m_bMovementDisabled));
+    DebugScreenText(UTIL_VarArgs("Aiming Disabled: %i", m_bAimingDisabled));
     //DebugScreenText( UTIL_VarArgs( "curTime: %2.f", gpGlobals->curtime ) );
 
     if ( GetSquad() ) {
-        DebugScreenText( "" );
-        DebugScreenText( UTIL_VarArgs( "Squad: %s", GetSquad()->GetName() ) );
-        DebugScreenText( UTIL_VarArgs( "Members: %i", GetSquad()->GetCount() ) );
+        DebugScreenText("");
+        DebugScreenText(UTIL_VarArgs("Squad: %s", GetSquad()->GetName()));
+        DebugScreenText(UTIL_VarArgs("Members: %i", GetSquad()->GetCount()));
     }
 
-    DebugScreenText( "" );
+    DebugScreenText("");
 
     if ( m_LastDamageTimer.HasStarted() )
-        DebugScreenText( UTIL_VarArgs( "Last Damage: %.2fs", m_LastDamageTimer.GetElapsedTime() ) );
+        DebugScreenText(UTIL_VarArgs("Last Damage: %.2fs", m_LastDamageTimer.GetElapsedTime()));
 
     if ( m_RaiseHelpTimer.HasStarted() )
-        DebugScreenText( UTIL_VarArgs( "Raise: %.2fs", m_RaiseHelpTimer.GetElapsedTime() ) );
+        DebugScreenText(UTIL_VarArgs("Raise: %.2fs", m_RaiseHelpTimer.GetElapsedTime()));
 
     DebugScreenText("");
-    DebugScreenText( UTIL_VarArgs("Features: %i", m_nComponents.Count()) );
+    DebugScreenText(UTIL_VarArgs("Features: %i", m_nComponents.Count()));
 
-	DebugScreenText("");
-	DebugScreenText( UTIL_VarArgs("Attributes: %i", m_nAttributes.Count()) );
+    DebugScreenText("");
+    DebugScreenText(UTIL_VarArgs("Attributes: %i", m_nAttributes.Count()));
 
-	FOR_EACH_VEC( m_nAttributes, it )
-	{
+    FOR_EACH_VEC(m_nAttributes, it)
+    {
         CAttribute *pAttribute = m_nAttributes.Element(it);
 
         //DevMsg("%s\n", m_nAttributes[it]->GetID() );
-		DebugScreenText( UTIL_VarArgs("%s:	%2.f	(amount: %.2f)	(rate: %.2f)", 
-            pAttribute->GetID(),
-            pAttribute->GetValue(),
-            pAttribute->GetAmount(),
-            pAttribute->GetRate()
-		));
+        DebugScreenText(UTIL_VarArgs("%s:	%2.f	(amount: %.2f)	(rate: %.2f)",
+                        pAttribute->GetID(),
+                        pAttribute->GetValue(),
+                        pAttribute->GetAmount(),
+                        pAttribute->GetRate()
+        ));
 
-		// Modificadores
-		FOR_EACH_VEC( pAttribute->m_nModifiers, key )
-		{
-			DebugScreenText( UTIL_VarArgs("		%s	(amount: %.2f)	(rate: %.2f) (expire: %.2f)", 
-                pAttribute->m_nModifiers[key].name,
-                pAttribute->m_nModifiers[key].amount,
-                pAttribute->m_nModifiers[key].rate,
-                pAttribute->m_nModifiers[key].expire
-			));
-		}
-	}
+        // Modificadores
+        FOR_EACH_VEC(pAttribute->m_nModifiers, key)
+        {
+            DebugScreenText(UTIL_VarArgs("		%s	(amount: %.2f)	(rate: %.2f) (expire: %.2f)",
+                            pAttribute->m_nModifiers[key].name,
+                            pAttribute->m_nModifiers[key].amount,
+                            pAttribute->m_nModifiers[key].rate,
+                            pAttribute->m_nModifiers[key].expire
+            ));
+        }
+    }
 
     //
     // Mensajes de depuración
@@ -2916,12 +2925,12 @@ void CPlayer::DebugDisplay()
     const float fadeAge = 7.0f;
     const float maxAge = 10.0f;
 
-    DebugScreenText( "" );
-    DebugScreenText( "" );
+    DebugScreenText("");
+    DebugScreenText("");
 
-    FOR_EACH_VEC( m_debugMessages, it )
+    FOR_EACH_VEC(m_debugMessages, it)
     {
-        DebugMessage *message = &m_debugMessages.Element( it );
+        DebugMessage *message = &m_debugMessages.Element(it);
 
         if ( !message )
             continue;
@@ -2932,39 +2941,39 @@ void CPlayer::DebugDisplay()
             if ( message->m_age.GetElapsedTime() > fadeAge )
                 alpha *= (1.0f - (message->m_age.GetElapsedTime() - fadeAge) / (maxAge - fadeAge));
 
-            DebugScreenText( UTIL_VarArgs( "%2.f - %s", message->m_age.GetStartTime(), message->m_string ), Color( 255, 255, 255, alpha ) );
+            DebugScreenText(UTIL_VarArgs("%2.f - %s", message->m_age.GetStartTime(), message->m_string), Color(255, 255, 255, alpha));
         }
     }
 }
 
 //================================================================================
 //================================================================================
-void CPlayer::DebugScreenText( const char * pText, Color color, float yPosition, float duration ) 
+void CPlayer::DebugScreenText(const char * pText, Color color, float yPosition, float duration)
 {
     if ( yPosition < 0 )
         yPosition = m_flDebugPosition;
     else
         m_flDebugPosition = yPosition;
 
-    NDebugOverlay::ScreenText( 0.1f, yPosition, pText, color.r(), color.g(), color.b(), color.a(), duration );
+    NDebugOverlay::ScreenText(0.1f, yPosition, pText, color.r(), color.g(), color.b(), color.a(), duration);
     m_flDebugPosition += 0.02f;
 }
 
 //================================================================================
 //================================================================================
-CON_COMMAND( test_seeds, "" )
+CON_COMMAND(test_seeds, "")
 {
-    DevMsg( "[test1] SharedRandomInt: %i\n", Utils::RandomInt( "test1", 0, 100 ) );
-    DevMsg( "[test2] SharedRandomInt: %i\n", Utils::RandomInt( "test2", 0, 100 ) );
-    DevMsg( "[test3] SharedRandomInt: %i\n", Utils::RandomInt( "test3", 0, 100 ) );
-    DevMsg( "\n" );
+    DevMsg("[test1] SharedRandomInt: %i\n", Utils::RandomInt("test1", 0, 100));
+    DevMsg("[test2] SharedRandomInt: %i\n", Utils::RandomInt("test2", 0, 100));
+    DevMsg("[test3] SharedRandomInt: %i\n", Utils::RandomInt("test3", 0, 100));
+    DevMsg("\n");
 
     ThreadSleep(2000);
 
-    DevMsg( "[test1] SharedRandomInt: %i\n", Utils::RandomInt( "test1", 0, 100 ) );
-    DevMsg( "[test3] SharedRandomInt: %i\n", Utils::RandomInt( "test3", 0, 100 ) );
-    DevMsg( "[test2] SharedRandomInt: %i\n", Utils::RandomInt( "test2", 0, 100 ) );
-    DevMsg( "\n" );
+    DevMsg("[test1] SharedRandomInt: %i\n", Utils::RandomInt("test1", 0, 100));
+    DevMsg("[test3] SharedRandomInt: %i\n", Utils::RandomInt("test3", 0, 100));
+    DevMsg("[test2] SharedRandomInt: %i\n", Utils::RandomInt("test2", 0, 100));
+    DevMsg("\n");
 }
 
 class CExample
@@ -2977,7 +2986,7 @@ CUtlVector<CExample *> g_TestList;
 
 //================================================================================
 //================================================================================
-CON_COMMAND( test_pointers, "" )
+CON_COMMAND(test_pointers, "")
 {
     CExample *x = new CExample();
     x->enemies = 0;
@@ -2985,50 +2994,50 @@ CON_COMMAND( test_pointers, "" )
     CExample *y = new CExample();
     y->enemies = 10;
 
-    g_TestList.AddToTail( x );
-    g_TestList.AddToTail( y );
+    g_TestList.AddToTail(x);
+    g_TestList.AddToTail(y);
 
-    Msg( "%i\n", x->enemies );
+    Msg("%i\n", x->enemies);
     //Msg( "%i\n", y->enemies );
 
     CExample *e = g_TestList[0];
     e->enemies += 10;
 
-    Msg( "%i\n", e->enemies ); // 10
-    Msg( "%i\n", g_TestList[0]->enemies ); // 10
-    Msg( "%i\n", x->enemies ); // 10
+    Msg("%i\n", e->enemies); // 10
+    Msg("%i\n", g_TestList[0]->enemies); // 10
+    Msg("%i\n", x->enemies); // 10
 }
 
 //================================================================================
 //================================================================================
-CON_COMMAND( test_pointers2, "" )
+CON_COMMAND(test_pointers2, "")
 {
     CExample *e = g_TestList[0];
     e->enemies += 10;
 
-    Msg( "%i\n", e->enemies ); // 20
-    Msg( "%i\n", g_TestList[0]->enemies ); // 20
+    Msg("%i\n", e->enemies); // 20
+    Msg("%i\n", g_TestList[0]->enemies); // 20
 
     g_TestList[0]->enemies += 10;
 
-    Msg( "%i\n", e->enemies ); // 30
-    Msg( "%i\n", g_TestList[0]->enemies ); // 30
+    Msg("%i\n", e->enemies); // 30
+    Msg("%i\n", g_TestList[0]->enemies); // 30
 }
 
 //================================================================================
 //================================================================================
-CON_COMMAND( test_pointers3, "" )
+CON_COMMAND(test_pointers3, "")
 {
     CExample *e = g_TestList[0];
     delete e;
 
-    Msg( "%i\n", e->enemies ); // ?
-    Msg( "%i\n", g_TestList[0]->enemies ); // ?
+    Msg("%i\n", e->enemies); // ?
+    Msg("%i\n", g_TestList[0]->enemies); // ?
 
-    g_TestList.Remove( 0 );
+    g_TestList.Remove(0);
 
-    Msg( "%i\n", e->enemies ); // ?
-    Msg( "%i\n", g_TestList[0]->enemies ); // 10
+    Msg("%i\n", e->enemies); // ?
+    Msg("%i\n", g_TestList[0]->enemies); // 10
 
     g_TestList.PurgeAndDeleteElements();
 }

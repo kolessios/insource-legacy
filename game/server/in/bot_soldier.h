@@ -18,6 +18,11 @@ class CBotSoldier : public CBot
 public:
 	DECLARE_CLASS_GAMEROOT( CBotSoldier, CBot );
 
+    CBotSoldier(CBasePlayer *parent) : BaseClass(parent)
+    {
+
+    }
+
 	// Principales
 	virtual void Spawn();
 	virtual void Process( CBotCmd* &cmd );
