@@ -469,14 +469,30 @@ $Project
 
                 $Folder "Sound"
                 {
-                    $File "$SRCDIR\game\shared\in\env_sound.cpp"
-                    $File "$SRCDIR\game\shared\in\env_sound.h"
+                    $Folder "Entities"
+                    {
+                        $File "$SRCDIR\game\shared\in\env_sound.cpp"
+                        $File "$SRCDIR\game\shared\in\env_sound.h"
+                    }
+
+                    $Folder "Managers"
+                    {
+                        $File "$SRCDIR\game\shared\in\sound_manager.cpp"
+                        $File "$SRCDIR\game\shared\in\sound_manager.h"
+                        $File "$SRCDIR\game\shared\in\sound_instance_manager.cpp"
+                        $File "$SRCDIR\game\shared\in\sound_instance_manager.h"
+                    }
+
+                    $Folder "Emitters"
+                    {
+                        $File "$SRCDIR\game\shared\in\sound_emitter_system.cpp"
+                        $File "$SRCDIR\game\shared\in\sound_emitter_system.h"
+                        $File "$SRCDIR\game\shared\in\sound_openal_emitter_system.cpp"
+                        $File "$SRCDIR\game\shared\in\sound_openal_emitter_system.h"
+                    }
+
                     $File "$SRCDIR\game\shared\in\sound_instance.cpp"
                     $File "$SRCDIR\game\shared\in\sound_instance.h"
-                    $File "$SRCDIR\game\shared\in\sound_manager.cpp"
-                    $File "$SRCDIR\game\shared\in\sound_manager.h"
-                    $File "$SRCDIR\game\shared\in\sound_instance_manager.cpp"
-                    $File "$SRCDIR\game\shared\in\sound_instance_manager.h"
                 }
 
                 $File	"$SRCDIR\game\shared\in\in_shareddefs.h"

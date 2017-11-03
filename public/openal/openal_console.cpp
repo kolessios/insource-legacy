@@ -47,7 +47,7 @@ void OpenALStartDemo(char *fileExtension)
 		return;
 	}
 
-	demoSample->Open(VarArgs(OPENAL_DEMO_FILENAME, fileExtension));
+	demoSample->Open(UTIL_VarArgs(OPENAL_DEMO_FILENAME, fileExtension));
 	demoSample->SetLooping(true);
     demoSample->Persist();
 	demoSample->Play();
@@ -97,7 +97,7 @@ static int OpenALDemo_AutoComplete(char const *partial,
 
 	for (int i=0; i < OPENAL_NUMBER_OF_FORMATS; ++i)
 	{
-		char *format_command = VarArgs("openal_demo %s", formats[i]);
+		char *format_command = UTIL_VarArgs("openal_demo %s", formats[i]);
 
 		if (strncmp(format_command, partial, strlen(partial)) == 0)
 		{

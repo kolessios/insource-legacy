@@ -198,6 +198,7 @@ void COpenALGameSystem::Update(float frametime)
  ***/
 inline void COpenALGameSystem::UpdateListener(const float frametime)
 {
+#ifdef CLIENT_DLL
 	float position[3], orientation[6], gain=0.0f;
 	Vector earPosition, fwd, right, up;
 	CBasePlayer *localPlayer;
@@ -249,6 +250,7 @@ inline void COpenALGameSystem::UpdateListener(const float frametime)
 	alListenerfv(AL_GAIN,        &gain);
 	if (alGetError() != AL_NO_ERROR)
 		Warning("OpenAL: Couldn't properly set the listener's gain.\n");
+#endif
 }
 
 /***
@@ -295,7 +297,14 @@ void COpenALGameSystem::UpdateSamples(const float updateTime)
 // Gets the full path of a specified sound file relative to the /sound folder
 void COpenALGameSystem::GetSoundPath(const char* relativePath, char* buffer, size_t bufferSize)
 {
-  Q_snprintf(buffer, bufferSize, "%s/sound/%s", engine->GetGameDirectory(), relativePath);
+#ifndef CLIENT_DLL
+    char gamePath[256];
+    engine->GetGameDir(gamePath, 256);
+#else
+    const char *gamePath = engine->GetGameDirectory();
+#endif
+
+  Q_snprintf(buffer, bufferSize, "%s/sound/%s", gamePath, relativePath);
 
   for (; *buffer; ++buffer) {
     if (*buffer == '\\') *buffer = '/';

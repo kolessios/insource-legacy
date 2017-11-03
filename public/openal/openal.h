@@ -7,7 +7,7 @@
 #include "AL/alc.h"
 
 // This will tell OpenAL to start running the demo automatically.
-#define OPENAL_AUTOSTART_DEMO
+//#define OPENAL_AUTOSTART_DEMO
 
 #define METERS_TO_VALVEUNITS(u) (valveUnitsPerMeter*(u)) // Converts meters to valve units
 #define VALVEUNITS_TO_METERS(u) (0.01905f*(u)) // Converts valve units to meters
@@ -19,9 +19,11 @@ const float valveSpeedOfSound = METERS_TO_VALVEUNITS(340.29);
 
 const float requestedNumberOfAuxiliarySends = 4;
 
+/*
 #ifndef CLIENT_DLL
 #error You don't need OpenAL on the server. Only compile it for the client.
 #endif
+*/
 
 typedef struct
 {

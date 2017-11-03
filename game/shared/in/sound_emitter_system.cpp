@@ -7,22 +7,14 @@
 #include "engine/IEngineSound.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "filesystem.h"
+#include "soundchars.h"
 
 #ifndef CLIENT_DLL
-#include "envmicrophone.h"
-#include "sceneentity.h"
-#include "closedcaptions.h"
+
 #else
 #include <vgui_controls/Controls.h>
 #include <vgui/IVgui.h>
 #include "hud_closecaption.h"
-
-#ifdef USE_OPENAL
-#include "openal/openal.h"
-#include "openal/openal_oggsample.h"
-#include "openal/openal_sample_pool.h"
-#include "soundchars.h"
-#endif
 
 #ifdef GAMEUI_UISYSTEM2_ENABLED
 #include "gameui.h"
@@ -36,6 +28,7 @@
 //================================================================================
 
 ConVar sv_soundemitter_trace("sv_soundemitter_trace", "-1", FCVAR_REPLICATED, "Show all EmitSound calls including their symbolic name and the actual wave file they resolved to. (-1 = for nobody, 0 = for everybody, n = for one entity)\n");
+ConVar cc_showmissing("cc_showmissing", "0", FCVAR_REPLICATED, "Show missing closecaption entries.");
 
 //================================================================================
 //================================================================================
@@ -48,7 +41,151 @@ int LookupStringFromCloseCaptionToken(char const *token);
 const wchar_t *GetStringForIndex(int index);
 #endif
 
-static bool g_bPermitDirectSoundPrecache = false;
+bool g_bPermitDirectSoundPrecache = false;
+
+//================================================================================
+// Captions
+//================================================================================
+#ifndef CLIENT_DLL
+static ConVar cc_norepeat("cc_norepeat", "5", 0, "In multiplayer games, don't repeat captions more often than this many seconds.");
+
+class CCaptionRepeatMgr
+{
+public:
+
+    CCaptionRepeatMgr() :
+        m_rbCaptionHistory(0, 0, DefLessFunc(unsigned int))
+    {
+    }
+
+    bool CanEmitCaption(unsigned int hash);
+
+    void Clear();
+
+private:
+
+    void RemoveCaptionsBefore(float t);
+
+    struct CaptionItem_t
+    {
+        unsigned int	hash;
+        float			realtime;
+
+        static bool Less(const CaptionItem_t &lhs, const CaptionItem_t &rhs)
+        {
+            return lhs.hash < rhs.hash;
+        }
+    };
+
+    CUtlMap< unsigned int, float > m_rbCaptionHistory;
+};
+
+static CCaptionRepeatMgr g_CaptionRepeats;
+
+void CCaptionRepeatMgr::Clear()
+{
+    m_rbCaptionHistory.Purge();
+}
+
+bool CCaptionRepeatMgr::CanEmitCaption(unsigned int hash)
+{
+    // Don't cull in single player
+    if ( gpGlobals->maxClients == 1 )
+        return true;
+
+    float realtime = gpGlobals->realtime;
+
+    RemoveCaptionsBefore(realtime - cc_norepeat.GetFloat());
+
+    int idx = m_rbCaptionHistory.Find(hash);
+    if ( idx == m_rbCaptionHistory.InvalidIndex() ) {
+        m_rbCaptionHistory.Insert(hash, realtime);
+        return true;
+    }
+
+    float flLastEmitted = m_rbCaptionHistory[idx];
+    if ( realtime - flLastEmitted > cc_norepeat.GetFloat() ) {
+        m_rbCaptionHistory[idx] = realtime;
+        return true;
+    }
+
+    return false;
+}
+
+void CCaptionRepeatMgr::RemoveCaptionsBefore(float t)
+{
+    CUtlVector< unsigned int > toRemove;
+    FOR_EACH_MAP(m_rbCaptionHistory, i)
+    {
+        if ( m_rbCaptionHistory[i] < t ) {
+            toRemove.AddToTail(m_rbCaptionHistory.Key(i));
+        }
+    }
+
+    for ( int i = 0; i < toRemove.Count(); ++i ) {
+        m_rbCaptionHistory.Remove(toRemove[i]);
+    }
+}
+
+//================================================================================
+//================================================================================
+bool CanEmitCaption(unsigned int hash)
+{
+    return g_CaptionRepeats.CanEmitCaption(hash);
+}
+
+void ClearModelSoundsCache();
+
+#endif // !CLIENT_DLL
+
+//================================================================================
+// Helpers
+//================================================================================
+
+void WaveTrace(char const *wavname, char const *funcname)
+{
+    if ( IsX360() && !IsDebug() ) {
+        return;
+    }
+
+    static CUtlSymbolTable s_WaveTrace;
+
+    // Make sure we only show the message once
+    if ( UTL_INVAL_SYMBOL == s_WaveTrace.Find(wavname) ) {
+        DevMsg("%s directly referenced wave %s (should use game_sounds.txt system instead)\n",
+               funcname, wavname);
+        s_WaveTrace.AddString(wavname);
+    }
+}
+
+void Hack_FixEscapeChars(char *str)
+{
+    int len = Q_strlen(str) + 1;
+    char *i = str;
+    char *o = (char *)stackalloc(len);
+    char *osave = o;
+    while ( *i ) {
+        if ( *i == '\\' ) {
+            switch ( *(i + 1) ) {
+                case 'n':
+                    *o = '\n';
+                    ++i;
+                    break;
+                default:
+                    *o = *i;
+                    break;
+            }
+        }
+        else {
+            *o = *i;
+        }
+
+        ++i;
+        ++o;
+    }
+    *o = 0;
+    Q_strncpy(str, osave, len);
+}
 
 #ifndef CLIENT_DLL
 //================================================================================
@@ -342,7 +479,7 @@ HSOUNDSCRIPTHANDLE CSoundEmitterSystem::PrecacheScriptSound(const char * soundna
         return (HSOUNDSCRIPTHANDLE)soundIndex;
     }
 
-#ifndef( CLIENT_DLL )
+#ifndef CLIENT_DLL
     LogPrecache(soundname);
 #endif
 
@@ -590,3 +727,389 @@ void CSoundEmitterSystem::EmitSound(IRecipientFilter & filter, int entindex, con
 
     EmitSoundByHandle(filter, entindex, ep, ep.m_hSoundScriptHandle);
 }
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::EmitAmbientSound(int entindex, const Vector & origin, const char * pSample, float volume, soundlevel_t soundlevel, int flags, int pitch, float soundtime, float * duration)
+{
+#if !defined( CLIENT_DLL )
+    CUtlVector< Vector > dummyorigins;
+
+    // Loop through all registered microphones and tell them the sound was just played
+    // NOTE: This means that pitch shifts/sound changes on the original ambient will not be reflected in the re-broadcasted sound
+    bool bSwallowed = CEnvMicrophone::OnSoundPlayed(
+        entindex,
+        pSample,
+        soundlevel,
+        volume,
+        flags,
+        pitch,
+        &origin,
+        soundtime,
+        dummyorigins);
+
+    if ( bSwallowed )
+        return;
+#endif
+
+    if ( pSample && (Q_stristr(pSample, ".wav") || Q_stristr(pSample, ".mp3")) ) {
+#ifdef CLIENT_DLL
+        enginesound->EmitAmbientSound(pSample, volume, pitch, flags, soundtime);
+#else
+        engine->EmitAmbientSound(entindex, origin, pSample, volume, soundlevel, flags, pitch, soundtime);
+#endif
+
+        if ( duration ) {
+            *duration = enginesound->GetSoundDuration(pSample);
+        }
+
+        TraceEmitSound(entindex, "EmitAmbientSound:  Raw wave emitted '%s' (ent %i)\n", pSample, entindex);
+    }
+    else {
+        EmitAmbientSound(entindex, origin, pSample, volume, flags, pitch, soundtime, duration);
+    }
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::EmitAmbientSound(int entindex, const Vector & origin, const char * soundname, float flVolume, int iFlags, int iPitch, float soundtime, float * duration)
+{
+    // Pull data from parameters
+    CSoundParameters params;
+
+    if ( !soundemitterbase->GetParametersForSound(soundname, params, GENDER_NONE) ) {
+        return;
+    }
+
+    if ( iFlags & SND_CHANGE_PITCH ) {
+        params.pitch = iPitch;
+    }
+
+    if ( iFlags & SND_CHANGE_VOL ) {
+        params.volume = flVolume;
+    }
+
+#ifdef CLIENT_DLL
+    enginesound->EmitAmbientSound(params.soundname, params.volume, params.pitch, iFlags, soundtime);
+#else
+    engine->EmitAmbientSound(entindex, origin, params.soundname, params.volume, params.soundlevel, iFlags, params.pitch, soundtime);
+#endif
+
+    bool needsCC = !(iFlags & (SND_STOP | SND_CHANGE_VOL | SND_CHANGE_PITCH));
+    float soundduration = 0.0f;
+
+    if ( duration || needsCC ) {
+        soundduration = enginesound->GetSoundDuration(params.soundname);
+
+        if ( duration ) {
+            *duration = soundduration;
+        }
+    }
+
+    TraceEmitSound(entindex, "EmitAmbientSound:  '%s' emitted as '%s' (ent %i)\n", soundname, params.soundname, entindex);
+
+    // We only want to trigger the CC on the start of the sound, not on any changes or halting of the sound
+    if ( needsCC ) {
+        CRecipientFilter filter;
+        filter.AddAllPlayers();
+        filter.MakeReliable();
+
+        CUtlVector< Vector > dummy;
+        EmitCloseCaption(filter, entindex, false, soundname, dummy, soundduration, false);
+    }
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::StopSoundByHandle(int entindex, const char * soundname, HSOUNDSCRIPTHANDLE & handle, bool bIsStoppingSpeakerSound)
+{
+    if ( handle == SOUNDEMITTER_INVALID_HANDLE ) {
+        handle = (HSOUNDSCRIPTHANDLE)soundemitterbase->GetSoundIndex(soundname);
+    }
+
+    if ( handle == SOUNDEMITTER_INVALID_HANDLE )
+        return;
+
+    CSoundParametersInternal *params;
+
+    params = soundemitterbase->InternalGetParametersForSound((int)handle);
+
+    if ( !params ) {
+        return;
+    }
+
+    // HACK:  we have to stop all sounds if there are > 1 in the rndwave section...
+    int c = params->NumSoundNames();
+
+    for ( int i = 0; i < c; ++i ) {
+        char const *wavename = soundemitterbase->GetWaveName(params->GetSoundNames()[i].symbol);
+        Assert(wavename);
+
+        enginesound->StopSound(entindex, params->GetChannel(), wavename);
+        TraceEmitSound(entindex, "StopSound:  '%s' stopped as '%s' (ent %i)\n", soundname, wavename, entindex);
+
+#ifndef CLIENT_DLL
+        if ( bIsStoppingSpeakerSound == false ) {
+            StopSpeakerSounds(wavename);
+        }
+#endif
+    }
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::StopSound(int entindex, const char * soundname)
+{
+    HSOUNDSCRIPTHANDLE handle = (HSOUNDSCRIPTHANDLE)soundemitterbase->GetSoundIndex(soundname);
+
+    if ( handle == SOUNDEMITTER_INVALID_HANDLE ) {
+        return;
+    }
+
+    StopSoundByHandle(entindex, soundname, handle);
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::StopSound(int iEntIndex, int iChannel, const char * pSample, bool bIsStoppingSpeakerSound)
+{
+    if ( pSample && (Q_stristr(pSample, ".wav") || Q_stristr(pSample, ".mp3") || pSample[0] == '!') ) {
+        enginesound->StopSound(iEntIndex, iChannel, pSample);
+        TraceEmitSound(iEntIndex, "StopSound:  Raw wave stopped '%s' (ent %i)\n", pSample, iEntIndex);
+
+#ifndef CLIENT_DLL
+        if ( bIsStoppingSpeakerSound == false ) {
+            StopSpeakerSounds(pSample);
+        }
+#endif
+    }
+    else {
+        // Look it up in sounds.txt and ignore other parameters
+        StopSound(iEntIndex, pSample);
+    }
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::EmitCloseCaption(IRecipientFilter & filter, int entindex, bool fromplayer, char const * token, CUtlVector<Vector>& originlist, float duration, bool warnifmissing, bool bForceSubtitle)
+{
+    // Don't use dedicated closecaption ConVar since it will prevent remote clients from getting captions.
+    // Okay to use it in SP, since it's the same ConVar, not the FCVAR_USERINFO one
+    if ( gpGlobals->maxClients == 1 && !g_pClosecaption->GetBool() ) {
+        return;
+    }
+
+    // A negative duration means fill it in from the wav file if possible
+    if ( duration < 0.0f ) {
+        char const *wav = soundemitterbase->GetWavFileForSound(token, GENDER_NONE);
+        if ( wav ) {
+            duration = enginesound->GetSoundDuration(wav);
+        }
+        else {
+            duration = 2.0f;
+        }
+    }
+
+    char lowercase[256];
+    Q_strncpy(lowercase, token, sizeof(lowercase));
+    Q_strlower(lowercase);
+
+    if ( Q_strstr(lowercase, "\\") ) {
+        Hack_FixEscapeChars(lowercase);
+    }
+
+    // NOTE:  We must make a copy or else if the filter is owned by a SoundPatch, we'll end up destructively removing
+    //  all players from it!!!!
+    CRecipientFilter filterCopy;
+    filterCopy.CopyFrom((CRecipientFilter &)filter);
+
+    // Captions only route to host player (there is only one closecaptioning HUD)
+    filterCopy.RemoveSplitScreenPlayers();
+
+    if ( !bForceSubtitle ) {
+        // Remove any players who don't want close captions
+        CBaseEntity::RemoveRecipientsIfNotCloseCaptioning((CRecipientFilter &)filterCopy);
+    }
+
+#ifndef CLIENT_DLL
+    // Defined in sceneentity.cpp
+    bool AttenuateCaption(const char *token, const Vector& listener, CUtlVector< Vector >& soundorigins);
+
+    if ( filterCopy.GetRecipientCount() > 0 ) {
+        int c = filterCopy.GetRecipientCount();
+        for ( int i = c - 1; i >= 0; --i ) {
+            CBasePlayer *player = UTIL_PlayerByIndex(filterCopy.GetRecipientIndex(i));
+            if ( !player )
+                continue;
+
+            Vector playerEarPosition = player->EarPosition();
+
+            if ( AttenuateCaption(lowercase, playerEarPosition, originlist) ) {
+                filterCopy.RemoveRecipient(player);
+            }
+        }
+    }
+#endif
+
+    // Anyone left?
+    if ( filterCopy.GetRecipientCount() > 0 ) {
+#ifndef CLIENT_DLL
+        char lowercase_nogender[256];
+        Q_strncpy(lowercase_nogender, lowercase, sizeof(lowercase_nogender));
+        bool bTriedGender = false;
+
+        CBaseEntity *pActor = CBaseEntity::Instance(entindex);
+        if ( pActor ) {
+            char const *pszActorModel = STRING(pActor->GetModelName());
+            gender_t gender = soundemitterbase->GetActorGender(pszActorModel);
+
+            if ( gender == GENDER_MALE ) {
+                Q_strncat(lowercase, "_male", sizeof(lowercase), COPY_ALL_CHARACTERS);
+                bTriedGender = true;
+            }
+            else if ( gender == GENDER_FEMALE ) {
+                Q_strncat(lowercase, "_female", sizeof(lowercase), COPY_ALL_CHARACTERS);
+                bTriedGender = true;
+            }
+        }
+
+        unsigned int hash = 0u;
+        bool bFound = GetCaptionHash(lowercase, true, hash);
+
+        // if not found, try the no-gender version
+        if ( !bFound && bTriedGender ) {
+            bFound = GetCaptionHash(lowercase_nogender, true, hash);
+        }
+
+        if ( bFound ) {
+            if ( g_CaptionRepeats.CanEmitCaption(hash) ) {
+                if ( bForceSubtitle ) {
+                    // Send forced caption and duration hint down to client
+                    UserMessageBegin(filterCopy, "CloseCaptionDirect");
+                    WRITE_LONG(hash);
+                    WRITE_UBITLONG(clamp((int)(duration * 10.0f), 0, 65535), 15),
+                        WRITE_UBITLONG(fromplayer ? 1 : 0, 1),
+                        MessageEnd();
+                }
+                else {
+                    // Send caption and duration hint down to client
+                    UserMessageBegin(filterCopy, "CloseCaption");
+                    WRITE_LONG(hash);
+                    WRITE_UBITLONG(clamp((int)(duration * 10.0f), 0, 65535), 15),
+                        WRITE_UBITLONG(fromplayer ? 1 : 0, 1),
+                        MessageEnd();
+                }
+            }
+        }
+#else
+        // Direct dispatch
+        CHudCloseCaption *cchud = GET_FULLSCREEN_HUDELEMENT(CHudCloseCaption);
+        if ( cchud ) {
+            cchud->ProcessCaption(lowercase, duration, fromplayer);
+        }
+#endif
+    }
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::EmitCloseCaption(IRecipientFilter & filter, int entindex, const CSoundParameters & params, const EmitSound_t & ep)
+{
+    // Don't use dedicated closecaption ConVar since it will prevent remote clients from getting captions.
+    // Okay to use it in SP, since it's the same ConVar, not the FCVAR_USERINFO one
+    if ( gpGlobals->maxClients == 1 &&
+        !g_pClosecaption->GetBool() ) {
+        return;
+    }
+
+    bool bForceSubtitle = false;
+
+    if ( TestSoundChar(params.soundname, CHAR_SUBTITLED) ) {
+        bForceSubtitle = true;
+    }
+
+    if ( !bForceSubtitle && !ep.m_bEmitCloseCaption ) {
+        return;
+    }
+
+    // NOTE:  We must make a copy or else if the filter is owned by a SoundPatch, we'll end up destructively removing
+    //  all players from it!!!!
+    CRecipientFilter filterCopy;
+    filterCopy.CopyFrom((CRecipientFilter &)filter);
+
+    if ( !bForceSubtitle ) {
+        // Remove any players who don't want close captions
+        CBaseEntity::RemoveRecipientsIfNotCloseCaptioning((CRecipientFilter &)filterCopy);
+    }
+
+    // Anyone left?
+    if ( filterCopy.GetRecipientCount() <= 0 ) {
+        return;
+    }
+
+    float duration = 0.0f;
+    if ( ep.m_pflSoundDuration ) {
+        duration = *ep.m_pflSoundDuration;
+    }
+    else {
+        duration = enginesound->GetSoundDuration(params.soundname);
+    }
+
+    bool fromplayer = false;
+    CBaseEntity *ent = CBaseEntity::Instance(entindex);
+    if ( ent ) {
+        while ( ent ) {
+            if ( ent->IsPlayer() ) {
+                fromplayer = true;
+                break;
+            }
+
+            ent = ent->GetOwnerEntity();
+        }
+    }
+    EmitCloseCaption(filter, entindex, fromplayer, ep.m_pSoundName, ep.m_UtlVecSoundOrigin, duration, ep.m_bWarnOnMissingCloseCaption, bForceSubtitle);
+}
+
+#ifndef CLIENT_DLL
+//================================================================================
+//================================================================================
+bool CSoundEmitterSystem::GetCaptionHash(char const * pchStringName, bool bWarnIfMissing, unsigned int & hash)
+{
+    // hash the string, find in dictionary or return 0u if not there!!!
+    CUtlVector< AsyncCaption_t >& directories = m_ServerCaptions;
+
+    CaptionLookup_t search;
+    search.SetHash(pchStringName);
+    hash = search.hash;
+
+    int idx = -1;
+    int i;
+    int dc = directories.Count();
+    for ( i = 0; i < dc; ++i ) {
+        idx = directories[i].m_CaptionDirectory.Find(search);
+        if ( idx == directories[i].m_CaptionDirectory.InvalidIndex() )
+            continue;
+
+        break;
+    }
+
+    if ( i >= dc || idx == -1 ) {
+        if ( bWarnIfMissing && cc_showmissing.GetBool() ) {
+            static CUtlRBTree< unsigned int > s_MissingHashes(0, 0, DefLessFunc(unsigned int));
+            if ( s_MissingHashes.Find(hash) == s_MissingHashes.InvalidIndex() ) {
+                s_MissingHashes.Insert(hash);
+                Msg("Missing caption for %s\n", pchStringName);
+            }
+        }
+        return false;
+    }
+
+    // Anything marked as L"" by content folks doesn't need to transmit either!!!
+    CaptionLookup_t &entry = directories[i].m_CaptionDirectory[idx];
+    if ( entry.length <= sizeof(wchar_t) ) {
+        return false;
+    }
+
+    return true;
+}
+#endif
