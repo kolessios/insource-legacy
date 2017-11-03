@@ -1761,7 +1761,7 @@ bool C_Player::CreateMove( float flInputSampleTime, CUserCmd *ucmd )
         ucmd->upmove = 0;
         ucmd->buttons = 0;
         ucmd->viewangles = GetAbsAngles();
-        engine->SetViewAngles( ucmd->viewangles );
+        //engine->SetViewAngles( ucmd->viewangles );
         return true;
     }
 

@@ -10,7 +10,8 @@
 #include "in_player.h"
 #include "in_shareddefs.h"
 
-#define DECLARE_COMPONENT( id ) virtual int GetID() { return id; }
+#undef DECLARE_COMPONENT
+#define DECLARE_PLAYER_COMPONENT( id ) virtual int GetID() const { return id; }
 
 //====================================================================
 // Base para la creación de componentes
@@ -19,7 +20,7 @@ class CPlayerComponent : public CPlayerInfo
 {
 public:
 	DECLARE_CLASS_GAMEROOT( CPlayerComponent, CPlayerInfo );
-    DECLARE_COMPONENT( PLAYER_COMPONENT_INVALID );
+    DECLARE_PLAYER_COMPONENT( PLAYER_COMPONENT_INVALID );
 
     CPlayerComponent();
     CPlayerComponent( CBasePlayer *pParent );

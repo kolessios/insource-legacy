@@ -26,7 +26,7 @@ void Bot_RunAll() {
         if ( !pPlayer )
             continue;
 
-        if ( !pPlayer->IsBot() )
+        if ( !pPlayer->GetBotController() )
             continue;
 
         pPlayer->GetBotController()->Update();

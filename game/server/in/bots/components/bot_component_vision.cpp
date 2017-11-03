@@ -38,7 +38,6 @@ void CBotVision::Update()
     Process();
 }
 
-
 //================================================================================
 // Process the aiming system
 // Author: Michael S. Booth (linkedin.com/in/michaelbooth), 2003
@@ -185,17 +184,20 @@ void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLook
         return;
 
     // We added a margin of error when aiming.
-    if ( GetProfile()->GetSkill() < SKILL_HARDEST ) {
+    if ( GetDecision()->IsEnemy(pEntity) && GetProfile()->GetSkill() < SKILL_HARDEST ) {
         float errorRange = 0.0f;
 
-        if ( GetProfile()->GetSkill() >= SKILL_HARD ) {
-            errorRange = RandomFloat( 0.0f, 20.0f );
+        if ( GetProfile()->GetSkill() >= SKILL_VERY_HARD ) {
+            errorRange = RandomFloat(0.0f, 10.0f);
         }
-        if ( GetProfile()->IsMedium() ) {
-            errorRange = RandomFloat( 10.0f, 30.0f );
+        else if ( GetProfile()->GetSkill() >= SKILL_HARD ) {
+            errorRange = RandomFloat( 0.0f, 15.0f );
+        }
+        else if ( GetProfile()->IsMedium() ) {
+            errorRange = RandomFloat( 10.0f, 20.0f );
         }
         else {
-            errorRange = RandomFloat( 20.0f, 50.0f );
+            errorRange = RandomFloat( 20.0f, 30.0f );
         }
 
         vecLookAt.x += RandomFloat( -errorRange, errorRange );

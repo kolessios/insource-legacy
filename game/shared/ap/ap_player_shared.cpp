@@ -63,8 +63,8 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
             return ACT_TERROR_FALL;
         }
 
-        switch ( actBase ) {
 #ifndef USE_L4D2_MODELS
+        switch ( actBase ) {
             case ACT_MP_IDLE_CALM:
             {
                 return ACT_HL2MP_IDLE_PASSIVE;
@@ -82,8 +82,9 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
                 return ACT_HL2MP_WALK_PASSIVE;
                 break;
             }
-#endif
+
         }
+#endif
     }
 
     // Usamos la animación del arma

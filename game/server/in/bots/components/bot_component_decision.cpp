@@ -563,19 +563,31 @@ bool CBotDecision::ShouldHelpFriends() const
 }
 
 //================================================================================
+// Returns if we should always recognize the dejected friends 
+// (even if we have no vision of them)
+//================================================================================
+bool CBotDecision::ShouldKnownDejectedFriends() const
+{
+    return true;
+}
+
+//================================================================================
 // Returns if we can help a dejected friend
 //================================================================================
-bool CBotDecision::ShouldHelpDejectedFriend( CPlayer *pDejected ) const
+bool CBotDecision::ShouldHelpDejectedFriend( CPlayer *pFriend ) const
 {
 #ifdef INSOURCE_DLL
-    if ( !pDejected->IsDejected() )
+    if ( !GetMemory() )
+        return false;
+
+    if ( !pFriend->IsDejected() )
         return false;
 
     CPlayer *pHelping = ToInPlayer( GetDataMemoryEntity( "DejectedFriend" ) );
 
     if ( pHelping ) {
         // We must help him!
-        if ( pHelping == pDejected )
+        if ( pHelping == pFriend )
             return true;
 
         // I am trying to help someone else
@@ -583,7 +595,7 @@ bool CBotDecision::ShouldHelpDejectedFriend( CPlayer *pDejected ) const
             return false;
     }
 
-    if ( pDejected->IsBeingHelped() )
+    if ( pFriend->IsBeingHelped() )
         return false;
 
     // TODO: Check other bots that are already trying to help
@@ -592,6 +604,48 @@ bool CBotDecision::ShouldHelpDejectedFriend( CPlayer *pDejected ) const
     AssertOnce( !"Implement in your mod" );
     return false;
 #endif
+}
+
+//================================================================================
+// Return the closest dejected friend no matter if I've seen it.
+//================================================================================
+CPlayer *CBotDecision::GetClosestDejectedFriend(bool prioritizeHumans, float *distance) const
+{
+    float closest = MAX_TRACE_LENGTH;
+    CPlayer *closestFriend = NULL;
+
+    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
+        CPlayer *pPlayer = ToInPlayer(it);
+
+        bool onlyHumans = (prioritizeHumans && closestFriend);
+
+        if ( !pPlayer || !pPlayer->IsAlive() )
+            continue;
+
+        // We already have a potential that is human
+        if ( onlyHumans && !closestFriend->IsBot() && pPlayer->IsBot() )
+            continue;
+
+        if ( !IsFriend(pPlayer) )
+            continue;
+
+        if ( !ShouldHelpDejectedFriend(pPlayer) )
+            continue;
+
+        float distance = pPlayer->GetAbsOrigin().DistTo(GetHost()->GetAbsOrigin());
+
+        // Closer or the potential is a bot but this is human.
+        if ( distance < closest || (onlyHumans && closestFriend->IsBot() && !pPlayer->IsBot()) ) {
+            closest = distance;
+            closestFriend = pPlayer;
+        }
+    }
+
+    if ( distance ) {
+        distance = &closest;
+    }
+
+    return closestFriend;
 }
 
 //================================================================================

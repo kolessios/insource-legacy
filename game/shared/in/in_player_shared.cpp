@@ -333,10 +333,12 @@ float CPlayer::GetSpeed()
     // Estamos corriendo o agachados
     // Ivan: Si estamos agachados usamos la velocidad
     // al correr ya que en el código de Valve se hace la disminución
-    if ( IsSneaking() )
+    if ( IsSneaking() ) {
         flSpeed = sv_player_walk_speed.GetFloat();
-    else if ( IsSprinting() || IsCrouching() )
+    }
+    else if ( IsSprinting() || IsCrouching() ) {
         flSpeed = sv_player_sprint_speed.GetFloat();
+    }
 
     return flSpeed;
 }
@@ -524,9 +526,9 @@ void CPlayer::TraceAttack( const CTakeDamageInfo & info, const Vector & vecDir, 
     AddMultiDamage( info, this );
 
     Vector vecOrigin = ptr->endpos - vecDir * 4;
-    int blood = BloodColor();
 
 #ifndef CLIENT_DLL
+    int blood = BloodColor();
     SetLastHitGroup( ptr->hitgroup );
 
     // @TODO: Shared code

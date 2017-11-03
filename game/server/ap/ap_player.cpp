@@ -287,7 +287,10 @@ void CAP_Player::CreateAttributes()
     AddAttribute( "health" );
     AddAttribute( "stamina" );
     AddAttribute( "stress" );
-    AddAttribute( "shield" );
+
+    if ( TheGameRules->GetGameMode() == GAME_MODE_ASSAULT ) {
+        AddAttribute("shield");
+    }
 }
 
 //================================================================================

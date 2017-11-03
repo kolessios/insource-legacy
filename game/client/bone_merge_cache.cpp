@@ -71,7 +71,7 @@ void CBoneMergeCache::UpdateCache()
                     // Los modelos de las manos de los personajes de L4D2 tienen huesos que no 
                     // existen en los modelos padres resultando en errores visuales.
                     // Esto es un pequeño hack para hacer frente al problema.
-#ifdef L4D2_HACKS
+#ifdef USE_L4D2_HACKS
                     if ( FClassnameIs( m_pOwner, "viewmodel" ) && FClassnameIs( m_pFollow, "viewmodel" ) ) {
                         mstudiobone_t *pBone = m_pFollow->GetModelPtr()->pBone( i );
                         if ( !pBone ) continue;

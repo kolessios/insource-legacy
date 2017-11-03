@@ -66,7 +66,10 @@ public:
     virtual bool ShouldGrabWeapon( CBaseWeapon *pWeapon ) const = 0;
     virtual bool ShouldSwitchToWeapon( CBaseWeapon *pWeapon ) const = 0;
     virtual bool ShouldHelpFriends() const = 0;
-    virtual bool ShouldHelpDejectedFriend( CPlayer *pDejected ) const = 0;
+
+    virtual bool ShouldKnownDejectedFriends() const = 0;
+    virtual bool ShouldHelpDejectedFriend( CPlayer *pFriend ) const = 0;
+    virtual CPlayer *GetClosestDejectedFriend(bool prioritizeHumans = true, float *distance = NULL) const = 0;
 
     virtual bool IsLowHealth() const = 0;
     virtual bool CanMove() const = 0;

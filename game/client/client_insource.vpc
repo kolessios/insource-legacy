@@ -8,490 +8,524 @@ $Macro SRCDIR		"..\.."
 
 $Include "$SRCDIR\game\client\client_base.vpc"
 
+//$Conditional USE_OPENAL "0" 		// Use OpenAL for the sound?
+//$Conditional USE_CEF "0" 			// Use Chromium Embedded Framework (CEF) for the user interface?
+//$Conditional USE_L4D2_HACKS "1" 	// Use hard coded hacks in the code to correct problems when using the L4D2 models?
+
 $Configuration
 {
-	$Compiler
-	{
-		$AdditionalIncludeDirectories	"$BASE;.\hl2;$SRCDIR\game\shared\hl2;;.\sdk;$SRCDIR\game\shared\sdk;.\sdk\vgui;$SRCDIR\game\client\sdk\gameui;..\statemachine;$SRCDIR\game\shared\multiplayer;.\in;$SRCDIR\game\shared\in;$SRCDIR\public\cef"
-		$PreprocessorDefinitions		"$BASE;GAMEUI_EMBEDDED;GAMEUI_EXPORTS;GAMEUI_ENGINE;INSOURCE_DLL;L4D2_HACKS"
-	}
+    $Compiler
+    {
+        $AdditionalIncludeDirectories	"$BASE;.\hl2;$SRCDIR\game\shared\hl2;;.\sdk;$SRCDIR\game\shared\sdk;.\sdk\vgui;$SRCDIR\game\client\sdk\gameui;..\statemachine;$SRCDIR\game\shared\multiplayer;.\in;$SRCDIR\game\shared\in"
+        $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\openal" [$USE_OPENAL]
+        $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\cef" [$USE_CEF]
 
-	$Linker
-	{
-		$AdditionalDependencies			"$BASE sqlite3.lib libcef.lib libcef_dll_wrapper.lib"
-	}
+        $PreprocessorDefinitions		"$BASE;GAMEUI_EMBEDDED;GAMEUI_EXPORTS;INSOURCE_DLL"
+        $PreprocessorDefinitions 		"$BASE;USE_L4D2_HACKS" [$USE_L4D2_HACKS]
+        $PreprocessorDefinitions 		"$BASE;USE_OPENAL" [$USE_OPENAL]
+        $PreprocessorDefinitions 		"$BASE;GAMEUI_CEF" [$USE_CEF]
+        $PreprocessorDefinitions 		"$BASE;GAMEUI_ENGINE" [!$USE_CEF]
+    }
+
+    $Linker
+    {
+        $AdditionalDependencies			"$BASE sqlite3.lib"
+        $AdditionalDependencies 		"$BASE libcef.lib libcef_dll_wrapper.lib" [$USE_CEF]
+        $AdditionalDependencies 		"$BASE EFX-Util.lib libFLAC_static.lib libFLAC++_static.lib libmad.lib libogg_static.lib libvorbis_static.lib libvorbisfile_static.lib OpenAL32.lib" [$USE_OPENAL]
+        $AdditionalLibraryDirectories   "$BASE;$SRCDIR\lib\openal\." [$USE_OPENAL]
+    }
 }
 
 $Project
 {
-	$Folder "Source Files"
-	{
-		-$File	"hud_animationinfo.cpp"
-		-$File	"hud_hintdisplay.cpp"
-		-$File 	"$SRCDIR\game\shared\weapon_parse_default.cpp"
-		$File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
-		$File	"$SRCDIR\game\shared\predicted_viewmodel.h"
-	}
-	
-	$Folder	"Source Files"
-	{
-		$File	"voice_menu.cpp"
-		
-		$Folder "From HL2"
-		{
-			$File	"hl2\c_antlion_dust.cpp"
-			$File	"hl2\c_ar2_explosion.cpp"
-			$File	"hl2\c_basehelicopter.cpp"
-			$File	"hl2\c_basehelicopter.h"
-			$File	"hl2\c_npc_combinegunship.cpp"
-			$File	"hl2\c_rotorwash.cpp"
-		}
-		
-		$Folder "SDK"
-		{			
-			$Folder "vgui"
-			{
-				$file	"sdk\vgui\sdk_vgui_music_importer.cpp"
-				$file	"sdk\vgui\sdk_vgui_music_importer.h"
-				$file	"sdk\vgui\sdk_logo_panel.cpp"
-				$file	"sdk\vgui\sdk_logo_panel.h"
-				$file	"sdk\vgui\sdk_loading_panel.cpp"
-				$file	"sdk\vgui\sdk_loading_panel.h"
-				$file	"sdk\vgui\sdk_hud_chat.cpp"
-				$file	"sdk\vgui\sdk_hud_chat.h"
-				$file	"sdk\vgui\sdk_hud_ammo.cpp"
-				$file	"sdk\vgui\sdk_hud_health.cpp"
-				$file	"sdk\vgui\sdk_hud_weaponselection.cpp"
-				
-				$Folder	"ManagedPanels"
-				{
-					$file	"sdk/vgui/nb_button.cpp"
-					$file	"sdk/vgui/nb_button.h"
-					$file	"sdk/vgui/nb_header_footer.cpp"
-					$file	"sdk/vgui/nb_header_footer.h"
-					$file	"sdk/vgui/nb_horiz_list.cpp"
-					$file	"sdk/vgui/nb_horiz_list.h"
-					$file	"sdk/vgui/nb_select_level_entry.cpp"
-					$file	"sdk/vgui/nb_select_level_entry.h"
-					$file	"sdk/vgui/nb_select_level_panel.cpp"
-					$file	"sdk/vgui/nb_select_level_panel.h"
-				}
-			}
-		}
+    $Folder "Source Files"
+    {
+        -$File	"hud_animationinfo.cpp"
+        -$File	"hud_hintdisplay.cpp"
+        -$File 	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+        $File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
+        $File	"$SRCDIR\game\shared\predicted_viewmodel.h"
+    }
 
-		$Folder "GameUI - Embedded"
-		{
-			$Folder "Base GameUI"
-			{
-				$Folder "Headers"
-				{
-				$File	"sdk\gameui\backgroundmenubutton.h" \
-						"sdk\gameui\basepanel.h" \
-						"sdk\gameui\basesavegamedialog.h" \
-						"sdk\gameui\bitmapimagepanel.h" \
-						"sdk\gameui\commandcheckbutton.h" \
-						"sdk\gameui\contentcontroldialog.h" \
-						"sdk\gameui\createmultiplayergamebotpage.h" \
-						"sdk\gameui\createmultiplayergamedialog.h" \
-						"sdk\gameui\createmultiplayergamegameplaypage.h" \
-						"sdk\gameui\createmultiplayergameserverpage.h" \
-						"sdk\gameui\customtabexplanationdialog.h" \
-						"sdk\gameui\cvarnegatecheckbutton.h" \
-						"sdk\gameui\cvarslider.h" \
-						"sdk\gameui\cvartextentry.h" \
-						"sdk\gameui\cvartogglecheckbutton.h" \
-						"sdk\gameui\engineinterface.h" \
-						"sdk\gameui\gameconsole.h" \
-						"sdk\gameui\gameconsoledialog.h" \
-						"sdk\gameui\gameui_interface.h" \
-						"sdk\gameui\gameui_util.h" \
-						"sdk\gameui\keytogglecheckbutton.h" \
-						"sdk\gameui\labeledcommandcombobox.h" \
-						"sdk\gameui\loadingdialog.h" \
-						"sdk\gameui\loadingtippanel.h" \
-						"sdk\gameui\modinfo.h" \
-						"sdk\gameui\mousemessageforwardingpanel.h" \
-						"sdk\gameui\multiplayeradvanceddialog.h" \
-						"sdk\gameui\optionsdialog.h" \
-						"sdk\gameui\optionssubaudio.h" \
-						"sdk\gameui\optionssubdifficulty.h" \
-						"sdk\gameui\optionssubgame.h" \
-						"sdk\gameui\optionssubkeyboard.h" \
-						"sdk\gameui\optionssubmouse.h" \
-						"sdk\gameui\optionssubmultiplayer.h" \
-						"sdk\gameui\optionssubportal.h" \
-						"sdk\gameui\optionssubvideo.h" \
-						"sdk\gameui\optionssubvoice.h" \
-						"sdk\gameui\panellistpanel.h" \
-						"sdk\gameui\playerlistdialog.h" \
-						"sdk\gameui\rungameengine.h" \
-						"sdk\gameui\scriptobject.h" \
-						"sdk\gameui\sys_utils.h" \
-						"sdk\gameui\textentrybox.h" \
-						"sdk\gameui\urlbutton.h" \
-						"sdk\gameui\vcontrolslistpanel.h" \
-						"sdk\gameui\vguisystemmoduleloader.h"
-				}
-				$File	"sdk\gameui\backgroundmenubutton.cpp" \
-						"sdk\gameui\basesavegamedialog.cpp" \
-						"sdk\gameui\bitmapimagepanel.cpp" \
-						"sdk\gameui\commandcheckbutton.cpp" \
-						"sdk\gameui\contentcontroldialog.cpp" \
-						"sdk\gameui\createmultiplayergamebotpage.cpp" \
-						"sdk\gameui\createmultiplayergamedialog.cpp" \
-						"sdk\gameui\createmultiplayergamegameplaypage.cpp" \
-						"sdk\gameui\createmultiplayergameserverpage.cpp" \
-						"sdk\gameui\customtabexplanationdialog.cpp" \
-						"sdk\gameui\cvarnegatecheckbutton.cpp" \
-						"sdk\gameui\cvarslider.cpp" \
-						"sdk\gameui\cvartextentry.cpp" \
-						"sdk\gameui\cvartogglecheckbutton.cpp" \
-						"sdk\gameui\gameconsole.cpp" \
-						"sdk\gameui\gameconsoledialog.cpp" \
-						"sdk\gameui\gameui_interface.cpp" \
-						"sdk\gameui\gameui_util.cpp" \
-						"sdk\gameui\keytogglecheckbutton.cpp" \
-						"sdk\gameui\labeledcommandcombobox.cpp" \
-						"sdk\gameui\loadingdialog.cpp" \
-						"sdk\gameui\loadingtippanel.cpp" \
-						"sdk\gameui\logofile.cpp" \
-						"sdk\gameui\modinfo.cpp" \
-						"sdk\gameui\mousemessageforwardingpanel.cpp" \
-						"sdk\gameui\multiplayeradvanceddialog.cpp" \
-						"sdk\gameui\optionsdialog.cpp" \
-						"sdk\gameui\optionssubaudio.cpp" \
-						"sdk\gameui\optionssubdifficulty.cpp" \
-						"sdk\gameui\optionssubgame.cpp" \
-						"sdk\gameui\optionssubkeyboard.cpp" \
-						"sdk\gameui\optionssubmouse.cpp" \
-						"sdk\gameui\optionssubmultiplayer.cpp" \
-						"sdk\gameui\optionssubportal.cpp" \
-						"sdk\gameui\optionssubvideo.cpp" \
-						"sdk\gameui\optionssubvoice.cpp" \
-						"sdk\gameui\panellistpanel.cpp" \
-						"sdk\gameui\playerlistdialog.cpp" \
-						"sdk\gameui\rungameengine.cpp" \
-						"sdk\gameui\scriptobject.cpp" \
-						"sdk\gameui\sys_utils.cpp" \
-						"sdk\gameui\textentrybox.cpp" \
-						"sdk\gameui\urlbutton.cpp" \
-						"sdk\gameui\vcontrolslistpanel.cpp" \
-						"sdk\gameui\vguisystemmoduleloader.cpp"
-				{
-					$Configuration
-					{
-						$Compiler
-						{
-							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-						}
-					}
-				}
-			}
-			
-			$Folder "External Stuff"
-			{
-				$File	"$SRCDIR\common\language.cpp"
-				{
-					$Configuration
-					{
-						$Compiler
-						{
-							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-						}
-					}
-				}
-			}
+    $Folder	"Source Files"
+    {
+        $File	"voice_menu.cpp"
 
-			$Folder "SDK GameUI"
-			{
-				$Folder "Headers"
-				{
-				$File	"sdk\gameui\sdk\basemodframe.h" \
-						"sdk\gameui\sdk\basemodpanel.h" \
-						"sdk\gameui\sdk\basemodui.h" \
-						"sdk\gameui\sdk\gamemodes.h" \
-						"sdk\gameui\sdk\uiavatarimage.h" \
-						"sdk\gameui\sdk\uigamedata.h" \
-						"sdk\gameui\sdk\vachievements.h" \
-						"sdk\gameui\sdk\vaddonassociation.h" \
-						"sdk\gameui\sdk\vaddons.h" \
-						"sdk\gameui\sdk\vattractscreen.h" \
-						"sdk\gameui\sdk\vaudio.h" \
-						"sdk\gameui\sdk\vaudiovideo.h" \
-						"sdk\gameui\sdk\vcloud.h" \
-						"sdk\gameui\sdk\vcontrolleroptions.h" \
-						"sdk\gameui\sdk\vcontrolleroptionsbuttons.h" \
-						"sdk\gameui\sdk\vcontrolleroptionssticks.h" \
-						"sdk\gameui\sdk\vcustomcampaigns.h" \
-						"sdk\gameui\sdk\vdownloadcampaign.h" \
-						"sdk\gameui\sdk\vdownloads.h" \
-						"sdk\gameui\sdk\vdropdownmenu.h" \
-						"sdk\gameui\sdk\vflyoutmenu.h" \
-						"sdk\gameui\sdk\vfooterpanel.h" \
-						"sdk\gameui\sdk\vfoundgames.h" \
-						"sdk\gameui\sdk\vfoundgroupgames.h" \
-						"sdk\gameui\sdk\vfoundpublicgames.h" \
-						"sdk\gameui\sdk\vgamelobby.h" \
-						"sdk\gameui\sdk\vgamelobbychat.h" \
-						"sdk\gameui\sdk\vgameoptions.h" \
-						"sdk\gameui\sdk\vgamesettings.h" \
-						"sdk\gameui\sdk\vgenericconfirmation.h" \
-						"sdk\gameui\sdk\vgenericpanellist.h" \
-						"sdk\gameui\sdk\vgenericwaitscreen.h" \
-						"sdk\gameui\sdk\vgetlegacydata.h" \
-						"sdk\gameui\sdk\vhybridbutton.h" \
-						"sdk\gameui\sdk\vingamechapterselect.h" \
-						"sdk\gameui\sdk\vingamedifficultyselect.h" \
-						"sdk\gameui\sdk\vingamekickplayerlist.h" \
-						"sdk\gameui\sdk\vingamemainmenu.h" \
-						"sdk\gameui\sdk\vjukebox.h" \
-						"sdk\gameui\sdk\vkeyboard.h" \
-						"sdk\gameui\sdk\vkeyboardmouse.h" \
-						"sdk\gameui\sdk\vleaderboard.h" \
-						"sdk\gameui\sdk\vloadingprogress.h" \
-						"sdk\gameui\sdk\vmainmenu.h" \
-						"sdk\gameui\sdk\vmultiplayer.h" \
-						"sdk\gameui\sdk\voptions.h" \
-						"sdk\gameui\sdk\vpasswordentry.h" \
-						"sdk\gameui\sdk\vquickjoin.h" \
-						"sdk\gameui\sdk\vquickjoingroups.h" \
-						"sdk\gameui\sdk\vsignindialog.h" \
-						"sdk\gameui\sdk\vslidercontrol.h" \
-						"sdk\gameui\sdk\vspinnercontrol.h" \
-						"sdk\gameui\sdk\vsteamcloudconfirmation.h" \
-						"sdk\gameui\sdk\vtransitionscreen.h" \
-						"sdk\gameui\sdk\vvideo.h" \
-						"sdk\gameui\sdk\vvoteoptions.h"
-				}
-				$Folder "Win32"
-				{
-				$File	"sdk\gameui\sdk\uiavatarimage.cpp" \
-						"sdk\gameui\sdk\vaddonassociation.cpp" \
-						"sdk\gameui\sdk\vaddons.cpp" \
-						"sdk\gameui\sdk\vcloud.cpp" \
-						"sdk\gameui\sdk\vcustomcampaigns.cpp" \
-						"sdk\gameui\sdk\vdownloadcampaign.cpp" \
-						"sdk\gameui\sdk\vdownloads.cpp" \
-						"sdk\gameui\sdk\vgetlegacydata.cpp" \
-						"sdk\gameui\sdk\vjukebox.cpp" \
-						"sdk\gameui\sdk\vkeyboard.cpp" \
-						"sdk\gameui\sdk\vkeyboardmouse.cpp" \
-						"sdk\gameui\sdk\vsteamcloudconfirmation.cpp"
-				{
-					$Configuration
-					{
-						$Compiler
-						{
-							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-						}
-					}
-				}
-				}
-				$File	"sdk\gameui\sdk\basemodframe.cpp" \
-						"sdk\gameui\sdk\basemodpanel.cpp" \
-						"sdk\gameui\sdk\gamemodes.cpp" \
-						"sdk\gameui\sdk\uigamedata.cpp" \
-						"sdk\gameui\sdk\uigamedata_invite.cpp" \
-						"sdk\gameui\sdk\uigamedata_storage.cpp" \
-						"sdk\gameui\sdk\vachievements.cpp" \
-						"sdk\gameui\sdk\vattractscreen.cpp" \
-						"sdk\gameui\sdk\vaudio.cpp" \
-						"sdk\gameui\sdk\vaudiovideo.cpp" \
-						"sdk\gameui\sdk\vcontrolleroptions.cpp" \
-						"sdk\gameui\sdk\vcontrolleroptionsbuttons.cpp" \
-						"sdk\gameui\sdk\vcontrolleroptionssticks.cpp" \
-						"sdk\gameui\sdk\vdropdownmenu.cpp" \
-						"sdk\gameui\sdk\vflyoutmenu.cpp" \
-						"sdk\gameui\sdk\vfooterpanel.cpp" \
-						"sdk\gameui\sdk\vfoundgames.cpp" \
-						"sdk\gameui\sdk\vfoundgroupgames.cpp" \
-						"sdk\gameui\sdk\vfoundpublicgames.cpp" \
-						"sdk\gameui\sdk\vgamelobby.cpp" \
-						"sdk\gameui\sdk\vgamelobbychat.cpp" \
-						"sdk\gameui\sdk\vgameoptions.cpp" \
-						"sdk\gameui\sdk\vgamesettings.cpp" \
-						"sdk\gameui\sdk\vgenericconfirmation.cpp" \
-						"sdk\gameui\sdk\vgenericpanellist.cpp" \
-						"sdk\gameui\sdk\vgenericwaitscreen.cpp" \
-						"sdk\gameui\sdk\vhybridbutton.cpp" \
-						"sdk\gameui\sdk\vingamechapterselect.cpp" \
-						"sdk\gameui\sdk\vingamedifficultyselect.cpp" \
-						"sdk\gameui\sdk\vingamekickplayerlist.cpp" \
-						"sdk\gameui\sdk\vingamemainmenu.cpp" \
-						"sdk\gameui\sdk\vleaderboard.cpp" \
-						"sdk\gameui\sdk\vloadingprogress.cpp" \
-						"sdk\gameui\sdk\vmainmenu.cpp" \
-						"sdk\gameui\sdk\vmenubackground.cpp" \
-						"sdk\gameui\sdk\vmultiplayer.cpp" \
-						"sdk\gameui\sdk\voptions.cpp" \
-						"sdk\gameui\sdk\vpasswordentry.cpp" \
-						"sdk\gameui\sdk\vquickjoin.cpp" \
-						"sdk\gameui\sdk\vquickjoingroups.cpp" \
-						"sdk\gameui\sdk\vsignindialog.cpp" \
-						"sdk\gameui\sdk\vslidercontrol.cpp" \
-						"sdk\gameui\sdk\vspinnercontrol.cpp" \
-						"sdk\gameui\sdk\vtransitionscreen.cpp" \
-						"sdk\gameui\sdk\vvideo.cpp" \
-						"sdk\gameui\sdk\vvoteoptions.cpp"
-				{
-					$Configuration
-					{
-						$Compiler
-						{
-							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-						}
-					}
-				}
-			}
-		}
+        $Folder "From HL2"
+        {
+            $File	"hl2\c_antlion_dust.cpp"
+            $File	"hl2\c_ar2_explosion.cpp"
+            $File	"hl2\c_basehelicopter.cpp"
+            $File	"hl2\c_basehelicopter.h"
+            $File	"hl2\c_npc_combinegunship.cpp"
+            $File	"hl2\c_rotorwash.cpp"
+        }
 
-		$Folder "InSource"
-		{
-			$Folder "Effects"
-			{
-				$File	"in\alienfx.cpp"
-				$File	"in\alienfx.h"
-				$File	"in\c_projectedlight.cpp"
-				$File	"in\c_projectedlight.h"
-				$File	"in\in_fx_impacts.cpp"
-				$File	"in\in_fx_tracers.cpp"
-				$File	"in\in_fx_weaponfx.cpp"
-			}
+        $Folder "SDK"
+        {
+            $Folder "vgui"
+            {
+                $file	"sdk\vgui\sdk_vgui_music_importer.cpp"
+                $file	"sdk\vgui\sdk_vgui_music_importer.h"
+                $file	"sdk\vgui\sdk_logo_panel.cpp"
+                $file	"sdk\vgui\sdk_logo_panel.h"
+                $file	"sdk\vgui\sdk_loading_panel.cpp"
+                $file	"sdk\vgui\sdk_loading_panel.h"
+                $file	"sdk\vgui\sdk_hud_chat.cpp"
+                $file	"sdk\vgui\sdk_hud_chat.h"
+                $file	"sdk\vgui\sdk_hud_ammo.cpp"
+                $file	"sdk\vgui\sdk_hud_health.cpp"
+                $file	"sdk\vgui\sdk_hud_weaponselection.cpp"
 
-			$Folder "Engine and Utils"
-			{
-				$File	"in\c_in_jukebox.cpp"
-				$File	"in\c_in_jukebox.h"
-				$File	"in\c_in_lesson.cpp"
-				$File	"in\clientmode_in.cpp"
-				$File	"in\in_view_scene.cpp"
-				$File	"in\in_view_scene.h"
-				$File	"in\vgui_rootpanel_in.cpp"
-			}
+                $Folder	"ManagedPanels"
+                {
+                    $file	"sdk/vgui/nb_button.cpp"
+                    $file	"sdk/vgui/nb_button.h"
+                    $file	"sdk/vgui/nb_header_footer.cpp"
+                    $file	"sdk/vgui/nb_header_footer.h"
+                    $file	"sdk/vgui/nb_horiz_list.cpp"
+                    $file	"sdk/vgui/nb_horiz_list.h"
+                    $file	"sdk/vgui/nb_select_level_entry.cpp"
+                    $file	"sdk/vgui/nb_select_level_entry.h"
+                    $file	"sdk/vgui/nb_select_level_panel.cpp"
+                    $file	"sdk/vgui/nb_select_level_panel.h"
+                }
+            }
+        }
 
-			$Folder "Game"
-			{
-				$Folder "Player"
-				{
-					$File	"in\c_in_player.cpp"
-					$File	"in\c_in_player.h"
-					$File	"in\in_input.cpp"
-					$File	"in\in_prediction.cpp"	
-				}
-			}
+        $Folder "GameUI - Embedded"
+        {
+            $Folder "Base GameUI"
+            {
+                $Folder "Headers"
+                {
+                $File	"sdk\gameui\backgroundmenubutton.h" \
+                        "sdk\gameui\basepanel.h" \
+                        "sdk\gameui\basesavegamedialog.h" \
+                        "sdk\gameui\bitmapimagepanel.h" \
+                        "sdk\gameui\commandcheckbutton.h" \
+                        "sdk\gameui\contentcontroldialog.h" \
+                        "sdk\gameui\createmultiplayergamebotpage.h" \
+                        "sdk\gameui\createmultiplayergamedialog.h" \
+                        "sdk\gameui\createmultiplayergamegameplaypage.h" \
+                        "sdk\gameui\createmultiplayergameserverpage.h" \
+                        "sdk\gameui\customtabexplanationdialog.h" \
+                        "sdk\gameui\cvarnegatecheckbutton.h" \
+                        "sdk\gameui\cvarslider.h" \
+                        "sdk\gameui\cvartextentry.h" \
+                        "sdk\gameui\cvartogglecheckbutton.h" \
+                        "sdk\gameui\engineinterface.h" \
+                        "sdk\gameui\gameconsole.h" \
+                        "sdk\gameui\gameconsoledialog.h" \
+                        "sdk\gameui\gameui_interface.h" \
+                        "sdk\gameui\gameui_util.h" \
+                        "sdk\gameui\keytogglecheckbutton.h" \
+                        "sdk\gameui\labeledcommandcombobox.h" \
+                        "sdk\gameui\loadingdialog.h" \
+                        "sdk\gameui\loadingtippanel.h" \
+                        "sdk\gameui\modinfo.h" \
+                        "sdk\gameui\mousemessageforwardingpanel.h" \
+                        "sdk\gameui\multiplayeradvanceddialog.h" \
+                        "sdk\gameui\optionsdialog.h" \
+                        "sdk\gameui\optionssubaudio.h" \
+                        "sdk\gameui\optionssubdifficulty.h" \
+                        "sdk\gameui\optionssubgame.h" \
+                        "sdk\gameui\optionssubkeyboard.h" \
+                        "sdk\gameui\optionssubmouse.h" \
+                        "sdk\gameui\optionssubmultiplayer.h" \
+                        "sdk\gameui\optionssubportal.h" \
+                        "sdk\gameui\optionssubvideo.h" \
+                        "sdk\gameui\optionssubvoice.h" \
+                        "sdk\gameui\panellistpanel.h" \
+                        "sdk\gameui\playerlistdialog.h" \
+                        "sdk\gameui\rungameengine.h" \
+                        "sdk\gameui\scriptobject.h" \
+                        "sdk\gameui\sys_utils.h" \
+                        "sdk\gameui\textentrybox.h" \
+                        "sdk\gameui\urlbutton.h" \
+                        "sdk\gameui\vcontrolslistpanel.h" \
+                        "sdk\gameui\vguisystemmoduleloader.h"
+                }
+                $File	"sdk\gameui\backgroundmenubutton.cpp" \
+                        "sdk\gameui\basesavegamedialog.cpp" \
+                        "sdk\gameui\bitmapimagepanel.cpp" \
+                        "sdk\gameui\commandcheckbutton.cpp" \
+                        "sdk\gameui\contentcontroldialog.cpp" \
+                        "sdk\gameui\createmultiplayergamebotpage.cpp" \
+                        "sdk\gameui\createmultiplayergamedialog.cpp" \
+                        "sdk\gameui\createmultiplayergamegameplaypage.cpp" \
+                        "sdk\gameui\createmultiplayergameserverpage.cpp" \
+                        "sdk\gameui\customtabexplanationdialog.cpp" \
+                        "sdk\gameui\cvarnegatecheckbutton.cpp" \
+                        "sdk\gameui\cvarslider.cpp" \
+                        "sdk\gameui\cvartextentry.cpp" \
+                        "sdk\gameui\cvartogglecheckbutton.cpp" \
+                        "sdk\gameui\gameconsole.cpp" \
+                        "sdk\gameui\gameconsoledialog.cpp" \
+                        "sdk\gameui\gameui_interface.cpp" \
+                        "sdk\gameui\gameui_util.cpp" \
+                        "sdk\gameui\keytogglecheckbutton.cpp" \
+                        "sdk\gameui\labeledcommandcombobox.cpp" \
+                        "sdk\gameui\loadingdialog.cpp" \
+                        "sdk\gameui\loadingtippanel.cpp" \
+                        "sdk\gameui\logofile.cpp" \
+                        "sdk\gameui\modinfo.cpp" \
+                        "sdk\gameui\mousemessageforwardingpanel.cpp" \
+                        "sdk\gameui\multiplayeradvanceddialog.cpp" \
+                        "sdk\gameui\optionsdialog.cpp" \
+                        "sdk\gameui\optionssubaudio.cpp" \
+                        "sdk\gameui\optionssubdifficulty.cpp" \
+                        "sdk\gameui\optionssubgame.cpp" \
+                        "sdk\gameui\optionssubkeyboard.cpp" \
+                        "sdk\gameui\optionssubmouse.cpp" \
+                        "sdk\gameui\optionssubmultiplayer.cpp" \
+                        "sdk\gameui\optionssubportal.cpp" \
+                        "sdk\gameui\optionssubvideo.cpp" \
+                        "sdk\gameui\optionssubvoice.cpp" \
+                        "sdk\gameui\panellistpanel.cpp" \
+                        "sdk\gameui\playerlistdialog.cpp" \
+                        "sdk\gameui\rungameengine.cpp" \
+                        "sdk\gameui\scriptobject.cpp" \
+                        "sdk\gameui\sys_utils.cpp" \
+                        "sdk\gameui\textentrybox.cpp" \
+                        "sdk\gameui\urlbutton.cpp" \
+                        "sdk\gameui\vcontrolslistpanel.cpp" \
+                        "sdk\gameui\vguisystemmoduleloader.cpp"
+                {
+                    $Configuration
+                    {
+                        $Compiler
+                        {
+                            $Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+                        }
+                    }
+                }
+            }
 
-			$Folder "HUD"
-			{
-				$File "in\hud_hitmarker.cpp"
-			}
+            $Folder "External Stuff"
+            {
+                $File	"$SRCDIR\common\language.cpp"
+                {
+                    $Configuration
+                    {
+                        $Compiler
+                        {
+                            $Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+                        }
+                    }
+                }
+            }
 
-			$Folder "Game UI"
-			{
-				$Folder "Awesomium"
-				{
-					$File	"in\awe_basewebpanel.cpp"
-					$File	"in\awe_basewebpanel.h"
-					$File	"in\awe_gameuiwebpanel.cpp"
-					$File	"in\awe_gameuiwebpanel.h"
-					$File	"in\VAwesomium.cpp"
-					$File	"in\VAwesomium.h"
-				}
+            $Folder "SDK GameUI"
+            {
+                $Folder "Headers"
+                {
+                $File	"sdk\gameui\sdk\basemodframe.h" \
+                        "sdk\gameui\sdk\basemodpanel.h" \
+                        "sdk\gameui\sdk\basemodui.h" \
+                        "sdk\gameui\sdk\gamemodes.h" \
+                        "sdk\gameui\sdk\uiavatarimage.h" \
+                        "sdk\gameui\sdk\uigamedata.h" \
+                        "sdk\gameui\sdk\vachievements.h" \
+                        "sdk\gameui\sdk\vaddonassociation.h" \
+                        "sdk\gameui\sdk\vaddons.h" \
+                        "sdk\gameui\sdk\vattractscreen.h" \
+                        "sdk\gameui\sdk\vaudio.h" \
+                        "sdk\gameui\sdk\vaudiovideo.h" \
+                        "sdk\gameui\sdk\vcloud.h" \
+                        "sdk\gameui\sdk\vcontrolleroptions.h" \
+                        "sdk\gameui\sdk\vcontrolleroptionsbuttons.h" \
+                        "sdk\gameui\sdk\vcontrolleroptionssticks.h" \
+                        "sdk\gameui\sdk\vcustomcampaigns.h" \
+                        "sdk\gameui\sdk\vdownloadcampaign.h" \
+                        "sdk\gameui\sdk\vdownloads.h" \
+                        "sdk\gameui\sdk\vdropdownmenu.h" \
+                        "sdk\gameui\sdk\vflyoutmenu.h" \
+                        "sdk\gameui\sdk\vfooterpanel.h" \
+                        "sdk\gameui\sdk\vfoundgames.h" \
+                        "sdk\gameui\sdk\vfoundgroupgames.h" \
+                        "sdk\gameui\sdk\vfoundpublicgames.h" \
+                        "sdk\gameui\sdk\vgamelobby.h" \
+                        "sdk\gameui\sdk\vgamelobbychat.h" \
+                        "sdk\gameui\sdk\vgameoptions.h" \
+                        "sdk\gameui\sdk\vgamesettings.h" \
+                        "sdk\gameui\sdk\vgenericconfirmation.h" \
+                        "sdk\gameui\sdk\vgenericpanellist.h" \
+                        "sdk\gameui\sdk\vgenericwaitscreen.h" \
+                        "sdk\gameui\sdk\vgetlegacydata.h" \
+                        "sdk\gameui\sdk\vhybridbutton.h" \
+                        "sdk\gameui\sdk\vingamechapterselect.h" \
+                        "sdk\gameui\sdk\vingamedifficultyselect.h" \
+                        "sdk\gameui\sdk\vingamekickplayerlist.h" \
+                        "sdk\gameui\sdk\vingamemainmenu.h" \
+                        "sdk\gameui\sdk\vjukebox.h" \
+                        "sdk\gameui\sdk\vkeyboard.h" \
+                        "sdk\gameui\sdk\vkeyboardmouse.h" \
+                        "sdk\gameui\sdk\vleaderboard.h" \
+                        "sdk\gameui\sdk\vloadingprogress.h" \
+                        "sdk\gameui\sdk\vmainmenu.h" \
+                        "sdk\gameui\sdk\vmultiplayer.h" \
+                        "sdk\gameui\sdk\voptions.h" \
+                        "sdk\gameui\sdk\vpasswordentry.h" \
+                        "sdk\gameui\sdk\vquickjoin.h" \
+                        "sdk\gameui\sdk\vquickjoingroups.h" \
+                        "sdk\gameui\sdk\vsignindialog.h" \
+                        "sdk\gameui\sdk\vslidercontrol.h" \
+                        "sdk\gameui\sdk\vspinnercontrol.h" \
+                        "sdk\gameui\sdk\vsteamcloudconfirmation.h" \
+                        "sdk\gameui\sdk\vtransitionscreen.h" \
+                        "sdk\gameui\sdk\vvideo.h" \
+                        "sdk\gameui\sdk\vvoteoptions.h"
+                }
+                $Folder "Win32"
+                {
+                $File	"sdk\gameui\sdk\uiavatarimage.cpp" \
+                        "sdk\gameui\sdk\vaddonassociation.cpp" \
+                        "sdk\gameui\sdk\vaddons.cpp" \
+                        "sdk\gameui\sdk\vcloud.cpp" \
+                        "sdk\gameui\sdk\vcustomcampaigns.cpp" \
+                        "sdk\gameui\sdk\vdownloadcampaign.cpp" \
+                        "sdk\gameui\sdk\vdownloads.cpp" \
+                        "sdk\gameui\sdk\vgetlegacydata.cpp" \
+                        "sdk\gameui\sdk\vjukebox.cpp" \
+                        "sdk\gameui\sdk\vkeyboard.cpp" \
+                        "sdk\gameui\sdk\vkeyboardmouse.cpp" \
+                        "sdk\gameui\sdk\vsteamcloudconfirmation.cpp"
+                {
+                    $Configuration
+                    {
+                        $Compiler
+                        {
+                            $Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+                        }
+                    }
+                }
+                }
+                $File	"sdk\gameui\sdk\basemodframe.cpp" \
+                        "sdk\gameui\sdk\basemodpanel.cpp" \
+                        "sdk\gameui\sdk\gamemodes.cpp" \
+                        "sdk\gameui\sdk\uigamedata.cpp" \
+                        "sdk\gameui\sdk\uigamedata_invite.cpp" \
+                        "sdk\gameui\sdk\uigamedata_storage.cpp" \
+                        "sdk\gameui\sdk\vachievements.cpp" \
+                        "sdk\gameui\sdk\vattractscreen.cpp" \
+                        "sdk\gameui\sdk\vaudio.cpp" \
+                        "sdk\gameui\sdk\vaudiovideo.cpp" \
+                        "sdk\gameui\sdk\vcontrolleroptions.cpp" \
+                        "sdk\gameui\sdk\vcontrolleroptionsbuttons.cpp" \
+                        "sdk\gameui\sdk\vcontrolleroptionssticks.cpp" \
+                        "sdk\gameui\sdk\vdropdownmenu.cpp" \
+                        "sdk\gameui\sdk\vflyoutmenu.cpp" \
+                        "sdk\gameui\sdk\vfooterpanel.cpp" \
+                        "sdk\gameui\sdk\vfoundgames.cpp" \
+                        "sdk\gameui\sdk\vfoundgroupgames.cpp" \
+                        "sdk\gameui\sdk\vfoundpublicgames.cpp" \
+                        "sdk\gameui\sdk\vgamelobby.cpp" \
+                        "sdk\gameui\sdk\vgamelobbychat.cpp" \
+                        "sdk\gameui\sdk\vgameoptions.cpp" \
+                        "sdk\gameui\sdk\vgamesettings.cpp" \
+                        "sdk\gameui\sdk\vgenericconfirmation.cpp" \
+                        "sdk\gameui\sdk\vgenericpanellist.cpp" \
+                        "sdk\gameui\sdk\vgenericwaitscreen.cpp" \
+                        "sdk\gameui\sdk\vhybridbutton.cpp" \
+                        "sdk\gameui\sdk\vingamechapterselect.cpp" \
+                        "sdk\gameui\sdk\vingamedifficultyselect.cpp" \
+                        "sdk\gameui\sdk\vingamekickplayerlist.cpp" \
+                        "sdk\gameui\sdk\vingamemainmenu.cpp" \
+                        "sdk\gameui\sdk\vleaderboard.cpp" \
+                        "sdk\gameui\sdk\vloadingprogress.cpp" \
+                        "sdk\gameui\sdk\vmainmenu.cpp" \
+                        "sdk\gameui\sdk\vmenubackground.cpp" \
+                        "sdk\gameui\sdk\vmultiplayer.cpp" \
+                        "sdk\gameui\sdk\voptions.cpp" \
+                        "sdk\gameui\sdk\vpasswordentry.cpp" \
+                        "sdk\gameui\sdk\vquickjoin.cpp" \
+                        "sdk\gameui\sdk\vquickjoingroups.cpp" \
+                        "sdk\gameui\sdk\vsignindialog.cpp" \
+                        "sdk\gameui\sdk\vslidercontrol.cpp" \
+                        "sdk\gameui\sdk\vspinnercontrol.cpp" \
+                        "sdk\gameui\sdk\vtransitionscreen.cpp" \
+                        "sdk\gameui\sdk\vvideo.cpp" \
+                        "sdk\gameui\sdk\vvoteoptions.cpp"
+                {
+                    $Configuration
+                    {
+                        $Compiler
+                        {
+                            $Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+                        }
+                    }
+                }
+            }
+        }
 
-				$Folder "CEF"
-				{
-					$File	"in\cef_basepanel.cpp"
-					$File	"in\cef_basepanel.h"
-					$File	"in\cef_client.cpp"
-					$File	"in\cef_gameui.cpp"
-					$File	"in\cef_gameui.h"
-					$File	"in\cef_handlers.cpp"
-				}
-				
-			}
-			
-			$Folder	"Shared"
-			{
-				$Folder "Gamerules"
-				{
-					$File	"$SRCDIR\game\shared\in\in_gamerules.cpp"
-					$File	"$SRCDIR\game\shared\in\in_gamerules.h"		
-				}
+        $Folder "InSource"
+        {
+            $Folder "Engine"
+            {
+                $Folder "Effects"
+                {
+                    $File	"in\alienfx.cpp"
+                    $File	"in\alienfx.h"
+                    $File	"in\c_projectedlight.cpp"
+                    $File	"in\c_projectedlight.h"
+                    $File	"in\in_fx_impacts.cpp"
+                    $File	"in\in_fx_tracers.cpp"
+                    $File	"in\in_fx_weaponfx.cpp"
+                }
 
-				$Folder "Player"
-				{
-					$Folder "Animation"
-					{
-						$File	"$SRCDIR\game\shared\in\multiplayer_animstate.cpp"
-						$File	"$SRCDIR\game\shared\in\multiplayer_animstate.h"
-						$File	"$SRCDIR\game\shared\in\in_playeranimstate_proxy.cpp"
-						$File	"$SRCDIR\game\shared\in\in_playeranimstate_proxy.h"
-						$File	"$SRCDIR\game\shared\in\in_playeranimsystem.cpp"
-						$File	"$SRCDIR\game\shared\in\in_playeranimsystem.h"
-					}
+                $File	"in\c_in_jukebox.cpp"
+                $File	"in\c_in_jukebox.h"
+                $File	"in\c_in_lesson.cpp"
+                $File	"in\clientmode_in.cpp"
+                $File	"in\in_view_scene.cpp"
+                $File	"in\in_view_scene.h"
+                $File	"in\vgui_rootpanel_in.cpp"
+            }
 
-					$File	"$SRCDIR\game\shared\in\in_movedata.h"
-					$File	"$SRCDIR\game\shared\in\in_view_vectors.h"
-					$File	"$SRCDIR\game\shared\in\in_gamemovement.cpp"
-					$File	"$SRCDIR\game\shared\in\in_player_shared.cpp"
-					$File	"$SRCDIR\game\shared\in\in_player_shared.h"
-				}
-				
+            $Folder "Game"
+            {
+                $Folder "Player"
+                {
+                    $File	"in\c_in_player.cpp"
+                    $File	"in\c_in_player.h"
+                    $File	"in\in_input.cpp"
+                    $File	"in\in_prediction.cpp"
+                }
 
-				$Folder "Weapons"
-				{
-					$File	"$SRCDIR\game\shared\in\bullet.cpp"
-					$File	"$SRCDIR\game\shared\in\bullet.h"
-					$File	"$SRCDIR\game\shared\in\bullet_manager.cpp"
-					$File	"$SRCDIR\game\shared\in\bullet_manager.h"
-					$File	"$SRCDIR\game\shared\in\in_ammodef.cpp"
-					$File	"$SRCDIR\game\shared\in\in_ammodef.h"
-					$File	"$SRCDIR\game\shared\in\weapon_base.cpp"
-					$File	"$SRCDIR\game\shared\in\weapon_base.h"
-					$File	"$SRCDIR\game\shared\in\weapon_base_shotgun.cpp"
-					$File	"$SRCDIR\game\shared\in\weapon_base_sniper.cpp"
-					$File	"$SRCDIR\game\shared\in\weapon_info.cpp"
-					$File	"$SRCDIR\game\shared\in\weapon_info.h"
-					$File	"$SRCDIR\game\shared\in\weapons_macro.cpp"
-				}
+                $Folder "HUD"
+                {
+                    $File "in\hud_hitmarker.cpp"
+                }
+            }
 
-				$Folder "Sound"
-				{
-					$File "$SRCDIR\game\shared\in\env_sound.cpp"
-					$File "$SRCDIR\game\shared\in\env_sound.h"
-					$File "$SRCDIR\game\shared\in\sound_instance.cpp"
-					$File "$SRCDIR\game\shared\in\sound_instance.h"
-					$File "$SRCDIR\game\shared\in\sound_manager.cpp"
-					$File "$SRCDIR\game\shared\in\sound_manager.h"
-					$File "$SRCDIR\game\shared\in\sound_instance_manager.cpp"
-					$File "$SRCDIR\game\shared\in\sound_instance_manager.h"
-				}
-				
-				$File	"$SRCDIR\game\shared\in\in_shareddefs.h"
-				$File	"$SRCDIR\game\shared\in\in_usermessages.cpp"
-			}
-		}
+            $Folder "Game UI"
+            {
+                $Folder "Awesomium"
+                {
+                    $File	"in\awe_basewebpanel.cpp"
+                    $File	"in\awe_basewebpanel.h"
+                    $File	"in\awe_gameuiwebpanel.cpp"
+                    $File	"in\awe_gameuiwebpanel.h"
+                    $File	"in\VAwesomium.cpp"
+                    $File	"in\VAwesomium.h"
+                }
 
-		$Folder "Shader Editor"
-		{
-			$Folder "Header Files"
-			{
-				$File	"ShaderEditor\ISEdit_ModelRender.h"
-				$File	"ShaderEditor\IVShaderEditor.h"
-				$File	"ShaderEditor\SEdit_ModelRender.h"
-				$File	"ShaderEditor\ShaderEditorSystem.h"
-			}
+                $Folder "CEF"
+                {
+                    $File	"in\cef_basepanel.cpp" [$USE_CEF]
+                    $File	"in\cef_basepanel.h" [$USE_CEF]
+                    $File	"in\cef_client.cpp" [$USE_CEF]
+                    $File	"in\cef_gameui.cpp" [$USE_CEF]
+                    $File	"in\cef_gameui.h" [$USE_CEF]
+                    $File	"in\cef_handlers.cpp" [$USE_CEF]
+                }
+            }
 
-			$Folder "Implementation Files"
-			{
-				$File	"ShaderEditor\SEdit_ModelRender.cpp"
-				$File	"ShaderEditor\ShaderEditorSystem.cpp"
-			}
-		}
-	}
-	
-	$Folder	"Link Libraries"
-	{
-		$Lib "$LIBCOMMON\jpeglib"
-		$Lib "$LIBPUBLIC\vpklib"
-	}
+            $Folder	"Shared"
+            {
+                $Folder "Gamerules"
+                {
+                    $File	"$SRCDIR\game\shared\in\in_gamerules.cpp"
+                    $File	"$SRCDIR\game\shared\in\in_gamerules.h"
+                }
+
+                $Folder "Player"
+                {
+                    $Folder "Animation"
+                    {
+                        $File	"$SRCDIR\game\shared\in\multiplayer_animstate.cpp"
+                        $File	"$SRCDIR\game\shared\in\multiplayer_animstate.h"
+                        $File	"$SRCDIR\game\shared\in\in_playeranimstate_proxy.cpp"
+                        $File	"$SRCDIR\game\shared\in\in_playeranimstate_proxy.h"
+                        $File	"$SRCDIR\game\shared\in\in_playeranimsystem.cpp"
+                        $File	"$SRCDIR\game\shared\in\in_playeranimsystem.h"
+                    }
+
+                    $File	"$SRCDIR\game\shared\in\in_movedata.h"
+                    $File	"$SRCDIR\game\shared\in\in_view_vectors.h"
+                    $File	"$SRCDIR\game\shared\in\in_gamemovement.cpp"
+                    $File	"$SRCDIR\game\shared\in\in_player_shared.cpp"
+                    $File	"$SRCDIR\game\shared\in\in_player_shared.h"
+                }
+
+
+                $Folder "Weapons"
+                {
+                    $File	"$SRCDIR\game\shared\in\bullet.cpp"
+                    $File	"$SRCDIR\game\shared\in\bullet.h"
+                    $File	"$SRCDIR\game\shared\in\bullet_manager.cpp"
+                    $File	"$SRCDIR\game\shared\in\bullet_manager.h"
+                    $File	"$SRCDIR\game\shared\in\in_ammodef.cpp"
+                    $File	"$SRCDIR\game\shared\in\in_ammodef.h"
+                    $File	"$SRCDIR\game\shared\in\weapon_base.cpp"
+                    $File	"$SRCDIR\game\shared\in\weapon_base.h"
+                    $File	"$SRCDIR\game\shared\in\weapon_base_shotgun.cpp"
+                    $File	"$SRCDIR\game\shared\in\weapon_base_sniper.cpp"
+                    $File	"$SRCDIR\game\shared\in\weapon_info.cpp"
+                    $File	"$SRCDIR\game\shared\in\weapon_info.h"
+                    $File	"$SRCDIR\game\shared\in\weapons_macro.cpp"
+                }
+
+                $Folder "Sound"
+                {
+                    $File "$SRCDIR\game\shared\in\env_sound.cpp"
+                    $File "$SRCDIR\game\shared\in\env_sound.h"
+                    $File "$SRCDIR\game\shared\in\sound_instance.cpp"
+                    $File "$SRCDIR\game\shared\in\sound_instance.h"
+                    $File "$SRCDIR\game\shared\in\sound_manager.cpp"
+                    $File "$SRCDIR\game\shared\in\sound_manager.h"
+                    $File "$SRCDIR\game\shared\in\sound_instance_manager.cpp"
+                    $File "$SRCDIR\game\shared\in\sound_instance_manager.h"
+                }
+
+                $File	"$SRCDIR\game\shared\in\in_shareddefs.h"
+                $File	"$SRCDIR\game\shared\in\in_usermessages.cpp"
+            }
+        }
+
+        $Folder "OpenAL"
+        {
+            $File	"$SRCDIR\public\openal\openal.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_console.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_flacsample.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_flacsample.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_loader.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_loader.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_mp3sample.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_mp3sample.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_oggsample.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_oggsample.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_sample.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_sample.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_sample_pool.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_sample_pool.h" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_wavsample.cpp" [$USE_OPENAL]
+            $File	"$SRCDIR\public\openal\openal_wavsample.h" [$USE_OPENAL]
+        }
+
+        $Folder "Shader Editor"
+        {
+            $Folder "Header Files"
+            {
+                $File	"ShaderEditor\ISEdit_ModelRender.h"
+                $File	"ShaderEditor\IVShaderEditor.h"
+                $File	"ShaderEditor\SEdit_ModelRender.h"
+                $File	"ShaderEditor\ShaderEditorSystem.h"
+            }
+
+            $Folder "Implementation Files"
+            {
+                $File	"ShaderEditor\SEdit_ModelRender.cpp"
+                $File	"ShaderEditor\ShaderEditorSystem.cpp"
+            }
+        }
+    }
+
+    $Folder	"Link Libraries"
+    {
+        $Lib "$LIBCOMMON\jpeglib"
+        $Lib "$LIBPUBLIC\vpklib"
+    }
 }

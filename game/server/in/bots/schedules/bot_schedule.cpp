@@ -78,6 +78,10 @@ void IBotSchedule::Finish()
         GetLocomotion()->StandUp();
     }
 
+    if ( GetFollow() && GetFollow()->IsFollowingInactive() ) {
+        GetFollow()->Enable();
+    }
+
     GetBot()->DebugAddMessage( "[%s] Finished", g_BotSchedules[GetID()] );
 }
 
@@ -592,6 +596,32 @@ void IBotSchedule::TaskStart()
             break;
         }
 
+        case BTASK_PAUSE_FOLLOW:
+        {
+            if ( GetFollow() && GetFollow()->IsFollowingActive() ) {
+                GetFollow()->Disable();
+            }
+
+            TaskComplete();
+            break;
+        }
+
+        case BTASK_RESUME_FOLLOW:
+        {
+            if ( GetFollow() && GetFollow()->IsFollowingInactive() ) {
+                GetFollow()->Enable();
+            }
+
+            TaskComplete();
+            break;
+        }
+
+        case BCUSTOM_TASK:
+        {
+            Warning("TaskStart(%i): Custom Task without handle", pTask->task);
+            break;
+        }
+
         default:
         {
             Assert( !"TaskStart(): Task not handled!" );
@@ -834,6 +864,12 @@ void IBotSchedule::TaskRun()
                 return;
             }
 
+            break;
+        }
+
+        case BCUSTOM_TASK:
+        {
+            Warning("TaskRun(%i): Custom Task without handle", pTask->task);
             break;
         }
 

@@ -349,12 +349,20 @@ float CBaseWeapon::GetSpreadPerShot()
     if ( GetPlayerOwner() ) {
         CPlayer *pPlayer = GetPlayerOwner();
 
-        // Agachado
-        if ( pPlayer->IsCrouching() ) {
-            spread *= GetWeaponInfo().m_flCrouchSpread;
-        }
-
 #ifndef CLIENT_DLL
+#ifdef DEBUG
+        // Testing Purposes: Without much spread until Bots can aim taking into account the spread.
+        if ( pPlayer->IsBot() ) {
+            if ( pPlayer->Classify() != CLASS_PLAYER_ALLY && pPlayer->Classify() != CLASS_PLAYER_ALLY_VITAL ) {
+                // Enemy
+                return VECTOR_CONE_4DEGREES.x;
+            }
+            else {
+                // Friend
+                return VECTOR_CONE_1DEGREES.x;
+            }
+        }
+#else
         // Disperción aumentada para bots
         if ( pPlayer->IsBot() && TheGameRules->GetSkillLevel() < SKILL_HARDEST ) {
             if ( pPlayer->Classify() != CLASS_PLAYER_ALLY && pPlayer->Classify() != CLASS_PLAYER_ALLY_VITAL ) {
@@ -362,6 +370,12 @@ float CBaseWeapon::GetSpreadPerShot()
             }
         }
 #endif
+#endif
+
+        // Agachado
+        if ( pPlayer->IsCrouching() ) {
+            spread *= GetWeaponInfo().m_flCrouchSpread;
+        }
 
         // Saltando
         if ( !pPlayer->IsOnGround() ) {
