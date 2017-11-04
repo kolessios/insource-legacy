@@ -51,11 +51,13 @@ public:
 	void Flush();
 	void PreloadSounds();
 
-	void InternalPrecacheWaves( int soundIndex );
-	void InternalPrefetchWaves( int soundIndex );
+	virtual HSOUNDSCRIPTHANDLE PrecacheScriptSound( const char *soundname );
+	virtual void PrefetchScriptSound( const char *soundname );
 
-	HSOUNDSCRIPTHANDLE PrecacheScriptSound( const char *soundname );
-	void PrefetchScriptSound( const char *soundname );
+    virtual void PrecacheWaves(int soundIndex);
+    virtual void PrefetchWaves(int soundIndex);
+
+    virtual void PrecacheWave(const char *soundwave);
 
 public:
 

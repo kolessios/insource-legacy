@@ -397,14 +397,68 @@ void CSoundEmitterSystem::PreloadSounds()
         CSoundParametersInternal *pParams = soundemitterbase->InternalGetParametersForSound(i);
 
         if ( pParams->ShouldPreload() ) {
-            InternalPrecacheWaves(i);
+            PrecacheWaves(i);
         }
     }
 }
 
 //================================================================================
 //================================================================================
-void CSoundEmitterSystem::InternalPrecacheWaves(int soundIndex)
+HSOUNDSCRIPTHANDLE CSoundEmitterSystem::PrecacheScriptSound(const char * soundname)
+{
+    int soundIndex = soundemitterbase->GetSoundIndex(soundname);
+
+    if ( !soundemitterbase->IsValidIndex(soundIndex) ) {
+        char ext[8];
+        V_ExtractFileExtension(soundname, ext, sizeof(ext));
+
+        if ( Q_stristr(ext, "wav") || Q_strstr(ext, "mp3") ) {
+            PrecacheWave(soundname);
+            return SOUNDEMITTER_INVALID_HANDLE;
+        }
+
+#ifndef CLIENT_DLL
+        if ( soundname[0] ) {
+            static CUtlSymbolTable s_PrecacheScriptSoundFailures;
+
+            // Make sure we only show the message once
+            if ( UTL_INVAL_SYMBOL == s_PrecacheScriptSoundFailures.Find(soundname) ) {
+                Warning("[CSoundEmitterSystem] PrecacheScriptSound '%s' failed, no such sound script entry\n", soundname);
+                s_PrecacheScriptSoundFailures.AddString(soundname);
+            }
+        }
+#endif
+        return (HSOUNDSCRIPTHANDLE)soundIndex;
+    }
+
+#ifndef CLIENT_DLL
+    LogPrecache(soundname);
+#endif
+
+    PrecacheWaves(soundIndex);
+    return (HSOUNDSCRIPTHANDLE)soundIndex;
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::PrefetchScriptSound(const char * soundname)
+{
+    int soundIndex = soundemitterbase->GetSoundIndex(soundname);
+
+    if ( !soundemitterbase->IsValidIndex(soundIndex) ) {
+        if ( Q_stristr(soundname, ".wav") || Q_strstr(soundname, ".mp3") ) {
+            CBaseEntity::PrefetchSound(soundname);
+        }
+
+        return;
+    }
+
+    PrefetchWaves(soundIndex);
+}
+
+//================================================================================
+//================================================================================
+void CSoundEmitterSystem::PrecacheWaves(int soundIndex)
 {
     CSoundParametersInternal *internal = soundemitterbase->InternalGetParametersForSound(soundIndex);
 
@@ -414,23 +468,19 @@ void CSoundEmitterSystem::InternalPrecacheWaves(int soundIndex)
     int waveCount = internal->NumSoundNames();
 
     if ( !waveCount ) {
-        DevMsg("CSoundEmitterSystem:  sounds.txt entry '%s' has no waves listed under 'wave' or 'rndwave' key!!!\n",
+        DevMsg("[CSoundEmitterSystem] sounds.txt entry '%s' has no waves listed under 'wave' or 'rndwave' key!!!\n",
                soundemitterbase->GetSoundName(soundIndex));
     }
     else {
-        g_bPermitDirectSoundPrecache = true;
-
         for ( int wave = 0; wave < waveCount; wave++ ) {
-            CBaseEntity::PrecacheSound(soundemitterbase->GetWaveName(internal->GetSoundNames()[wave].symbol));
+            PrecacheWave(soundemitterbase->GetWaveName(internal->GetSoundNames()[wave].symbol));
         }
-
-        g_bPermitDirectSoundPrecache = false;
     }
 }
 
 //================================================================================
 //================================================================================
-void CSoundEmitterSystem::InternalPrefetchWaves(int soundIndex)
+void CSoundEmitterSystem::PrefetchWaves(int soundIndex)
 {
     CSoundParametersInternal *internal = soundemitterbase->InternalGetParametersForSound(soundIndex);
 
@@ -452,56 +502,11 @@ void CSoundEmitterSystem::InternalPrefetchWaves(int soundIndex)
 
 //================================================================================
 //================================================================================
-HSOUNDSCRIPTHANDLE CSoundEmitterSystem::PrecacheScriptSound(const char * soundname)
+void CSoundEmitterSystem::PrecacheWave(const char *soundwave)
 {
-    int soundIndex = soundemitterbase->GetSoundIndex(soundname);
-
-    if ( !soundemitterbase->IsValidIndex(soundIndex) ) {
-        if ( Q_stristr(soundname, ".wav") || Q_strstr(soundname, ".mp3") ) {
-            g_bPermitDirectSoundPrecache = true;
-            CBaseEntity::PrecacheSound(soundname);
-            g_bPermitDirectSoundPrecache = false;
-
-            return SOUNDEMITTER_INVALID_HANDLE;
-        }
-
-#ifndef CLIENT_DLL
-        if ( soundname[0] ) {
-            static CUtlSymbolTable s_PrecacheScriptSoundFailures;
-
-            // Make sure we only show the message once
-            if ( UTL_INVAL_SYMBOL == s_PrecacheScriptSoundFailures.Find(soundname) ) {
-                Warning("PrecacheScriptSound '%s' failed, no such sound script entry\n", soundname);
-                s_PrecacheScriptSoundFailures.AddString(soundname);
-            }
-        }
-#endif
-        return (HSOUNDSCRIPTHANDLE)soundIndex;
-    }
-
-#ifndef CLIENT_DLL
-    LogPrecache(soundname);
-#endif
-
-    InternalPrecacheWaves(soundIndex);
-    return (HSOUNDSCRIPTHANDLE)soundIndex;
-}
-
-//================================================================================
-//================================================================================
-void CSoundEmitterSystem::PrefetchScriptSound(const char * soundname)
-{
-    int soundIndex = soundemitterbase->GetSoundIndex(soundname);
-
-    if ( !soundemitterbase->IsValidIndex(soundIndex) ) {
-        if ( Q_stristr(soundname, ".wav") || Q_strstr(soundname, ".mp3") ) {
-            CBaseEntity::PrefetchSound(soundname);
-        }
-
-        return;
-    }
-
-    InternalPrefetchWaves(soundIndex);
+    g_bPermitDirectSoundPrecache = true;
+    CBaseEntity::PrecacheSound(soundwave);
+    g_bPermitDirectSoundPrecache = false;
 }
 
 //================================================================================

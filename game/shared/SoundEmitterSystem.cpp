@@ -16,7 +16,12 @@
 #include "tier0/icommandline.h"
 
 #include "sound_emitter_system.h"
+
+#ifdef USE_OPENAL
 #include "sound_openal_emitter_system.h"
+#elif USE_FMOD
+#include "sound_fmod_emitter_system.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -54,6 +59,10 @@ EmitSound_t::EmitSound_t( const CSoundParameters &src )
 #ifdef USE_OPENAL
 
 static CSoundOpenALEmitterSystem g_SoundEmitterSystem( "CSoundOpenALEmitterSystem" );
+
+#elif USE_FMOD
+
+static CFMODSoundEmitterSystem g_SoundEmitterSystem("CFMODSoundEmitterSystem");
 
 #else
 
