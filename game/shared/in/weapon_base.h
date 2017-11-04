@@ -20,20 +20,12 @@ class C_Player;
 
 #define CWeaponCubemap C_WeaponCubemap
 
-#ifdef USE_L4D2_MODELS
 #define CWeaponAK47 C_WeaponAK47
 #define CWeaponM16 C_WeaponM16
 #define CWeaponSMG C_WeaponSMG
 #define CWeaponP220 C_WeaponP220
 #define CWeaponCombatShotgun C_WeaponCombatShotgun
 #define CWeaponSniperRifle C_WeaponSniperRifle
-#else
-#define CWeaponSMG1 C_WeaponSMG1
-#define CWeapon357 C_Weapon357
-#define CWeaponAR2 C_WeaponAR2
-#define CWeaponPistol C_WeaponPistol
-#define CWeaponShotgun C_WeaponShotgun
-#endif
 
 #ifdef APOCALYPSE
 //#define CWeaponAK47 C_WeaponAK47
@@ -239,7 +231,6 @@ private:
 // Macros
 //================================================================================
 
-#ifdef USE_L4D2_MODELS
 #define IMPLEMENT_DEFAULT_ACTTABLE(classname, anim) acttable_t C##classname::m_acttable[] = {\
         { ACT_MP_STAND_IDLE,                    ACT_IDLE_##anim,                false },\
         { ACT_MP_IDLE_CALM,                        ACT_IDLE_CALM_##anim,            false },\
@@ -259,24 +250,6 @@ private:
         { ACT_MP_DEPLOY,                        ACT_DEPLOY_##anim,                false },\
     };\
     IMPLEMENT_ACTTABLE( C##classname );
-#else
-#define IMPLEMENT_DEFAULT_ACTTABLE(classname, anim) acttable_t C##classname::m_acttable[] = {\
-        { ACT_MP_STAND_IDLE,                    ACT_HL2MP_IDLE_##anim,                        false },\
-        { ACT_MP_IDLE_INJURED,                  ACT_HL2MP_IDLE_##anim,                        false },\
-        { ACT_MP_RUN,                           ACT_HL2MP_RUN_##anim,                         false },\
-        { ACT_MP_RUN_INJURED,                   ACT_HL2MP_RUN_##anim,                         false },\
-        { ACT_MP_WALK,                          ACT_HL2MP_WALK_##anim,                        false },\
-        { ACT_MP_WALK_INJURED,                  ACT_HL2MP_WALK_##anim,                        false },\
-        { ACT_MP_JUMP,                          ACT_HL2MP_JUMP_##anim,                        false },\
-        { ACT_MP_CROUCH_IDLE,                   ACT_HL2MP_IDLE_CROUCH_##anim,                 false },\
-        { ACT_MP_CROUCHWALK,                    ACT_HL2MP_WALK_CROUCH_##anim,                 false },\
-        { ACT_MP_ATTACK_STAND_PRIMARYFIRE,      ACT_HL2MP_GESTURE_RANGE_ATTACK_##anim,        false },\
-        { ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,     ACT_HL2MP_GESTURE_RANGE_ATTACK_##anim,        false },\
-        { ACT_MP_RELOAD_STAND,                  ACT_HL2MP_GESTURE_RELOAD_##anim,              false },\
-        { ACT_MP_RELOAD_CROUCH,                 ACT_HL2MP_GESTURE_RELOAD_##anim,              false },\
-    };\
-    IMPLEMENT_ACTTABLE( C##classname );
-#endif
 
 #undef DECLARE_WEAPON
 #define DECLARE_WEAPON( classname, name, baseclass, anim ) class C##classname : public baseclass {\

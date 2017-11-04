@@ -62,29 +62,6 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         if ( GetPlayerStatus() == PLAYER_STATUS_FALLING ) {
             return ACT_TERROR_FALL;
         }
-
-#ifndef USE_L4D2_MODELS
-        switch ( actBase ) {
-            case ACT_MP_IDLE_CALM:
-            {
-                return ACT_HL2MP_IDLE_PASSIVE;
-                break;
-            }
-
-            case ACT_MP_RUN_CALM:
-            {
-                return ACT_HL2MP_RUN_PASSIVE;
-                break;
-            }
-
-            case ACT_MP_WALK_CALM:
-            {
-                return ACT_HL2MP_WALK_PASSIVE;
-                break;
-            }
-
-        }
-#endif
     }
 
     // Usamos la animación del arma
@@ -102,11 +79,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
 		case ACT_MP_SWIM_IDLE:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_IDLE_CALM_PISTOL;
-#else
-                return ACT_HL2MP_IDLE;
-#endif
             }
 
             return ACT_IDLE;
@@ -116,11 +89,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         case ACT_MP_IDLE_INJURED:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_IDLE_INJURED_PISTOL;
-#else
-                return ACT_HL2MP_IDLE;
-#endif
             }
             break;
         }
@@ -130,11 +99,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
 		case ACT_MP_SWIM:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_RUN_CALM_PISTOL;
-#else
-                return ACT_HL2MP_RUN;
-#endif
             }
 
             return ACT_RUN;
@@ -144,11 +109,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         case ACT_MP_RUN_INJURED:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_RUN_INJURED_PISTOL;
-#else
-                return ACT_HL2MP_RUN;
-#endif
             }
             break;
         }
@@ -157,11 +118,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         case ACT_MP_WALK_CALM:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_WALK_CALM_PISTOL;
-#else
-                return ACT_HL2MP_WALK;
-#endif
             }
 
             return ACT_WALK;
@@ -171,22 +128,14 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         case ACT_MP_WALK_INJURED:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_WALK_INJURED_PISTOL;
-#else
-                return ACT_HL2MP_WALK;
-#endif
             }
         }
 
         case ACT_MP_CROUCH_IDLE:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_CROUCHIDLE_PISTOL;
-#else
-                return ACT_HL2MP_IDLE_CROUCH;
-#endif
             }
 
             return ACT_CROUCHIDLE;
@@ -196,11 +145,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         case ACT_MP_CROUCHWALK:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_RUN_CROUCH_PISTOL;
-#else
-                return ACT_HL2MP_WALK_CROUCH;
-#endif
             }
 
             return ACT_RUN_CROUCH;
@@ -210,11 +155,7 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
         case ACT_MP_JUMP:
         {
             if ( IsSurvivor() || IsSoldier() ) {
-#ifdef USE_L4D2_MODELS
                 return ACT_JUMP_RIFLE;
-#else
-                return ACT_HL2MP_JUMP;
-#endif
             }
 
             return ACT_JUMP;
@@ -223,7 +164,6 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
 
         case ACT_DIERAGDOLL:
         {
-#ifdef USE_L4D2_MODELS
             if ( IsSurvivor() || IsSoldier() ) {
                 if ( GetPlayerStatus() == PLAYER_STATUS_DEJECTED )
                     return ACT_DIE_INCAP;
@@ -235,11 +175,9 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
             }
 
             return ACT_DIESIMPLE;
-#endif
             break;
         }
 
-#ifdef USE_L4D2_MODELS
         case ACT_MP_GESTURE_FLINCH_HEAD:
         case ACT_MP_GESTURE_FLINCH_STOMACH:
         case ACT_MP_GESTURE_FLINCH_CHEST:
@@ -253,41 +191,6 @@ Activity CAP_Player::TranslateActivity( Activity actBase )
             return ACT_TERROR_FLINCH;
             break;
         }
-#else
-        case ACT_MP_GESTURE_FLINCH_HEAD:
-        {
-            return ACT_FLINCH_HEAD;
-            break;
-        }
-
-        case ACT_MP_GESTURE_FLINCH_STOMACH:
-        case ACT_MP_GESTURE_FLINCH_CHEST:
-        {
-            return ACT_FLINCH_STOMACH;
-            break;
-        }
-
-        case ACT_MP_GESTURE_FLINCH_LEFTARM:
-        {
-            return ACT_FLINCH_SHOULDER_LEFT;
-            break;
-        }
-
-        case ACT_MP_GESTURE_FLINCH_RIGHTARM:
-        {
-            return ACT_FLINCH_SHOULDER_RIGHT;
-            break;
-        }
-
-        case ACT_MP_GESTURE_FLINCH:
-        {
-            if ( GetPlayerStatus() == PLAYER_STATUS_CLIMBING )
-                return ACT_TERROR_FLINCH_LEDGE;
-
-            return ACT_FLINCH;
-            break;
-        }
-#endif
     }
 
     return actBase;

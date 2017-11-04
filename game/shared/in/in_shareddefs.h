@@ -28,8 +28,6 @@ typedef CBitVec<MAX_CONDITIONS> CFlagsBits;
     #define GAME_NAME "InSource"
 #endif
 
-#define USE_L4D2_MODELS
-
 //================================================================================
 // Preprocesadores
 //================================================================================

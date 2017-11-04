@@ -2420,20 +2420,12 @@ void CPlayer::CheatImpulseCommands(int iImpulse)
 
             GiveNamedItem("weapon_cubemap");
 
-#ifdef USE_L4D2_MODELS
             GiveNamedItem("weapon_rifle_ak47");
             GiveNamedItem("weapon_rifle_m16");
             GiveNamedItem("weapon_smg");
             GiveNamedItem("weapon_pistol_p220");
             GiveNamedItem("weapon_shotgun_combat");
             GiveNamedItem("weapon_rifle_sniper");
-#else
-            GiveNamedItem("weapon_smg1");
-            GiveNamedItem("weapon_357");
-            GiveNamedItem("weapon_ar2");
-            GiveNamedItem("weapon_pistol");
-            GiveNamedItem("weapon_shotgun");
-#endif
 
             SetHealth(100);
 

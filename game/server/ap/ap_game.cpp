@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 
@@ -11,14 +13,27 @@
 extern ConVar sv_gamemode;
 
 //================================================================================
-// Instala las reglas del juego del modo actual
+// Install the rules of the game of the current mode
 //================================================================================
 void InstallGameRules()
 {
-	if ( sv_gamemode.GetInt() == GAME_MODE_SURVIVAL )
-		CreateGameRulesObject( "CSurvivalGameRules" );
-    else if ( sv_gamemode.GetInt() == GAME_MODE_ASSAULT )
-        CreateGameRulesObject( "CAssaultGameRules" );
-	else
-		CreateGameRulesObject( "CInGameRules" );
+    switch ( sv_gamemode.GetInt() ) {
+        case GAME_MODE_SURVIVAL:
+        {
+            CreateGameRulesObject("CSurvivalGameRules");
+            break;
+        }
+
+        case GAME_MODE_ASSAULT:
+        {
+            CreateGameRulesObject("CAssaultGameRules");
+            break;
+        }
+
+        default:
+        {
+            CreateGameRulesObject("CInGameRules");
+            break;
+        }
+    }
 }

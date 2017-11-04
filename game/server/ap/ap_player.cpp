@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "ap_player.h"
@@ -15,19 +17,19 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
-// Definiciones
+// Declarations
 //================================================================================
 
+// ID of the viewmodel representing the hands
 #define HANDS_VIEWMODEL_INDEX 1
 
-// Infectados
+// Tank Model
 #define INFECTED_TANK_MODEL "models/infected/hulk.mdl"
 
-#ifdef USE_L4D2_MODELS
-
-// PLAYER
+// Main Player Model
 #define SURVIVOR_ABIGAIL_MODEL "models/survivors/survivor_teenangst.mdl"
 
+// Soldier models
 // PLAYER_CLASS_SOLDIER_LEVEL1
 static const char *g_SoldierModels[] = {
     "models/survivors/survivor_coach.mdl",
@@ -47,94 +49,58 @@ static const char *g_SoldierModels[] = {
 // PLAYER_CLASS_SOLDIER_MEDIC
 #define SOLDIER_MEDIC_MODEL "models/survivors/survivor_mechanic.mdl"
 
-#else
-
-#define SOLDIER_LEADER_MODEL "models/payday2/units/heavy_swat_player.mdl"
-#define SOLDIER_SNIPER_MODEL "models/payday2/units/heavy_swat_player.mdl"
-
-#define SOLDIER_BULLDOZER_MODEL "models/mark2580/payday2/pd2_bulldozer_player.mdl" // PLAYER_CLASS_SOLDIER_LEVEL3
-#define SOLDIER_BULLDOZER_UH_MODEL "models/mark2580/payday2/pd2_bulldozer_zeal_player.mdl" // PLAYER_CLASS_SOLDIER_LEVEL3
-
-#define SOLDIER_CLOAKER_MODEL "models/mark2580/payday2/pd2_cloaker_player.mdl" // PLAYER_CLASS_SOLDIER_LEVEL2
-#define SOLDIER_CLOAKER_UH_MODEL "models/mark2580/payday2/pd2_cloaker_zeal_player.mdl" // PLAYER_CLASS_SOLDIER_LEVEL2
-
-#define SOLDIER_MEDIC_MODEL "models/payday2/units/medic_player.mdl" // PLAYER_CLASS_SOLDIER_MEDIC
-
-#define SURVIVOR_ABIGAIL_MODEL "models/frosty/jacketless/j_alyx.mdl"
-#define SURVIVOR_COMMON_MODEL ""
-
-// PLAYER_CLASS_SOLDIER_LEVEL1
-static const char *g_SoldierModels[] = {
-    "models/payday2/units/heavy_swat_player.mdl"
-};
-static const char *g_SoldierUltraHardModels[] = {
-    "models/mark2580/payday2/pd2_gs_elite_player.mdl"
-};
-
-#define SOLDIER_MODEL g_SoldierModels[RandomInt(0, (ARRAYSIZE(g_SoldierModels)-1))]
-#define SOLDIER_UH_MODEL g_SoldierUltraHardModels[RandomInt(0, (ARRAYSIZE(g_SoldierUltraHardModels)-1))]
-#endif
-
+// List of models of hands to make precache
 static const char *g_HandsModels[] = {
-#ifdef USE_L4D2_MODELS
     "models/weapons/arms/v_arms_zoey.mdl",
     "models/weapons/arms/v_arms_francis.mdl",
     "models/weapons/arms/v_arms_coach_new.mdl",
     "models/weapons/arms/v_arms_gambler_new.mdl",
     "models/weapons/arms/v_arms_mechanic_new.mdl",
     "models/weapons/arms/v_arms_producer_new.mdl"
-#else
-    "models/weapons/c_arms_refugee.mdl",
-    "models/mark2580/payday2/bulldozer_c_arms.mdl",
-    "models/mark2580/payday2/pd2_bulldozer_zeal_c_arms.mdl",
-    "models/mark2580/payday2/c_arms_cloaker.mdl",
-    "models/mark2580/payday2/pd2_cloaker_zeal_c_arms.mdl",
-    "models/payday2/units/medic_arms.mdl",
-    "models/payday2/units/heavy_swat_arms.mdl",
-    "models/mark2580/payday2/gensec_c_arms.mdl",
-#endif
 };
 
 //================================================================================
-// Comandos
+// Commands
 //================================================================================
 
 //================================================================================
-// Información y Red
+// Information and network
 //================================================================================
 
-LINK_ENTITY_TO_CLASS( player, CAP_Player );
-PRECACHE_REGISTER( player );
+LINK_ENTITY_TO_CLASS(player, CAP_Player);
+PRECACHE_REGISTER(player);
 
-IMPLEMENT_SERVERCLASS_ST( CAP_Player, DT_AP_Player )
+IMPLEMENT_SERVERCLASS_ST(CAP_Player, DT_AP_Player)
 END_SEND_TABLE()
 
 //================================================================================
+// Classification of the entity
 //================================================================================
 Class_T CAP_Player::Classify()
 {
-    // Es un Bot
     if ( IsBot() ) {
-        if ( FStrEq( GetPlayerName(), "Adan" ) ) {
+        // Brother of Abigail
+        if ( FStrEq(GetPlayerName(), "Adan") ) {
             return CLASS_PLAYER_ALLY_VITAL;
         }
 
-        if ( GetSquad() && GetSquad()->IsNamed( "player" ) ) {
-            if ( TheGameRules->GetGameMode() == GAME_MODE_ASSAULT )
-                return CLASS_PLAYER_ALLY_VITAL;
-            else
-                return CLASS_PLAYER_ALLY;
+        // It is in the player's squad.
+        if ( GetSquad() && GetSquad()->IsNamed("player") ) {
+            return CLASS_PLAYER_ALLY;
         }
 
+        // Common survivor
         if ( IsSurvivor() ) {
             return CLASS_HUMAN;
         }
     }
 
+    // Soldier
     if ( IsSoldier() ) {
         return CLASS_SOLDIER;
     }
 
+    // Infected
     if ( IsTank() ) {
         return CLASS_INFECTED_BOSS;
     }
@@ -143,22 +109,23 @@ Class_T CAP_Player::Classify()
         return CLASS_INFECTED;
     }
 
+    // Main player
     return CLASS_PLAYER;
 }
 
 //================================================================================
-// Prepara el jugador para ser controlado por la I.A.
+// Create the artificial intelligence of the bot
 //================================================================================
 void CAP_Player::SetUpAI()
 {
-    SetBotController( new CBot(this) );
+    SetBotController(new CBot(this));
 
     /*
     if ( IsSoldier() ) {
-        SetAI( new CAP_BotSoldier() );
+    SetAI( new CAP_BotSoldier() );
     }
     else {
-        SetAI( new CAP_Bot() );
+    SetAI( new CAP_Bot() );
     }*/
 }
 
@@ -177,8 +144,7 @@ void CAP_Player::Spawn()
 }
 
 //================================================================================
-// Pre-pensamiento
-// Se llama antes de procesar el movimiento y el pensamiento normal
+// It is called before processing the movement and normal thinking
 //================================================================================
 void CAP_Player::PreThink()
 {
@@ -186,107 +152,100 @@ void CAP_Player::PreThink()
 }
 
 //================================================================================
-// Pensamiento normal
-// Se llama después de PreThink pero antes de procesar el movimiento
+// It is called after PreThink but before processing the movement
 //================================================================================
 void CAP_Player::PlayerThink()
 {
     BaseClass::PlayerThink();
 
+    // Tank Idle & Alert sounds
     if ( IsTank() ) {
         if ( m_nIdleSoundTimer.IsElapsed() ) {
-            if ( IsIdle() )
+            if ( IsIdle() ) {
                 IdleSound();
-            else if ( IsAlerted() )
+            }
+            else if ( IsAlerted() ) {
                 AlertSound();
+            }
 
-            m_nIdleSoundTimer.Start( RandomInt( 6, 12 ) );
+            m_nIdleSoundTimer.Start(RandomInt(6, 12));
         }
     }
 
-    SetNextThink( gpGlobals->curtime + 0.1f );
+    SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 //================================================================================
-// Post-pensamiento
-// Se llama después de procesar el movimiento y el pensamiento normal
+// It is called after processing the movement and normal thinking
 //================================================================================
 void CAP_Player::PostThink()
 {
     BaseClass::PostThink();
 
     if ( IsAlive() && IsActive() ) {
-#ifdef USE_L4D2_MODELS
+        // Fidget animation
         if ( ShouldFidget() ) {
-            DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_TERROR_FIDGET );
-            m_nFidgetTimer.Start( RandomFloat( 10.0f, 25.0f ) );
+            DoAnimationEvent(PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_TERROR_FIDGET);
+            m_nFidgetTimer.Start(RandomFloat(10.0f, 25.0f));
         }
-#endif
 
-        // A nadie le gusta estar bajo el agua
+        // Nobody likes to be under water
         if ( GetWaterLevel() >= WL_Feet ) {
-            AddAttributeModifier( "stress_water" );
+            AddAttributeModifier("stress_water");
         }
     }
 }
 
 //================================================================================
 //================================================================================
-void CAP_Player::Precache() 
+void CAP_Player::Precache()
 {
     BaseClass::Precache();
 
-    PrecacheModel( SOLDIER_BULLDOZER_MODEL );
-    PrecacheModel( SOLDIER_BULLDOZER_UH_MODEL );
-    PrecacheModel( SOLDIER_CLOAKER_MODEL );
-    PrecacheModel( SOLDIER_CLOAKER_UH_MODEL );
-    PrecacheModel( SOLDIER_MEDIC_MODEL );
+    PrecacheModel(SOLDIER_BULLDOZER_MODEL);
+    PrecacheModel(SOLDIER_BULLDOZER_UH_MODEL);
+    PrecacheModel(SOLDIER_CLOAKER_MODEL);
+    PrecacheModel(SOLDIER_CLOAKER_UH_MODEL);
+    PrecacheModel(SOLDIER_MEDIC_MODEL);
 
-    PrecacheModel( SURVIVOR_ABIGAIL_MODEL );
-    PrecacheModel( INFECTED_TANK_MODEL );
+    PrecacheModel(SURVIVOR_ABIGAIL_MODEL);
+    PrecacheModel(INFECTED_TANK_MODEL);
 
-    for ( int it = 0; it < ARRAYSIZE( g_SoldierModels ); ++it ) {
-        PrecacheModel( g_SoldierModels[it] );
+    for ( int it = 0; it < ARRAYSIZE(g_SoldierModels); ++it ) {
+        PrecacheModel(g_SoldierModels[it]);
     }
 
-    for ( int it = 0; it < ARRAYSIZE( g_HandsModels ); ++it ) {
-        PrecacheModel( g_HandsModels[it] );
+    for ( int it = 0; it < ARRAYSIZE(g_HandsModels); ++it ) {
+        PrecacheModel(g_HandsModels[it]);
     }
 
-#ifndef USE_L4D2_MODELS
-    PrecacheModel( SOLDIER_LEADER_MODEL );
-    PrecacheModel( SOLDIER_SNIPER_MODEL );
-
-    for ( int it = 0; it < ARRAYSIZE( g_SoldierUltraHardModels ); ++it ) {
-        PrecacheModel( g_SoldierUltraHardModels[it] );
-    }
-#endif
-
-    PrecacheScriptSound( "Tank.Idle" );
-    PrecacheScriptSound( "Tank.Alert" );
-    PrecacheScriptSound( "Tank.Pain" );
-    PrecacheScriptSound( "Tank.Attack" );
-    PrecacheScriptSound( "Tank.Death" );
-    PrecacheScriptSound( "Tank.Hit" );
-    PrecacheScriptSound( "Tank.Punch" );
+    PrecacheScriptSound("Tank.Idle");
+    PrecacheScriptSound("Tank.Alert");
+    PrecacheScriptSound("Tank.Pain");
+    PrecacheScriptSound("Tank.Attack");
+    PrecacheScriptSound("Tank.Death");
+    PrecacheScriptSound("Tank.Hit");
+    PrecacheScriptSound("Tank.Punch");
 }
 
 //================================================================================
+// Player components
 //================================================================================
 void CAP_Player::CreateComponents()
 {
-    AddComponent( PLAYER_COMPONENT_HEALTH );
-    AddComponent( PLAYER_COMPONENT_EFFECTS );
+    AddComponent(PLAYER_COMPONENT_HEALTH);
+    AddComponent(PLAYER_COMPONENT_EFFECTS);
     //AddComponent( PLAYER_COMPONENT_DEJECTED );
 }
 
 //================================================================================
+// Player attribute's
 //================================================================================
 void CAP_Player::CreateAttributes()
 {
-    AddAttribute( "health" );
-    AddAttribute( "stamina" );
-    AddAttribute( "stress" );
+    AddAttribute("health");
+    AddAttribute("stamina");
+    AddAttribute("stress");
 
     if ( TheGameRules->GetGameMode() == GAME_MODE_ASSAULT ) {
         AddAttribute("shield");
@@ -294,22 +253,26 @@ void CAP_Player::CreateAttributes()
 }
 
 //================================================================================
+// The player has entered a new state
 //================================================================================
-void CAP_Player::EnterPlayerState( int status )
+void CAP_Player::EnterPlayerState(int status)
 {
-    BaseClass::EnterPlayerState( status );
+    BaseClass::EnterPlayerState(status);
 
     switch ( status ) {
+        // You have entered the server, now you must choose your team.
         case PLAYER_STATE_WELCOME:
         {
-            SetPlayerState( PLAYER_STATE_PICKING_TEAM );
+            SetPlayerState(PLAYER_STATE_PICKING_TEAM);
             break;
         }
 
+        // Welcome to the game
         case PLAYER_STATE_ACTIVE:
         {
+            // All the soldiers are given a pistol at least
             if ( IsSoldier() ) {
-                GiveNamedItem( "weapon_pistol" );
+                GiveNamedItem("weapon_pistol");
             }
 
             if ( TheGameRules->GetGameMode() == GAME_MODE_ASSAULT ) {
@@ -328,15 +291,18 @@ void CAP_Player::EnterPlayerState( int status )
 //================================================================================
 void CAP_Player::SetRandomTeam()
 {
-	ChangeTeam( RandomInt(TEAM_HUMANS, TEAM_SOLDIERS) );
-	// TODO: TEAM_INFECTED = Buggy
+    ChangeTeam(RandomInt(TEAM_HUMANS, TEAM_SOLDIERS));
+    // TODO: TEAM_INFECTED = Buggy
 }
 
 //================================================================================
+// The player has selected a class
 //================================================================================
-void CAP_Player::OnPlayerClass( int playerClass )
+void CAP_Player::OnPlayerClass(int playerClass)
 {
-    BaseClass::OnPlayerClass( playerClass );
+    BaseClass::OnPlayerClass(playerClass);
+
+    // Ready for the game
     Spawn();
 }
 
@@ -345,39 +311,39 @@ void CAP_Player::OnPlayerClass( int playerClass )
 //================================================================================
 void CAP_Player::SetRandomPlayerClass()
 {
-	switch ( GetTeamNumber() ) {
-		case TEAM_HUMANS:
-		{
-			SetPlayerClass( PLAYER_CLASS_NONE );
-			break;
-		}
+    switch ( GetTeamNumber() ) {
+        case TEAM_HUMANS:
+        {
+            SetPlayerClass(PLAYER_CLASS_NONE);
+            break;
+        }
 
-		case TEAM_SOLDIERS:
-		{
-			SetPlayerClass( RandomInt( PLAYER_CLASS_SOLDIER_LEVEL1, PLAYER_CLASS_SOLDIER_MEDIC ) );
-			break;
-		}
+        case TEAM_SOLDIERS:
+        {
+            SetPlayerClass(RandomInt(PLAYER_CLASS_SOLDIER_LEVEL1, PLAYER_CLASS_SOLDIER_MEDIC));
+            break;
+        }
 
-		case TEAM_INFECTED:
-		{
-			SetPlayerClass( RandomInt( PLAYER_CLASS_INFECTED_COMMON, PLAYER_CLASS_INFECTED_BOSS ) );
-			break;
-		}
+        case TEAM_INFECTED:
+        {
+            SetPlayerClass(RandomInt(PLAYER_CLASS_INFECTED_COMMON, PLAYER_CLASS_INFECTED_BOSS));
+            break;
+        }
 
-		default:
-		{
-			Assert( !"An attempt has been made to establish a random class without a selected team." );
-			SetPlayerClass( PLAYER_CLASS_NONE );
-			break;
-		}
-	}
+        default:
+        {
+            Assert(!"An attempt has been made to establish a random class without a selected team.");
+            SetPlayerClass(PLAYER_CLASS_NONE);
+            break;
+        }
+    }
 }
 
 //================================================================================
 //================================================================================
-void CAP_Player::ChangeTeam( int iTeamNum )
+void CAP_Player::ChangeTeam(int iTeamNum)
 {
-    BaseClass::ChangeTeam( iTeamNum );
+    BaseClass::ChangeTeam(iTeamNum);
 
     if ( GetTeamNumber() != iTeamNum )
         return;
@@ -386,17 +352,18 @@ void CAP_Player::ChangeTeam( int iTeamNum )
         case TEAM_HUMANS:
         case TEAM_SOLDIERS:
         {
-            SetFlashlightEnabled( true );
+            // We have flashlight
+            SetFlashlightEnabled(true);
+            m_nFidgetTimer.Start(5.0f);
 
-            m_takedamage = DAMAGE_YES;
-            m_nFidgetTimer.Start( 5.0f );
-
+            // The survivors do not have classes for now.
             if ( iTeamNum == TEAM_HUMANS ) {
-                SetPlayerClass( PLAYER_CLASS_NONE );
+                SetPlayerClass(PLAYER_CLASS_NONE);
             }
 
+            // Select what kind of soldier you want to be
             if ( iTeamNum == TEAM_SOLDIERS ) {
-                SetPlayerState( PLAYER_STATE_PICKING_CLASS );
+                SetPlayerState(PLAYER_STATE_PICKING_CLASS);
             }
 
             break;
@@ -404,14 +371,16 @@ void CAP_Player::ChangeTeam( int iTeamNum )
 
         case TEAM_INFECTED:
         {
-            SetFlashlightEnabled( false );
-            SetPlayerClass( PLAYER_CLASS_NONE );
+            // Infected people do not have a flashlight
+            SetFlashlightEnabled(false);
+            SetPlayerClass(PLAYER_CLASS_NONE);
             break;
         }
     }
 }
 
 //================================================================================
+// Returns the model the player will use
 //================================================================================
 const char *CAP_Player::GetPlayerModel()
 {
@@ -439,10 +408,12 @@ const char *CAP_Player::GetPlayerModel()
         }
     }
 
+    // TODO: 
     if ( IsSurvivor() ) {
         return SURVIVOR_ABIGAIL_MODEL;
     }
 
+    // 
     if ( IsTank() ) {
         return INFECTED_TANK_MODEL;
     }
@@ -451,53 +422,15 @@ const char *CAP_Player::GetPlayerModel()
 }
 
 //================================================================================
+// Prepare the model with a visual style
 //================================================================================
 void CAP_Player::SetUpModel()
 {
-    if ( IsSoldier() ) {
-#ifndef USE_L4D2_MODELS
-        // Cloaker
-        if ( GetPlayerClass() == PLAYER_CLASS_SOLDIER_LEVEL2 ) {
-            if ( GetDifficultyLevel() < SKILL_ULTRA_HARD ) {
-                SetSkin( 1 );
-            }
-        }
-
-        // Bulldozer
-        if ( GetPlayerClass() == PLAYER_CLASS_SOLDIER_LEVEL3 ) {
-            if ( GetDifficultyLevel() >= SKILL_ULTRA_HARD ) {
-                SetSkin( RandomInt(1, 2) );
-            }
-            else {
-                SetBodygroup( 2, 0 ); // Cubierta trasera
-                SetBodygroup( 3, 0 ); // Cubierta delantera
-
-                switch ( GetDifficultyLevel() ) {
-                    case SKILL_EASY:
-                        SetSkin( 0 ); // Original
-                        SetBodygroup( 1, RandomInt( 1, 2 ) ); // Casco: Protección transparente
-                        SetBodygroup( 2, 1 ); // Sin cubierta trasera
-                        SetBodygroup( 3, 1 ); // Sin cubierta delantera
-                        break;
-
-                    case SKILL_MEDIUM:
-                        SetSkin( 0 ); // Original
-                        SetBodygroup( 1, 0 ); // Casco: Cubierto
-                        break;
-
-                    case SKILL_HARD:
-                        SetSkin( 1 ); // Negro
-                        SetBodygroup( 1, RandomInt( 0, 1 ) );
-                        break;
-
-                    case SKILL_VERY_HARD:
-                        SetSkin( RandomInt( 2, 4 ) ); // Blanco/Azul - Calabera/Calabera gatito - Blanco
-                        SetBodygroup( 1, 0 );
-                        break;
-                }
-            }
-        }
-#endif
+    if ( IsSurvivor() ) {
+        SetSkin(RandomInt(0, 1));
+        SetBodygroup(1, RandomInt(0, 6)); // Hair
+        SetBodygroup(2, RandomInt(0, 6)); // Upper body
+        SetBodygroup(3, RandomInt(0, 6)); // Lower body
     }
 }
 
@@ -535,7 +468,7 @@ gender_t CAP_Player::GetPlayerGender()
 void CAP_Player::IdleSound()
 {
     if ( IsTank() ) {
-        EmitSound( "Tank.Idle" );
+        EmitSound("Tank.Idle");
     }
 }
 
@@ -544,145 +477,114 @@ void CAP_Player::IdleSound()
 void CAP_Player::AlertSound()
 {
     if ( IsTank() ) {
-        EmitSound( "Tank.Alert" );
+        EmitSound("Tank.Alert");
     }
 }
 
 //================================================================================
 //================================================================================
-void CAP_Player::PainSound( const CTakeDamageInfo &info )
+void CAP_Player::PainSound(const CTakeDamageInfo &info)
 {
     if ( IsTank() ) {
-        EmitSound( "Tank.Pain" );
+        EmitSound("Tank.Pain");
     }
     else {
-        BaseClass::PainSound( info );
+        BaseClass::PainSound(info);
     }
 }
 
 //================================================================================
 //================================================================================
-void CAP_Player::DeathSound( const CTakeDamageInfo &info )
+void CAP_Player::DeathSound(const CTakeDamageInfo &info)
 {
-    // Este tipo de muerte no emite sonido
-    if ( !TheGameRules->FCanPlayDeathSound( info ) ) return;
+    if ( !TheGameRules->FCanPlayDeathSound(info) ) {
+        return;
+    }
 
     if ( IsTank() ) {
-        EmitSound( "Tank.Death" );
+        EmitSound("Tank.Death");
     }
     else {
-        BaseClass::DeathSound( info );
+        BaseClass::DeathSound(info);
     }
 }
 
 //================================================================================
+// Returns the model of the hands for the player
 //================================================================================
-const char * CAP_Player::GetHandsModel( int viewmodelindex )
+const char *CAP_Player::GetHandsModel(int viewmodelindex)
 {
+    Assert(GetTeamNumber() != TEAM_UNASSIGNED);
+
     if ( GetTeamNumber() == TEAM_UNASSIGNED )
         return NULL;
 
-#ifdef USE_L4D2_MODELS
-    const char *pModel = STRING( GetModelName() );
+    const char *pModel = STRING(GetModelName());
 
-    if ( FStrEq( pModel, SOLDIER_BULLDOZER_MODEL ) )
+    if ( FStrEq(pModel, SOLDIER_BULLDOZER_MODEL) )
         return "models/weapons/arms/v_arms_francis.mdl";
 
-    if ( FStrEq( pModel, SOLDIER_CLOAKER_MODEL ) )
+    if ( FStrEq(pModel, SOLDIER_CLOAKER_MODEL) )
         return "models/weapons/arms/v_arms_gambler_new.mdl";
 
-    if ( FStrEq( pModel, SOLDIER_MEDIC_MODEL ) )
+    if ( FStrEq(pModel, SOLDIER_MEDIC_MODEL) )
         return "models/weapons/arms/v_arms_mechanic_new.mdl";
 
-    if ( FStrEq( pModel, "models/survivors/survivor_coach.mdl" ) )
+    if ( FStrEq(pModel, "models/survivors/survivor_coach.mdl") )
         return "models/weapons/arms/v_arms_coach_new.mdl";
 
-    if ( FStrEq( pModel, "models/survivors/survivor_producer.mdl" ) )
+    if ( FStrEq(pModel, "models/survivors/survivor_producer.mdl") )
         return "models/weapons/arms/v_arms_producer_new.mdl";
 
     return "models/weapons/arms/v_arms_zoey.mdl";
-#else
-    const char *pModel = STRING( GetModelName() );
-
-    if ( FStrEq( pModel, SOLDIER_BULLDOZER_MODEL ) )
-        return "models/mark2580/payday2/bulldozer_c_arms.mdl";
-
-    if ( FStrEq( pModel, SOLDIER_BULLDOZER_UH_MODEL ) )
-        return "models/mark2580/payday2/pd2_bulldozer_zeal_c_arms.mdl";
-
-    if ( FStrEq( pModel, SOLDIER_CLOAKER_MODEL ) )
-        return "models/mark2580/payday2/c_arms_cloaker.mdl";
-
-    if ( FStrEq( pModel, SOLDIER_CLOAKER_UH_MODEL ) )
-        return "models/mark2580/payday2/pd2_cloaker_zeal_player.mdl";
-
-    if ( FStrEq( pModel, SOLDIER_MEDIC_MODEL ) )
-        return "models/payday2/units/medic_arms.mdl";
-
-    if ( FStrEq( pModel, "models/payday2/units/heavy_swat_player.mdl" ) )
-        return "models/payday2/units/heavy_swat_arms.mdl";
-
-    if ( FStrEq( pModel, "models/mark2580/payday2/pd2_gs_elite_player.mdl" ) )
-        return "models/mark2580/payday2/gensec_c_arms.mdl";
-
-    return "models/weapons/c_arms_refugee.mdl";
-#endif
 }
 
 //================================================================================
-// El modelo ha sido establecido, ya podemos crear nuestras manos
+// Create the model of the hands or other extensions for the viewmodel.
 //================================================================================
 void CAP_Player::SetUpHands()
 {
-    CreateHands( HANDS_VIEWMODEL_INDEX );
+    CreateHands(HANDS_VIEWMODEL_INDEX);
 }
 
 //================================================================================
-// Establece el estado del jugador
+// The player has entered a new condition
 //================================================================================
-void CAP_Player::OnPlayerStatus( int oldStatus, int status )
+void CAP_Player::OnPlayerStatus(int oldStatus, int status)
 {
-    BaseClass::OnPlayerStatus( oldStatus, status );
+    BaseClass::OnPlayerStatus(oldStatus, status);
 
     switch ( status ) {
-        case PLAYER_STATUS_NONE:
-            break;
-
         case PLAYER_STATUS_DEJECTED:
-            DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_DIESIMPLE );
-            SetNextAttack( gpGlobals->curtime + SequenceDuration() );
+        {
+            DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_DIESIMPLE);
+            SetNextAttack(gpGlobals->curtime + SequenceDuration());
             break;
+        }
 
         case PLAYER_STATUS_CLIMBING:
-            DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_TERROR_FALL_GRAB_LEDGE );
+        {
+            DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_TERROR_FALL_GRAB_LEDGE);
+            SetNextAttack(gpGlobals->curtime + SequenceDuration());
             break;
-
-        case PLAYER_STATUS_FALLING:   
-            break;
-    }
-}
-
-//================================================================================
-//================================================================================
-void CAP_Player::OnNewLeader( CPlayer * pMember )
-{
-    // ¡Somos nosotros!
-    if ( pMember == this ) {
-        if ( IsSoldier() ) {
-            //SetModel( SOLDIER_LEADER_MODEL );
         }
     }
 }
 
 //================================================================================
 //================================================================================
+void CAP_Player::OnNewLeader(CPlayer * pMember)
+{
+}
+
+//================================================================================
+// Returns if we can reproduce the animation
+//================================================================================
 bool CAP_Player::ShouldFidget()
 {
-    // Solo si estamos normal
     if ( GetPlayerStatus() != PLAYER_STATUS_NONE )
         return false;
 
-    // Esperamos a estar relajados
     if ( IsOnCombat() || IsUnderAttack() )
         return false;
 
@@ -691,49 +593,43 @@ bool CAP_Player::ShouldFidget()
 
 //================================================================================
 //================================================================================
-void CAP_Player::HandleAnimEvent( animevent_t * event )
+void CAP_Player::HandleAnimEvent(animevent_t * event)
 {
     if ( IsTank() ) {
-        // En cada paso hacemos temblar el suelo, ignorandonos a nosotros mismos
+        // In each step we make the ground shake
         if ( event->Event() == AE_PLAYER_FOOTSTEP_LEFT || event->Event() == AE_PLAYER_FOOTSTEP_RIGHT ) {
             CUtlVector<CBasePlayer *> *ignoreList = new CUtlVector<CBasePlayer *>();
-            ignoreList->AddToTail( this );
-            UTIL_ScreenShake( GetAbsOrigin(), 3.0f, 1.0f, 1.0f, 700.0f, SHAKE_START, false, ignoreList );
+            ignoreList->AddToTail(this);
+            UTIL_ScreenShake(GetAbsOrigin(), 3.0f, 1.0f, 1.0f, 700.0f, SHAKE_START, false, ignoreList);
         }
     }
 
-    BaseClass::HandleAnimEvent( event );
+    BaseClass::HandleAnimEvent(event);
 }
 
 //================================================================================
 //================================================================================
-bool CAP_Player::ClientCommand( const CCommand & args )
+bool CAP_Player::ClientCommand(const CCommand & args)
 {
-    // Convertirse en espectador
-    if ( FStrEq( args[0], "taunt_salute" ) )
-    {
-        DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GMOD_TAUNT_SALUTE );
+    if ( FStrEq(args[0], "taunt_salute") ) {
+        DoAnimationEvent(PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GMOD_TAUNT_SALUTE);
         return true;
     }
 
-    // Convertirse en espectador
-    if ( FStrEq( args[0], "taunt_forward" ) )
-    {
-        DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GMOD_SIGNAL_FORWARD );
+    if ( FStrEq(args[0], "taunt_forward") ) {
+        DoAnimationEvent(PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GMOD_SIGNAL_FORWARD);
         return true;
     }
 
-    // Convertirse en espectador
-    if ( FStrEq( args[0], "taunt_group" ) )
-    {
-        DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GMOD_SIGNAL_GROUP );
+    if ( FStrEq(args[0], "taunt_group") ) {
+        DoAnimationEvent(PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GMOD_SIGNAL_GROUP);
         return true;
     }
 
-    if ( FStrEq( args[0], "iktest" ) ) {
-        DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_SEQUENCE, LookupSequence("Idle_subtle") );
+    if ( FStrEq(args[0], "iktest") ) {
+        DoAnimationEvent(PLAYERANIMEVENT_CUSTOM_SEQUENCE, LookupSequence("Idle_subtle"));
         return true;
     }
 
-    return BaseClass::ClientCommand( args );
+    return BaseClass::ClientCommand(args);
 }
