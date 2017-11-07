@@ -20,7 +20,11 @@ echo Engine Configuration
 echo --------
 echo.
 
-set /p SoundEngine=Sound Engine: (openal,fmod,source) 
+set /p SoundEngine=Sound Engine: (steamaudio,openal,fmod,source) 
+
+If "%SoundEngine%"=="steamaudio" (
+    set params=%params% /define:USE_STEAMAUDIO
+)
 
 If "%SoundEngine%"=="openal" (
     set params=%params% /define:USE_OPENAL
