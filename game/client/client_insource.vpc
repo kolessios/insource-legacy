@@ -402,6 +402,7 @@ $Project
                 $Folder "HUD"
                 {
                     $File "in\hud_hitmarker.cpp"
+                    $File "in\hud_damageindicator.cpp"
                 }
             }
 
