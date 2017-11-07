@@ -264,7 +264,7 @@ enum
 	VIS_CACHE_INVALID = 0x80000000
 };
 
-#define VIS_CACHE_ENTRY_LIFE .090f
+#define VIS_CACHE_ENTRY_LIFE .3f
 
 class CCombatCharVisCache : public CAutoGameSystemPerFrame
 {
@@ -413,6 +413,8 @@ static CCombatCharVisCache s_CombatCharVisCache;
 
 bool CBaseCombatCharacter::IsAbleToSee(const Vector & pos, FieldOfViewCheckType checkFOV)
 {
+    VPROF_BUDGET("CBaseCombatCharacter::IsAbleToSeePosition", "Bots");
+
     // Test this every time; it's cheap.
     Vector vecEyePosition = EyePosition();
     Vector vecTargetPosition = pos;
@@ -455,6 +457,8 @@ static void ComputeSeeTestPosition( Vector *pEyePosition, CBaseCombatCharacter *
 
 bool CBaseCombatCharacter::IsAbleToSee( CBaseCombatCharacter *pBCC, FieldOfViewCheckType checkFOV )
 {
+    VPROF_BUDGET("CBaseCombatCharacter::IsAbleToSeeCharacter", "Bots");
+
 	Vector vecEyePosition, vecOtherEyePosition;
 	ComputeSeeTestPosition( &vecEyePosition, this );
 	ComputeSeeTestPosition( &vecOtherEyePosition, pBCC );

@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #ifndef UTILS_H
 #define UTILS_H
@@ -25,82 +27,146 @@ class CHintCriteria;
 typedef CUtlVector<Vector> SpotVector;
 
 //================================================================================
+//================================================================================
+enum SpotCriteriaFlag
+{
+    FLAG_USE_SNIPER_POSITIONS = (1 << 0),
+    FLAG_USE_NEAREST = (1 << 1),
+
+    FLAG_ONLY_VISIBLE = (1 << 2),
+    FLAG_OUT_OF_LINE_OF_FIRE = (1 << 3),
+    FLAG_OUT_OF_AVOID_VISIBILITY = (1 << 4),
+    FLAG_FIRE_OPPOORTUNITY = (1 << 5),
+    FLAG_IGNORE_RESERVED = (1 << 6),
+
+    FLAG_INTERESTING_SPOT = (1 << 7),
+    FLAG_COVER_SPOT = (1 << 8),
+
+    LAST_FLAG = (1 << 9)
+};
+
+//================================================================================
 // Información para la búsqueda de un punto interesante en el mapa
 //================================================================================
 class CSpotCriteria
 {
 public:
-    DECLARE_CLASS_NOBASE( CSpotCriteria );
+    DECLARE_CLASS_NOBASE(CSpotCriteria);
 
     CSpotCriteria()
     {
-        m_flMaxRange = 1000.0f;
-        m_flMinDistanceFromEnemy = 500.0f;
-        m_bIsSniper = false;
-        m_bUseNearest = false;
-        m_bUseRandom = false;
-        m_bOnlyVisible = false;
-        m_bOutOfLineOfFire = false;
-        m_bOutOfVisibility = false;
-        m_iAvoidTeam = NULL;
+        m_flMaxRange = 1300.0f;
+        m_flMinRangeFromAvoid = 500.0f;
+        m_iAvoidTeam = TEAM_UNASSIGNED;
         m_iTacticalMode = TACTICAL_MODE_NONE;
-
+        m_pPlayer = NULL;
         m_vecOrigin.Invalidate();
+        m_flags = 0;
     }
 
-    virtual void SetOrigin( Vector position ) {
+    virtual void SetOrigin(Vector position)
+    {
         m_vecOrigin = position;
     }
-    virtual void SetMaxRange( float maxRange ) {
-        m_flMaxRange = maxRange;
-    }
-    virtual void SetMinDistanceAvoid( float minDistance ) {
-        m_flMinDistanceFromEnemy = minDistance;
-    }
-    virtual void SniperSpots( bool isSniper ) {
-        m_bIsSniper = isSniper;
-    }
-    virtual void UseNearest( bool status ) {
-        m_bUseNearest = status;
-    }
-    virtual void UseRandom( bool status ) {
-        m_bUseRandom = status;
-    }
-    virtual void OnlyVisible( bool status ) {
-        m_bOnlyVisible = status;
-    }
-    virtual void OutOfLineOfFire( bool status ) {
-        m_bOutOfLineOfFire = status;
-    }
-    virtual void OutOfVisibility( bool status ) {
-        m_bOutOfVisibility = status;
-    }
-    virtual void AvoidTeam( int team ) {
-        m_iAvoidTeam = team;
-    }
-    virtual void AvoidTeam( CBaseEntity *pEntity )
+
+    virtual void SetOrigin(CBaseEntity *pEntity)
     {
         if ( !pEntity )
             return;
 
-        AvoidTeam( pEntity->GetTeamNumber() );
+        SetOrigin(pEntity->GetAbsOrigin());
     }
-    virtual void SetTacticalMode( int mode )
+
+    virtual bool HasValidOrigin() const
+    {
+        return m_vecOrigin.IsValid();
+    }
+
+    virtual const Vector &GetOrigin() const
+    {
+        return m_vecOrigin;
+    }
+
+    virtual void SetMaxRange(float maxRange)
+    {
+        m_flMaxRange = maxRange;
+    }
+
+    virtual float GetMaxRange() const
+    {
+        return m_flMaxRange;
+    }
+
+    virtual void SetMinRangeFromAvoid(float minDistance)
+    {
+        m_flMinRangeFromAvoid = minDistance;
+    }
+
+    virtual float GetMinRangeFromAvoid() const
+    {
+        return m_flMinRangeFromAvoid;
+    }
+
+    virtual void AvoidTeam(int team)
+    {
+        m_iAvoidTeam = team;
+    }
+
+    virtual void AvoidTeam(CBaseEntity *pEntity)
+    {
+        if ( !pEntity )
+            return;
+
+        AvoidTeam(pEntity->GetTeamNumber());
+    }
+
+    virtual int GetAvoidTeam() const
+    {
+        return m_iAvoidTeam;
+    }
+
+    virtual void SetTacticalMode(int mode)
     {
         m_iTacticalMode = mode;
     }
 
-public:
+    virtual int GetTacticalMode() const
+    {
+        return m_iTacticalMode;
+    }
+
+    virtual void SetPlayer(CPlayer *pPlayer);
+
+    virtual CPlayer *GetPlayer() const
+    {
+        return m_pPlayer;
+    }
+
+    virtual void SetFlags(int flags)
+    {
+        m_flags |= flags;
+    }
+
+    virtual void ClearFlags(int flags)
+    {
+        m_flags &= ~flags;
+    }
+
+    virtual bool HasFlags(int flags) const
+    {
+        return ((m_flags & flags) != 0);
+    }
+
+protected:
+    int m_flags;
+
     float m_flMaxRange;
-    float m_flMinDistanceFromEnemy;
-    bool m_bIsSniper;
-    bool m_bUseNearest;
-    bool m_bUseRandom;
-    bool m_bOnlyVisible;
-    bool m_bOutOfLineOfFire;
-    bool m_bOutOfVisibility;
+    float m_flMinRangeFromAvoid;
+
     int m_iTacticalMode;
     int m_iAvoidTeam;
+
+    CPlayer *m_pPlayer;
     Vector m_vecOrigin;
 };
 
@@ -110,65 +176,70 @@ public:
 class Utils
 {
 public:
-    DECLARE_CLASS_NOBASE( Utils );
+    DECLARE_CLASS_NOBASE(Utils);
 
-    static float RandomFloat( const char *sharedname, float flMinVal, float flMaxVal );
-    static int RandomInt( const char *sharedname, int iMinVal, int iMaxVal );
-    static Vector RandomVector( const char *sharedname, float minVal, float maxVal );
-    static QAngle RandomAngle( const char *sharedname, float minVal, float maxVal );
+    static float RandomFloat(const char *sharedname, float flMinVal, float flMaxVal);
+    static int RandomInt(const char *sharedname, int iMinVal, int iMaxVal);
+    static Vector RandomVector(const char *sharedname, float minVal, float maxVal);
+    static QAngle RandomAngle(const char *sharedname, float minVal, float maxVal);
 
-    static void NormalizeAngle( float& fAngle );
-    static void DeNormalizeAngle( float& fAngle );
-    static void GetAngleDifference( QAngle const& angOrigin, QAngle const& angDestination, QAngle& angDiff );
+    static void NormalizeAngle(float& fAngle);
+    static void DeNormalizeAngle(float& fAngle);
+    static void GetAngleDifference(QAngle const& angOrigin, QAngle const& angDestination, QAngle& angDiff);
 
-    static bool IsBreakable( CBaseEntity *pEntity );
-    static bool IsBreakableSurf( CBaseEntity *pEntity );
-    static bool IsDoor( CBaseEntity *pEntity );
-    static CBaseEntity *FindNearestPhysicsObject( const Vector &vOrigin, float fMaxDist, float fMinMass = 0, float fMaxMass = 500, CBaseEntity *pFrom = NULL );
-    static bool IsMoveableObject( CBaseEntity *pEntity );
+    static bool IsBreakable(CBaseEntity *pEntity);
+    static bool IsBreakableSurf(CBaseEntity *pEntity);
+    static bool IsDoor(CBaseEntity *pEntity);
+    static CBaseEntity *FindNearestPhysicsObject(const Vector &vOrigin, float fMaxDist, float fMinMass = 0, float fMaxMass = 500, CBaseEntity *pFrom = NULL);
+    static bool IsMoveableObject(CBaseEntity *pEntity);
 
-    static bool RunOutEntityLimit( int iTolerance = 20 );
-    static IGameEvent *CreateLesson( const char *pLesson, CBaseEntity *pSubject = NULL );
+    static bool RunOutEntityLimit(int iTolerance = 20);
+    static IGameEvent *CreateLesson(const char *pLesson, CBaseEntity *pSubject = NULL);
 
 #ifdef INSOURCE_DLL
-    static bool AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, int team = TEAM_ANY );
-    static bool AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter );
-    static bool AddAttributeModifier( const char *name, int team = TEAM_ANY );
+    static bool AddAttributeModifier(const char *name, float radius, const Vector &vecPosition, int team = TEAM_ANY);
+    static bool AddAttributeModifier(const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter);
+    static bool AddAttributeModifier(const char *name, int team = TEAM_ANY);
 #endif
 
-    static bool GetEntityBones( CBaseEntity *pEntity, HitboxBones &bones );
-    static bool GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions );
-    static bool GetHitboxPosition( CBaseEntity *pEntity, Vector &vecPosition, HitboxType type );
+    static bool GetEntityBones(CBaseEntity *pEntity, HitboxBones &bones);
+    static bool ComputeHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positions);
+    static bool GetHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positions);
+
+    static bool GetHitboxPosition(CBaseEntity *pEntity, Vector &vecPosition, HitboxType type);
 
     static void InitBotTrig();
-    static float BotCOS( float angle );
-    static float BotSIN( float angle );
+    static float BotCOS(float angle);
+    static float BotSIN(float angle);
 
-    static bool IsIntersecting2D( const Vector &startA, const Vector &endA, const Vector &startB, const Vector &endB, Vector *result = NULL );
+    static bool IsIntersecting2D(const Vector &startA, const Vector &endA, const Vector &startB, const Vector &endB, Vector *result = NULL);
 
-    static CPlayer *GetClosestPlayer( const Vector &vecPosition, float *distance = NULL, CPlayer *pIgnore = NULL, int team = NULL );
-    static bool IsSpotOccupied( const Vector &vecPosition, CPlayer *pIgnore = NULL, float closeRange = 75.0f, int avoidTeam = NULL );
+    static CPlayer *GetClosestPlayer(const Vector &vecPosition, float *distance = NULL, CPlayer *pIgnore = NULL, int team = NULL);
+    static bool IsSpotOccupied(const Vector &vecPosition, CPlayer *pIgnore = NULL, float closeRange = 75.0f, int avoidTeam = NULL);
 
-    static CPlayer *GetClosestPlayerByClass( const Vector &vecPosition, Class_T classify, float *distance = NULL, CPlayer *pIgnore = NULL );
-    static bool IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, CPlayer *pIgnore = NULL, float closeRange = 75.0f );
+    static CPlayer *GetClosestPlayerByClass(const Vector &vecPosition, Class_T classify, float *distance = NULL, CPlayer *pIgnore = NULL);
+    static bool IsSpotOccupiedByClass(const Vector &vecPosition, Class_T classify, CPlayer *pIgnore = NULL, float closeRange = 75.0f);
 
-    static bool IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore = NULL, int ignoreTeam = NULL );
-    static bool IsValidSpot( const Vector &vecSpot, const Vector &vecOrigin, const CSpotCriteria &criteria, CPlayer *pPlayer = NULL );
+    static bool IsCrossingLineOfFire(const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore = NULL, int ignoreTeam = NULL);
+    static bool IsValidSpot(const Vector &vecSpot, const CSpotCriteria &criteria);
 
-    static bool FindNavCoverSpot( Vector *vecResult, const Vector &vecOrigin, const CSpotCriteria &criteria, CPlayer *pPlayer = NULL, SpotVector *list = NULL );
-    static bool FindNavCoverSpotInArea( Vector *vecResult, const Vector &vecOrigin, CNavArea *pArea, const CSpotCriteria &criteria, CPlayer *pPlayer = NULL, SpotVector *list = NULL );
-    static CAI_Hint *FindHintSpot( const Vector &vecOrigin, const CHintCriteria &hintCriteria, const CSpotCriteria &criteria, CPlayer *pPlayer = NULL, SpotVector *list = NULL );
+    // 
 
-    static bool FindIntestingPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotCriteria &criteria );
-    static bool FindCoverPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotCriteria &criteria );
+    static bool FindNavCoverSpot(const CSpotCriteria &criteria, SpotVector *list);
+    //static bool FindNavCoverSpotInArea(Vector *vecResult, const Vector &vecOrigin, CNavArea *pArea, const CSpotCriteria &criteria, CPlayer *pPlayer = NULL, SpotVector *list = NULL);
 
-    static void FillIntestingPositions( SpotVector *list, CPlayer *pPlayer, const CSpotCriteria &criteria );
-    static void FillCoverPositions( SpotVector *list, CPlayer *pPlayer, const CSpotCriteria &criteria );
+    static CAI_Hint *FindHintSpot(const CHintCriteria &hintCriteria, const CSpotCriteria &criteria, SpotVector *list);
+
+    static bool GetSpotCriteria(Vector *vecResult, CSpotCriteria &criteria, SpotVector *list = NULL);
 
 #ifdef INSOURCE_DLL
-    static void AlienFX_SetColor( CPlayer *pPlayer, unsigned int lights, unsigned int color, float duration = 2.0f );
+    static void AlienFX_SetColor(CPlayer *pPlayer, unsigned int lights, unsigned int color, float duration = 2.0f);
 #endif
 };
+
+extern Vector g_OriginSort;
+extern int SortNearestSpot(const Vector *spot1, const Vector *spot2);
+extern int SortNearestHint(CAI_Hint * const *spot1, CAI_Hint * const *spot2);
 
 //================================================================================
 // CollectHidingSpotsFunctor
@@ -176,7 +247,7 @@ public:
 class CollectHidingSpotsFunctor
 {
 public:
-    CollectHidingSpotsFunctor( CPlayer *me, const Vector &origin, float range, int flags, Place place = UNDEFINED_PLACE ) : m_origin( origin )
+    CollectHidingSpotsFunctor(CPlayer *me, const Vector &origin, float range, int flags, Place place = UNDEFINED_PLACE) : m_origin(origin)
     {
         m_me = me;
         m_count = 0;
@@ -191,7 +262,7 @@ public:
         MAX_SPOTS = 256
     };
 
-    bool operator() ( CNavArea *area )
+    bool operator() (CNavArea *area)
     {
         // if a place is specified, only consider hiding spots from areas in that place
         if ( m_place != UNDEFINED_PLACE && area->GetPlace() != m_place )
@@ -200,7 +271,7 @@ public:
         // collect all the hiding spots in this area
         const HidingSpotVector *list = area->GetHidingSpots();
 
-        FOR_EACH_VEC( (*list), it )
+        FOR_EACH_VEC((*list), it)
         {
             const HidingSpot *spot = (*list)[it];
 
@@ -212,13 +283,13 @@ public:
             // make sure hiding spot is in range
             if ( m_range > 0.0f ) {
                 //if ( (spot->GetPosition() - m_origin).IsLengthGreaterThan(m_range) )
-                if ( m_origin.DistTo( spot->GetPosition() ) > m_range ) {
+                if ( m_origin.DistTo(spot->GetPosition()) > m_range ) {
                     continue;
                 }
             }
 
             // if a Player is using this hiding spot, don't consider it
-            if ( Utils::IsSpotOccupied( spot->GetPosition(), m_me ) ) {
+            if ( Utils::IsSpotOccupied(spot->GetPosition(), m_me) ) {
                 // player is in hiding spot
                 /// @todo Check if player is moving or sitting still
                 continue;
@@ -255,7 +326,7 @@ public:
     /**
     * Remove the spot at index "i"
     */
-    void RemoveSpot( int i )
+    void RemoveSpot(int i)
     {
         if ( m_count == 0 )
             return;
@@ -267,9 +338,9 @@ public:
     }
 
 
-    int GetRandomHidingSpot( void )
+    int GetRandomHidingSpot(void)
     {
-        int weight = RandomInt( 0, m_totalWeight - 1 );
+        int weight = RandomInt(0, m_totalWeight - 1);
         for ( int i = 0; i<m_count - 1; ++i ) {
             // if the next spot's starting weight is over the target weight, this spot is the one
             if ( m_hidingSpotWeight[i + 1] >= weight ) {

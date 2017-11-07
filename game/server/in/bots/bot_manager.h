@@ -9,6 +9,7 @@
 #pragma once
 #endif
 
+
 //================================================================================
 // Sistema de bots
 //================================================================================
@@ -24,6 +25,9 @@ public:
 
     virtual void FrameUpdatePreEntityThink();
     virtual void FrameUpdatePostEntityThink();
+
+    virtual bool IsSpotReserved(const Vector &vecSpot, CPlayer *pPlayer) const;
+    virtual bool IsSpotReserved(const Vector &vecSpot, int team = TEAM_UNASSIGNED, CPlayer *pIgnore = NULL) const;
 };
 
 extern CBotManager *TheBots;

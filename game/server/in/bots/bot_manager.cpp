@@ -90,3 +90,53 @@ void CBotManager::FrameUpdatePostEntityThink()
 {
 
 }
+
+//================================================================================
+//================================================================================
+bool CBotManager::IsSpotReserved(const Vector & vecSpot, CPlayer * pPlayer) const
+{
+    if ( !pPlayer ) {
+        return IsSpotReserved(vecSpot, TEAM_UNASSIGNED);
+    }
+
+    return IsSpotReserved(vecSpot, pPlayer->GetTeamNumber(), pPlayer);
+}
+
+//================================================================================
+//================================================================================
+bool CBotManager::IsSpotReserved(const Vector & vecSpot, int team, CPlayer *pIgnore) const
+{
+    const float tolerance = 70.0f;
+
+    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
+        CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(it));
+
+        if ( !pPlayer )
+            continue;
+
+        if ( pPlayer == pIgnore )
+            continue;
+
+        if ( team != TEAM_UNASSIGNED && pPlayer->GetTeamNumber() != team )
+            continue;
+
+        if ( !pPlayer->GetBotController() )
+            continue;
+
+        IBot *pBot = pPlayer->GetBotController();
+
+        if ( !pBot->GetMemory() )
+            continue;
+
+        CDataMemory *memory = pBot->GetMemory()->GetDataMemory("ReservedSpot");
+
+        if ( !memory )
+            continue;
+
+        if ( memory->GetVector() == vecSpot || memory->GetVector().DistTo(vecSpot) <= tolerance ) {
+            return true;
+        }
+    }
+
+    return false;
+}

@@ -1,10 +1,7 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
-//
-// Conjunto de tareas para los Bots de Apocalypse.
-//
-//=============================================================================//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
-/*
 #ifndef AP_BOT_SCHEDULES_H
 #define AP_BOT_SCHEDULES_H
 
@@ -15,7 +12,7 @@
 class CAI_Hint;
 
 //================================================================================
-// Busca recursos por el mapa
+// Search resources across the map
 //================================================================================
 class CSearchResourcesSchedule : public IBotSchedule
 {
@@ -28,12 +25,15 @@ class CSearchResourcesSchedule : public IBotSchedule
 	};
 
 public:
-	CSearchResourcesSchedule();
+	CSearchResourcesSchedule(IBot *bot);
 
-	virtual bool ItsImportant() { return true; }
+    virtual bool ItsImportant() const
+    {
+        return true;
+    }
 
-	virtual float GetDesire();
-	virtual void OnEnd();
+	virtual float GetDesire() const;
+	virtual void Finish();
 
 	virtual void GetWander();
 	virtual void GetResources();
@@ -47,7 +47,7 @@ protected:
 };
 
 //================================================================================
-// Limpia un edificio (Busca enemigos dentro de el)
+// Clean a building (Look for enemies inside)
 //================================================================================
 class CCleanBuildingSchedule : public IBotSchedule
 {
@@ -63,28 +63,61 @@ public:
         BTASK_WAIT_LEADER
     };
 
-    CCleanBuildingSchedule();
+    CCleanBuildingSchedule(IBot *bot);
 
-    virtual bool ItsImportant()
+public:
+    virtual bool ItsImportant() const
     {
         return true;
     }
 
-    virtual float GetDesire();
+    virtual float GetDesire() const;
 
     virtual void Start();
-    virtual void OnEnd();
+    virtual void Finish();
 
-    virtual void Think();
+    virtual void Update();
     virtual void LookAround();
+
+    virtual void TaskStart();
+    virtual void TaskRun();
+};
+
+//================================================================================
+// We maintain a cover position
+//================================================================================
+class CMaintainCoverSchedule : public IBotSchedule
+{
+public:
+    DECLARE_CLASS_GAMEROOT(CMaintainCoverSchedule, IBotSchedule);
+    DECLARE_SCHEDULE(SCHEDULE_MAINTAIN_COVER);
+
+    enum
+    {
+        BTASK_MAINTAIN_COVER = BCUSTOM_TASK
+    };
+
+    CMaintainCoverSchedule(IBot *bot) : BaseClass(bot)
+    {
+
+    }
+
+public:
+    virtual bool ItsImportant() const
+    {
+        return false;
+    }
+
+    virtual float GetDesire() const;
+
+    virtual int GetSoldiersInCover() const;
+    virtual bool ShouldCrouch() const;
 
     virtual void TaskStart();
     virtual void TaskRun();
 
 protected:
-    CAI_Hint *m_pHint;
-    Vector m_vecSpot;
+    bool m_bDisabled;
 };
 
 #endif // AP_BOT_SCHEDULES_H
-*/

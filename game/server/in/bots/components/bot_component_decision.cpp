@@ -5,6 +5,8 @@
 #include "cbase.h"
 #include "bots\bot.h"
 
+#include "bots\bot_manager.h"
+
 #ifdef INSOURCE_DLL
 #include "in_gamerules.h"
 #include "in_utils.h"
@@ -72,6 +74,43 @@ bool CBotDecision::ShouldLookSquadMember() const
         return false;
 
     return true;
+}
+
+//================================================================================
+//================================================================================
+void CBotDecision::PerformSensing() const
+{
+    VPROF_BUDGET("CBotDecision::PerformSensing", VPROF_BUDGETGROUP_BOTS);
+
+    if ( ShouldOnlyFeelPlayers() ) {
+        // We can only verify if we are seeing the players.
+        // Light load for the engine
+        for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
+            CPlayer *pPlayer = ToInPlayer(i);
+
+            if ( !pPlayer )
+                continue;
+
+            if ( !pPlayer->IsAlive() )
+                continue;
+
+            if ( pPlayer == GetHost() )
+                continue;
+
+            if ( !IsAbleToSee(pPlayer) )
+                continue;
+
+            GetBot()->OnLooked(pPlayer);
+        }
+    }
+    else if ( GetHost()->GetSenses() ) {
+        // We can see, hear and smell!
+        // Great load for the engine
+        GetHost()->GetSenses()->PerformSensing();
+    }
+    else {
+        Assert(!"Invalid Perform Sensing");
+    }
 }
 
 //================================================================================
@@ -271,7 +310,7 @@ bool CBotDecision::ShouldCrouch() const
 //================================================================================
 bool CBotDecision::ShouldJump() const
 {
-    VPROF_BUDGET( "ShouldJump", VPROF_BUDGETGROUP_BOTS );
+    VPROF_BUDGET("CBotDecision::ShouldJump", VPROF_BUDGETGROUP_BOTS);
 
     if ( !GetLocomotion() )
         return false;
@@ -576,6 +615,8 @@ bool CBotDecision::ShouldKnownDejectedFriends() const
 //================================================================================
 bool CBotDecision::ShouldHelpDejectedFriend( CPlayer *pFriend ) const
 {
+    VPROF_BUDGET("CBotDecision::ShouldHelpDejectedFriend", VPROF_BUDGETGROUP_BOTS);
+
 #ifdef INSOURCE_DLL
     if ( !GetMemory() )
         return false;
@@ -611,10 +652,12 @@ bool CBotDecision::ShouldHelpDejectedFriend( CPlayer *pFriend ) const
 //================================================================================
 CPlayer *CBotDecision::GetClosestDejectedFriend(bool prioritizeHumans, float *distance) const
 {
+    VPROF_BUDGET("CBotDecision::GetClosestDejectedFriend", VPROF_BUDGETGROUP_BOTS);
+
     float closest = MAX_TRACE_LENGTH;
     CPlayer *closestFriend = NULL;
 
-    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
+    for ( int it = 1; it <= gpGlobals->maxClients; ++it ) {
         CPlayer *pPlayer = ToInPlayer(it);
 
         bool onlyHumans = (prioritizeHumans && closestFriend);
@@ -799,6 +842,8 @@ bool CBotDecision::IsSelf( CBaseEntity * pEntity ) const
 //================================================================================
 bool CBotDecision::IsBetterEnemy( CBaseEntity * pIdeal, CBaseEntity * pPrevious ) const
 {
+    VPROF_BUDGET("CBotDecision::IsBetterEnemy", VPROF_BUDGETGROUP_BOTS);
+
     if ( pIdeal == NULL )
         return false;
 
@@ -1037,22 +1082,103 @@ void CBotDecision::SwitchToBestWeapon()
 }
 
 //================================================================================
-// Returns if there is a cover spot close to the bot position
+// Returns if we should update the list of safe places
 //================================================================================
-bool CBotDecision::GetNearestCover( float radius, Vector *vecCoverSpot ) const
+bool CBotDecision::ShouldUpdateCoverSpots() const
 {
-    CSpotCriteria criteria;
-    criteria.SetMaxRange( radius );
-    criteria.UseNearest( true );
-    criteria.OutOfVisibility( true );
-    criteria.AvoidTeam( GetBot()->GetEnemy() );
-    criteria.SetTacticalMode( GetBot()->GetTacticalMode() );
+    if ( !CanMove() )
+        return false;
+
+    if ( !m_UpdateCoverSpotsTimer.HasStarted() )
+        return true;
+
+    if ( m_UpdateCoverSpotsTimer.IsElapsed() )
+        return true;
+
+    return false;
+}
+
+//================================================================================
+// Returns how often we can update the list of safe places.
+//================================================================================
+float CBotDecision::GetUpdateCoverRate() const
+{
+    return 1.0f;
+}
+
+//================================================================================
+// Modify the search criteria
+//================================================================================
+void CBotDecision::GetCoverCriteria(CSpotCriteria & criteria)
+{
+    criteria.SetMaxRange(GET_COVER_RADIUS);
+    criteria.AvoidTeam(GetBot()->GetEnemy());
+    criteria.SetTacticalMode(GetBot()->GetTacticalMode());
+    criteria.SetPlayer(GetHost());
+    criteria.SetFlags(FLAG_USE_NEAREST | FLAG_OUT_OF_AVOID_VISIBILITY | FLAG_COVER_SPOT);
 
     if ( GetHost()->GetActiveBaseWeapon() && GetHost()->GetActiveBaseWeapon()->IsSniper() ) {
-        criteria.SniperSpots( true );
+        criteria.SetFlags(FLAG_USE_SNIPER_POSITIONS);
+    }
+}
+
+//================================================================================
+// Update the list of safe places to cover
+//================================================================================
+void CBotDecision::UpdateCoverSpots()
+{
+    VPROF_BUDGET("CBotDecision::UpdateCoverSpots", VPROF_BUDGETGROUP_BOTS);
+    m_CoverSpots.Purge();
+
+    // We obtain the search criteria
+    CSpotCriteria criteria;
+    GetCoverCriteria(criteria);
+
+    // We update the list of cover positions
+    Utils::GetSpotCriteria(NULL, criteria, &m_CoverSpots);
+
+    if ( m_CoverSpots.Count() == 0 ) {
+        // We have not found any cover spots, we try again soon.
+        m_UpdateCoverSpotsTimer.Start(1.0f);
+        return;
+    }
+    else {
+        m_UpdateCoverSpotsTimer.Start(GetUpdateCoverRate());
     }
 
-    return Utils::FindCoverPosition( vecCoverSpot, GetHost(), criteria );
+    // We reserve the closest free position
+    if ( GetMemory() && !GetMemory()->HasDataMemory("ReservedSpot") ) {
+        FOR_EACH_VEC(m_CoverSpots, it)
+        {
+            Vector vecSpot = m_CoverSpots[it];
+
+            if ( TheBots->IsSpotReserved(vecSpot, GetHost()) )
+                continue;
+
+            GetMemory()->UpdateDataMemory("ReservedSpot", vecSpot, GetUpdateCoverRate());
+            break;
+        }
+    }
+}
+
+//================================================================================
+// Returns if there is a cover spot close to the bot position
+//================================================================================
+bool CBotDecision::GetNearestCover(Vector *vecCoverSpot) const
+{
+    // We use the position reserved for us
+    if ( GetMemory() && GetMemory()->HasDataMemory("ReservedSpot") ) {
+        Vector vecSpot = GetDataMemoryVector("ReservedSpot");
+        *vecCoverSpot = vecSpot;
+        return true;
+    }
+
+    if ( m_CoverSpots.Count() == 0 ) {
+        return false;
+    }
+
+    *vecCoverSpot = m_CoverSpots[0];
+    return true;
 }
 
 //================================================================================
@@ -1061,12 +1187,12 @@ bool CBotDecision::GetNearestCover( float radius, Vector *vecCoverSpot ) const
 bool CBotDecision::IsInCoverPosition() const
 {
     Vector vecCoverSpot;
-    const float tolerance = 75.0f;
+    const float tolerance = 80.0f;
 
-    if ( !GetNearestCover( GET_COVER_RADIUS, &vecCoverSpot ) )
+    if ( !GetNearestCover(&vecCoverSpot) )
         return false;
 
-    if ( GetHost()->GetAbsOrigin().DistTo( vecCoverSpot ) > tolerance )
+    if ( GetHost()->GetAbsOrigin().DistTo(vecCoverSpot) > tolerance )
         return false;
 
     return true;
@@ -1255,36 +1381,60 @@ BCOND CBotDecision::ShouldMeleeAttack2()
 //================================================================================
 bool CBotDecision::IsAbleToSee( CBaseEntity * entity, FieldOfViewCheckType checkFOV ) const
 {
-    if ( entity->MyCombatCharacterPointer() ) {
-        return GetHost()->IsAbleToSee( entity->MyCombatCharacterPointer(), (CBaseCombatCharacter::FieldOfViewCheckType)checkFOV );
+    VPROF_BUDGET("CBotDecision::IsAbleToSee::Entity", VPROF_BUDGETGROUP_BOTS);
+
+    if ( checkFOV == USE_FOV && !IsInFieldOfView(entity) ) {
+        return false;
     }
 
-    return GetHost()->IsAbleToSee( entity, (CBaseCombatCharacter::FieldOfViewCheckType)checkFOV );
+    {
+        VPROF_BUDGET("IsHiddenByFog", VPROF_BUDGETGROUP_BOTS);
+        if ( GetHost()->IsHiddenByFog(entity) ) {
+            return false;
+        }
+    }
+
+    {
+        VPROF_BUDGET("FVisible", VPROF_BUDGETGROUP_BOTS);
+        return GetHost()->FVisible(entity, MASK_VISIBLE_AND_NPCS);
+    }
 }
 
 //================================================================================
 //================================================================================
 bool CBotDecision::IsAbleToSee( const Vector & pos, FieldOfViewCheckType checkFOV ) const
 {
-#ifdef INSOURCE_DLL
-    return GetHost()->IsAbleToSee( pos, (CBaseCombatCharacter::FieldOfViewCheckType)checkFOV );
-#else
-    return (GetHost()->FVisible( pos ) && GetHost()->IsInFieldOfView( pos ));
-#endif
+    VPROF_BUDGET("CBotDecision::IsAbleToSee::Position", VPROF_BUDGETGROUP_BOTS);
+
+    if ( checkFOV == USE_FOV && !IsInFieldOfView(pos) ) {
+        return false;
+    }
+
+    if ( GetHost()->IsHiddenByFog(pos) ) {
+        return false;
+    }
+
+    return GetHost()->FVisible(pos, MASK_VISIBLE_AND_NPCS);
 }
 
 //================================================================================
 //================================================================================
 bool CBotDecision::IsInFieldOfView( CBaseEntity * entity ) const
 {
-    return GetHost()->IsInFieldOfView( entity );
+    VPROF_BUDGET("CBotDecision::IsInFieldOfView::Entity", VPROF_BUDGETGROUP_BOTS);
+
+    //return GetHost()->IsInFieldOfView( entity ); // Slow!
+    return GetHost()->FInViewCone(entity);
 }
 
 //================================================================================
 //================================================================================
 bool CBotDecision::IsInFieldOfView( const Vector & pos ) const
 {
-    return GetHost()->IsInFieldOfView( pos );
+    VPROF_BUDGET("CBotDecision::IsInFieldOfView::Position", VPROF_BUDGETGROUP_BOTS);
+
+    //return GetHost()->IsInFieldOfView( pos ); // Slow!
+    return GetHost()->FInViewCone(pos);
 }
 
 //================================================================================

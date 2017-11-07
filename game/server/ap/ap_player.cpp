@@ -86,7 +86,12 @@ Class_T CAP_Player::Classify()
 
         // It is in the player's squad.
         if ( GetSquad() && GetSquad()->IsNamed("player") ) {
-            return CLASS_PLAYER_ALLY;
+            if ( TheGameRules->IsGameMode(GAME_MODE_ASSAULT) ) {
+                return CLASS_PLAYER_ALLY_VITAL;
+            }
+            else {
+                return CLASS_PLAYER_ALLY;
+            }
         }
 
         // Common survivor
@@ -116,17 +121,9 @@ Class_T CAP_Player::Classify()
 //================================================================================
 // Create the artificial intelligence of the bot
 //================================================================================
-void CAP_Player::SetUpAI()
+void CAP_Player::SetUpBot()
 {
-    SetBotController(new CBot(this));
-
-    /*
-    if ( IsSoldier() ) {
-    SetAI( new CAP_BotSoldier() );
-    }
-    else {
-    SetAI( new CAP_Bot() );
-    }*/
+    SetBotController(new CAP_Bot(this));
 }
 
 //================================================================================
@@ -140,6 +137,11 @@ void CAP_Player::InitialSpawn()
 //================================================================================
 void CAP_Player::Spawn()
 {
+    if ( IsSoldier() && GetPlayerClass() == PLAYER_CLASS_NONE ) {
+        SetPlayerClass(PLAYER_CLASS_SOLDIER_LEVEL1);
+        return;
+    }
+
     BaseClass::Spawn();
 }
 
@@ -385,7 +387,7 @@ void CAP_Player::ChangeTeam(int iTeamNum)
 const char *CAP_Player::GetPlayerModel()
 {
     if ( IsSoldier() ) {
-        if ( GetPlayerClass() == PLAYER_CLASS_SOLDIER_LEVEL1 || GetPlayerClass() == PLAYER_CLASS_NONE ) {
+        if ( GetPlayerClass() == PLAYER_CLASS_SOLDIER_LEVEL1 ) {
             return SOLDIER_MODEL;
         }
 

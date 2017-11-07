@@ -40,69 +40,73 @@ void CBotMemory::Update()
 //================================================================================
 void CBotMemory::UpdateMemory()
 {
-    int nearbyThreats = 0;
-    int nearbyFriends = 0;
-    int nearbyDangerousThreats = 0;
+    VPROF_BUDGET("CBotMemory::UpdateMemory", VPROF_BUDGETGROUP_BOTS);
 
     UpdateDataMemory( "NearbyThreats", 0 );
     UpdateDataMemory( "NearbyFriends", 0 );
     UpdateDataMemory( "NearbyDangerousThreats", 0 );
+    
+    if ( m_DataMemory.Count() > 0 ) {
+        FOR_EACH_MAP_FAST(m_DataMemory, it)
+        {
+            CDataMemory *memory = m_DataMemory[it];
+            Assert(memory);
 
-    FOR_EACH_MAP_FAST( m_DataMemory, it )
-    {
-        CDataMemory *memory = m_DataMemory[it];
-        Assert( memory );
-
-        if ( memory->IsExpired() ) {
-            m_DataMemory.RemoveAt( it );
-            delete memory;
-            memory = NULL;
-            continue;
-        }
-    }
-
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
-        CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
-
-        CBaseEntity *pEntity = memory->GetEntity();
-
-        // The entity has been deleted.
-        if ( pEntity == NULL || pEntity->IsMarkedForDeletion() || !pEntity->IsAlive() ) {
-            ForgetEntity( it );
-            continue;
-        }
-
-        // New frame, we need to recheck if we can see it.
-        memory->UpdateVisibility( false );
-
-        if ( !memory->IsLost() ) {
-            // The last known position of this entity is close to us.
-            // We mark how many allied/enemy entities are close to us to make better decisions.
-            if ( memory->IsInRange( m_flNearbyDistance ) ) {
-                if ( memory->IsEnemy() ) {
-                    if ( GetDecision()->IsDangerousEnemy( pEntity ) ) {
-                        ++nearbyDangerousThreats;
-                    }
-
-                    ++nearbyThreats;
-                }
-                else if ( memory->IsFriend() ) {
-                    ++nearbyFriends;
-                }
+            if ( memory->IsExpired() ) {
+                m_DataMemory.RemoveAt(it);
+                delete memory;
+                memory = NULL;
+                continue;
             }
         }
     }
 
-    UpdateDataMemory( "NearbyThreats", nearbyThreats );
-    UpdateDataMemory( "NearbyFriends", nearbyFriends );
-    UpdateDataMemory( "NearbyDangerousThreats", nearbyDangerousThreats );
+    if ( m_Memory.Count() > 0 ) {
+        int nearbyThreats = 0;
+        int nearbyFriends = 0;
+        int nearbyDangerousThreats = 0;
+
+        FOR_EACH_MAP_FAST(m_Memory, it)
+        {
+            CEntityMemory *memory = m_Memory[it];
+            Assert(memory);
+
+            CBaseEntity *pEntity = memory->GetEntity();
+
+            // The entity has been deleted.
+            if ( pEntity == NULL || pEntity->IsMarkedForDeletion() || !pEntity->IsAlive() ) {
+                ForgetEntity(it);
+                continue;
+            }
+
+            // New frame, we need to recheck if we can see it.
+            memory->UpdateVisibility(false);
+
+            if ( !memory->IsLost() ) {
+                // The last known position of this entity is close to us.
+                // We mark how many allied/enemy entities are close to us to make better decisions.
+                if ( memory->IsInRange(m_flNearbyDistance) ) {
+                    if ( memory->IsEnemy() ) {
+                        if ( GetDecision()->IsDangerousEnemy(pEntity) ) {
+                            ++nearbyDangerousThreats;
+                        }
+
+                        ++nearbyThreats;
+                    }
+                    else if ( memory->IsFriend() ) {
+                        ++nearbyFriends;
+                    }
+                }
+            }
+        }
+
+        UpdateDataMemory("NearbyThreats", nearbyThreats);
+        UpdateDataMemory("NearbyFriends", nearbyFriends);
+        UpdateDataMemory("NearbyDangerousThreats", nearbyDangerousThreats);
+    }
 
     // We see, we smell, we feel
-    if ( GetHost()->GetSenses() ) {
-        GetHost()->GetSenses()->PerformSensing();
-    }
+    GetDecision()->PerformSensing();
 }
 
 //================================================================================
@@ -110,6 +114,8 @@ void CBotMemory::UpdateMemory()
 //================================================================================
 void CBotMemory::UpdateIdealThreat()
 {
+    VPROF_BUDGET("CBotMemory::UpdateIdealThreat", VPROF_BUDGETGROUP_BOTS);
+
     CEntityMemory *pIdeal = NULL;
 
    FOR_EACH_MAP_FAST( m_Memory, it )
@@ -139,6 +145,8 @@ void CBotMemory::UpdateIdealThreat()
 //================================================================================
 void CBotMemory::UpdateThreat()
 {
+    VPROF_BUDGET("CBotMemory::UpdateThreat", VPROF_BUDGETGROUP_BOTS);
+
     // We totally lost it
     if ( m_pPrimaryThreat && m_pPrimaryThreat->IsLost() ) {
         m_pPrimaryThreat = NULL;
@@ -753,6 +761,14 @@ CDataMemory * CBotMemory::RemoveDataMemoryList( const char * name, CDataMemory *
 
     memory->Remove( value );
     return memory;
+}
+
+//================================================================================
+//================================================================================
+bool CBotMemory::HasDataMemory(const char * name) const
+{
+    CDataMemory *memory = GetDataMemory(name);
+    return (memory == NULL) ? false : true;
 }
 
 //================================================================================

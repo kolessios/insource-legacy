@@ -82,12 +82,12 @@ float CHuntEnemySchedule::GetDesire() const
         if ( HasCondition( BCOND_ENEMY_LAST_POSITION_VISIBLE ) && (HasCondition( BCOND_ENEMY_TOO_NEAR ) || HasCondition( BCOND_ENEMY_NEAR )) )
             return BOT_DESIRE_NONE;
         
-        return 0.65;
+        return 0.65f;
     }
 
     // We do not have direct vision to the enemy (a person, window, etc.)
     if ( HasCondition( BCOND_ENEMY_OCCLUDED ) )
-        return 0.65;
+        return 0.65f;
 
     // We do not have range of attack
     if ( HasCondition( BCOND_TOO_FAR_TO_ATTACK ) )

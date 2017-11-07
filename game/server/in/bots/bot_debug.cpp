@@ -4,6 +4,7 @@
 
 #include "cbase.h"
 #include "bots\bot.h"
+#include "bots\bot_manager.h"
 
 #ifdef INSOURCE_DLL
 #include "in_utils.h"
@@ -29,6 +30,7 @@ extern ConVar bot_debug_desires;
 extern ConVar bot_debug_conditions;
 extern ConVar bot_debug_cmd;
 extern ConVar bot_debug_max_msgs;
+extern ConVar bot_debug_data_memory;
 
 extern ConVar think_limit;
 
@@ -53,7 +55,7 @@ bool CBot::ShouldShowDebug()
 //================================================================================
 void CBot::DebugDisplay()
 {
-    VPROF_BUDGET( "DebugDisplay", VPROF_BUDGETGROUP_BOTS );
+    VPROF_BUDGET( "CBot::DebugDisplay", VPROF_BUDGETGROUP_BOTS );
 
     if ( !ShouldShowDebug() )
         return;
@@ -184,11 +186,10 @@ void CBot::DebugDisplay()
             DebugScreenText( msg.sprintf( "        Time Left: %.2fs", pThreat->GetTimeLeft() ), red );
             DebugScreenText( msg.sprintf( "        Visible: %i (%.2f since visible)", pThreat->IsVisible(), pThreat->GetElapsedTimeSinceVisible() ), red );
             DebugScreenText( msg.sprintf( "        Distance: %.2f", pThreat->GetDistance() ), red );
-            DebugScreenText( msg.sprintf( "        Hitbox: (H: %i) (C: %i) (LL: %i) (RL: %i)", 
+            DebugScreenText( msg.sprintf( "        Hitbox: (H: %i) (C: %i) (F: %i)", 
                              pThreat->GetVisibleHitbox().head.IsValid(),
                              pThreat->GetVisibleHitbox().chest.IsValid(),
-                             pThreat->GetVisibleHitbox().leftLeg.IsValid(),
-                             pThreat->GetVisibleHitbox().rightLeg.IsValid() ), red );
+                             pThreat->GetVisibleHitbox().feet.IsValid() ), red );
 
             if ( bot_debug_memory.GetBool() ) {
                 NDebugOverlay::EntityBounds( pThreat->GetEntity(), red.r(), red.g(), red.b(), 15.0f, 0.1f );
@@ -202,14 +203,25 @@ void CBot::DebugDisplay()
                     NDebugOverlay::Box( pThreat->GetVisibleHitbox().head, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 255, 0, 0, 10.0f, 0.1f ); // Rojo
                 if ( pThreat->GetVisibleHitbox().chest.IsValid() )
                     NDebugOverlay::Box( pThreat->GetVisibleHitbox().chest, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 0, 0, 255, 10.0f, 0.1f ); // Azul
-                if ( pThreat->GetVisibleHitbox().leftLeg.IsValid() )
-                    NDebugOverlay::Box( pThreat->GetVisibleHitbox().leftLeg, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 0, 255, 0, 10.0f, 0.1f ); // Verde
-                if ( pThreat->GetVisibleHitbox().rightLeg.IsValid() )
-                    NDebugOverlay::Box( pThreat->GetVisibleHitbox().rightLeg, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 0, 255, 0, 10.0f, 0.1f ); // Verde
+                if ( pThreat->GetVisibleHitbox().feet.IsValid() )
+                    NDebugOverlay::Box( pThreat->GetVisibleHitbox().feet, Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), 0, 255, 0, 10.0f, 0.1f ); // Verde
             }
         }
         else {
             DebugScreenText( msg.sprintf( "    Primary Threat: None" ), red );
+        }
+
+        if ( bot_debug_data_memory.GetBool() ) {
+            DebugScreenText("");
+
+            FOR_EACH_MAP(GetMemory()->m_DataMemory, it)
+            {
+                CDataMemory *memory = GetMemory()->m_DataMemory[it];
+                const char *name = STRING(GetMemory()->m_DataMemory.Key(it));
+                Assert(memory && name);
+
+                DebugScreenText(msg.sprintf("%s (Remaining: %.2f s) (Elapsed: %.2f)",name, memory->GetRemainingTime(), memory->GetElapsedTimeSinceUpdated()), red );
+            }
         }
     }
 
@@ -280,6 +292,22 @@ void CBot::DebugDisplay()
         }
         else {
             DebugScreenText( msg.sprintf( "    Destination: None" ), blue );
+        }
+
+        if ( GetLocomotion()->IsCrouching() ) {
+            DebugScreenText(msg.sprintf("CROUCHING"), blue);
+        }
+
+        if ( GetLocomotion()->IsJumping() ) {
+            DebugScreenText(msg.sprintf("JUMPING"), blue);
+        }
+
+        if ( GetLocomotion()->IsRunning() ) {
+            DebugScreenText(msg.sprintf("RUNNING"), blue);
+        }
+
+        if ( GetLocomotion()->IsSneaking() ) {
+            DebugScreenText(msg.sprintf("SNEAKING"), blue);
         }
     }
 
@@ -389,53 +417,39 @@ void CBot::DebugDisplay()
     if ( !GetHost()->IsBot() )
         return;
 
-    Vector vecDummy;
-
     // CSpotCriteria
     CSpotCriteria criteria;
-    criteria.SetMaxRange( 1000.0f );
+    criteria.SetMaxRange(GET_COVER_RADIUS);
+    criteria.AvoidTeam(GetEnemy());
+    criteria.SetTacticalMode(GetTacticalMode());
+    criteria.SetPlayer(GetHost());
+    criteria.SetFlags(FLAG_IGNORE_RESERVED | FLAG_USE_NEAREST | FLAG_OUT_OF_AVOID_VISIBILITY | FLAG_COVER_SPOT | FLAG_INTERESTING_SPOT);
 
-    // Cover Spots
     SpotVector spotList;
-    Utils::FindNavCoverSpot( &vecDummy, GetAbsOrigin(), criteria, GetHost(), &spotList );
-
-    SpotVector hintList;
-    CHintCriteria hintCriteria;
-#ifdef INSOURCE_DLL
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER );
-#else
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER_MED );
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER_LOW );
-#endif
-    hintCriteria.AddHintType( HINT_WORLD_VISUALLY_INTERESTING );
-    Utils::FindHintSpot( GetAbsOrigin(), hintCriteria, criteria, GetHost(), &spotList );
+    Utils::GetSpotCriteria(NULL, criteria, &spotList);
 
     FOR_EACH_VEC( spotList, it )
     {
         Vector vecSpot = spotList.Element( it );
+        Color arrowColor = {255, 255, 255, 155};
 
-#ifdef INSOURCE_DLL
-        if ( GetHost()->FEyesVisible( vecSpot ) )
-#else
-        if ( GetHost()->FVisible( vecSpot ) && GetHost()->IsInFieldOfView( vecSpot ) )
-#endif
-            NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 255, 255, 255, 100.0f, true, 0.15f );
-        else
-            NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 0, 0, 0, 100.0f, true, 0.15f );
+        // Reserved = Red
+        if ( TheBots->IsSpotReserved(vecSpot, GetHost()) ) {
+            arrowColor.SetColor(255, 0, 0, 155);
+        }
+
+        NDebugOverlay::VertArrow(vecSpot + Vector(0, 0, 15.0f), vecSpot, 15.0f / 4.0f, arrowColor.r(), arrowColor.g(), arrowColor.b(), arrowColor.a(), true, 0.15f);
     }
 
-    FOR_EACH_VEC( hintList, it )
-    {
-        Vector vecSpot = hintList.Element( it );
+    Vector vecNearestCover;
 
-#ifdef INSOURCE_DLL
-        if ( GetHost()->FEyesVisible( vecSpot ) )
-#else
-        if ( GetHost()->FVisible( vecSpot ) && GetHost()->IsInFieldOfView( vecSpot ) )
-#endif
-            NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 255, 255, 255, 0, true, 0.15f );
-        else
-            NDebugOverlay::VertArrow( vecSpot + Vector( 0, 0, 15.0f ), vecSpot, 15.0f / 4.0f, 0, 0, 0, 0, true, 0.15f );
+    if ( GetDecision()->GetNearestCover(&vecNearestCover) ) {
+        const CCollisionProperty *pCollide = GetHost()->CollisionProp();
+        NDebugOverlay::BoxAngles(vecNearestCover, pCollide->OBBMins(), pCollide->OBBMaxs(), pCollide->GetCollisionAngles(), 255, 255, 0, 100.0f, 0.1f);
+    }
+    else {
+        DebugScreenText("");
+        DebugScreenText("Without Nearest Cover", red);
     }
 }
 

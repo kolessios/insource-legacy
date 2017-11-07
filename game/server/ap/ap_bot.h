@@ -1,4 +1,6 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #ifndef AP_BOT_H
 #define AP_BOT_H
@@ -8,18 +10,18 @@
 #endif
 
 #include "bots\bot.h"
-#include "bot_soldier.h"
 
 #include "ai_hint.h"
 
 #include "ap_bot_schedules.h"
+#include "ap_bot_components.h"
 #include "ap_player.h"
 
-// Tiempo que dura la memoria al limpiar un edificio
+// We will remember a building as "clean" during this time.
 #define BUILDING_MEMORY_TIME (5 * 60.0f)
 
 //================================================================================
-// Información acerca de la limpieza de enemigos de un edificio
+// Information about a building
 //================================================================================
 class CBuildingInfo
 {
@@ -31,9 +33,9 @@ public:
         expired.Invalidate();
     }
 
-    CBuildingInfo( CAI_Hint *pHint )
+    CBuildingInfo(CAI_Hint *pHint)
     {
-        Q_strncpy( name, STRING( pHint->GetGroup() ), sizeof( name ) );
+        Q_strncpy(name, STRING(pHint->GetGroup()), sizeof(name));
         entrance = pHint;
         enemies = 0;
         expired.Invalidate();
@@ -52,56 +54,71 @@ public:
 typedef CUtlVector<CBuildingInfo *> BuildingList;
 
 //================================================================================
-// Inteligencia artificial para crear un jugador controlado por el ordenador
+// Artificial intelligence for Bots of Apocalypse
 //================================================================================
 class CAP_Bot : public CBot
 {
-    DECLARE_CLASS_GAMEROOT( CAP_Bot, CBot );
-
 public:
+    DECLARE_CLASS_GAMEROOT(CAP_Bot, CBot);
 
-    CAP_Bot( CBasePlayer *parent ) : BaseClass( parent )
+    CAP_Bot(CBasePlayer *parent) : BaseClass(parent)
     {
-
+        m_BuildingList.EnsureCapacity(32);
     }
 
-	virtual CAP_Player *GetPlayer() { return ToApPlayer(m_pParent); }
-    virtual CAP_Player *GetPlayer() const { return ToApPlayer(m_pParent); }
+    virtual CAP_Player *GetPlayer()
+    {
+        return ToApPlayer(m_pParent);
+    }
+    virtual CAP_Player *GetPlayer() const
+    {
+        return ToApPlayer(m_pParent);
+    }
 
-    // Principales
-	virtual void SetUpSchedules();
-
-    // Aim Component
-    virtual bool ShouldAimOnlyVisibleInterestingSpots();
-    virtual bool ShouldLookSquadMember();
-};
-
-//================================================================================
-// Inteligencia artificial para crear un jugador controlado por el ordenador
-// con un modo de juego similar a un soldado.
-//================================================================================
-class CAP_BotSoldier : public CAP_Bot
-{
 public:
-    DECLARE_CLASS_GAMEROOT( CAP_BotSoldier, CAP_Bot );
+    virtual bool IsSurvivor()
+    {
+        return GetPlayer()->IsSurvivor();
+    }
 
-    CAP_BotSoldier( CBasePlayer *parent );
+    virtual bool IsSoldier()
+    {
+        return GetPlayer()->IsSoldier();
+    }
+
+    virtual bool IsInfected()
+    {
+        return GetPlayer()->IsInfected();
+    }
+
+    virtual bool IsTank()
+    {
+        return GetPlayer()->IsTank();
+    }
+
+public:
+    virtual void SetUpComponents();
+    virtual void SetUpSchedules();
 
     virtual void Spawn();
+
+    virtual void RunCustomAI();
+
+    virtual void FindBuilding();
 
     // Building Scan
     virtual bool IsCleaningBuilding();
     virtual bool IsMinionCleaningBuilding();
 
-    virtual void StartBuildingClean( CAI_Hint *pHint );
+    virtual void StartBuildingClean(CAI_Hint *pHint);
     virtual void FinishBuildingClean();
 
-    virtual CBuildingInfo *GetBuildingInfo( const char *pName );
+    virtual CBuildingInfo *GetBuildingInfo(const char *pName);
     virtual CBuildingInfo *GetBuildingInfo();
 
-    virtual bool HasBuildingCleaned( const char *pName );
+    virtual bool HasBuildingCleaned(const char *pName);
 
-    virtual void SetScanningArea( CNavArea *pArea )
+    virtual void SetScanningArea(CNavArea *pArea)
     {
         m_pScanningArea = pArea;
     }

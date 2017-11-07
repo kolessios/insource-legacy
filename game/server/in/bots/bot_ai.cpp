@@ -147,6 +147,8 @@ int CBot::GetActiveScheduleID()
 //================================================================================
 int CBot::SelectIdealSchedule()
 {
+    VPROF_BUDGET("CBot::SelectIdealSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetHost()->IsAlive() )
         return SCHEDULE_NONE;
 
@@ -182,7 +184,7 @@ int CBot::SelectIdealSchedule()
 //================================================================================
 void CBot::UpdateSchedule()
 {
-    VPROF_BUDGET( "UpdateSchedule", VPROF_BUDGETGROUP_BOTS );
+    VPROF_BUDGET( "CBot::UpdateSchedule", VPROF_BUDGETGROUP_BOTS );
 
     // Maybe an custom A.I. want to change a schedule.
     int idealSchedule = TranslateSchedule( SelectIdealSchedule() );
@@ -252,7 +254,7 @@ void CBot::TaskFail( const char *pWhy )
 //================================================================================
 void CBot::GatherConditions()
 {
-    VPROF_BUDGET( "GatherConditions", VPROF_BUDGETGROUP_BOTS );
+    VPROF_BUDGET( "CBot::GatherConditions", VPROF_BUDGETGROUP_BOTS );
 
     GatherHealthConditions();
     GatherWeaponConditions();
@@ -460,7 +462,7 @@ void CBot::GatherEnemyConditions()
 //================================================================================
 void CBot::GatherAttackConditions()
 {
-    VPROF_BUDGET("SelectAttackConditions", VPROF_BUDGETGROUP_BOTS);
+    VPROF_BUDGET("GatherAttackConditions", VPROF_BUDGETGROUP_BOTS);
 
     UnblockConditions();
 
@@ -491,6 +493,8 @@ void CBot::GatherAttackConditions()
 //================================================================================
 void CBot::GatherLocomotionConditions()
 {
+    VPROF_BUDGET("GatherLocomotionConditions", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetLocomotion() )
         return;
 
@@ -506,6 +510,8 @@ void CBot::GatherLocomotionConditions()
 //================================================================================
 void CBot::GatherOtherConditions()
 {
+    VPROF_BUDGET("GatherOtherConditions", VPROF_BUDGETGROUP_BOTS);
+
     // We want to always know if any of our friends is down
     if ( GetDecision()->ShouldKnownDejectedFriends() ) {
         CPlayer *pDejected = GetDecision()->GetClosestDejectedFriend();

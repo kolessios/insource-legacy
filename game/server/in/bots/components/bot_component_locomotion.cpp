@@ -99,11 +99,12 @@ void CBotLocomotion::Update()
 void CBotLocomotion::UpdateCommands()
 {
     if ( GetDecision()->ShouldSneak() ) {
-        //InjectButton( IN_WALK );
+        InjectButton( IN_WALK );
     }
     else if ( GetDecision()->ShouldRun() ) {
         InjectButton( IN_SPEED );
     }
+
     if ( GetDecision()->ShouldCrouch() ) {
         InjectButton( IN_DUCK );
     }
@@ -248,7 +249,7 @@ bool CBotLocomotion::ShouldComputePath()
     if ( GetPath()->GetElapsedTimeSinceBuild() < 3.0f )
         return false;
 
-    if ( IsStuck() && GetStuckDuration() >= 4.0f )
+    if ( IsStuck() && GetStuckDuration() >= 6.0f )
         return true;
 
     const Vector vecGoal = GetDestination();

@@ -7,6 +7,8 @@
 
 #pragma once
 
+class CSpotCriteria;
+
 //================================================================================
 // Decision component
 // Everything related to the decisions that the bot must take.
@@ -19,6 +21,8 @@ public:
 
     IBotDecision( IBot *bot ) : BaseClass( bot )
     {
+        m_bOnlyFeelPlayers = false;
+        m_CoverSpots.EnsureCapacity(32);
     }
 
     enum FieldOfViewCheckType
@@ -33,6 +37,12 @@ public:
         IGNORE_ACTORS
     };
 
+    virtual void Reset()
+    {
+        BaseClass::Reset();
+        m_UpdateCoverSpotsTimer.Invalidate();
+    }
+
 public:
     virtual bool CanLookNoVisibleSpots() const {
         return true;
@@ -46,6 +56,18 @@ public:
     virtual bool ShouldLookInterestingSpot() const = 0;
     virtual bool ShouldLookRandomSpot() const = 0;
     virtual bool ShouldLookSquadMember() const = 0;
+
+    virtual bool ShouldOnlyFeelPlayers() const
+    {
+        return m_bOnlyFeelPlayers;
+    }
+
+    virtual void SetOnlyFeelPlayers(bool feel)
+    {
+        m_bOnlyFeelPlayers = feel;
+    }
+
+    virtual void PerformSensing() const = 0;
 
     virtual bool ShouldLookThreat() const = 0;
 
@@ -93,7 +115,13 @@ public:
     virtual bool ShouldMustBeCareful() const = 0;
 
     virtual void SwitchToBestWeapon() = 0;
-    virtual bool GetNearestCover( float radius = GET_COVER_RADIUS, Vector *vecCoverSpot = NULL ) const = 0;
+
+    virtual bool ShouldUpdateCoverSpots() const = 0;
+    virtual float GetUpdateCoverRate() const = 0;
+    virtual void GetCoverCriteria(CSpotCriteria &criteria) = 0;
+
+    virtual void UpdateCoverSpots() = 0;
+    virtual bool GetNearestCover( Vector *vecCoverSpot = NULL ) const = 0;
     virtual bool IsInCoverPosition() const = 0;
 
     virtual float GetWeaponIdealRange( CBaseWeapon *pWeapon = NULL ) const = 0;
@@ -111,6 +139,11 @@ public:
 
     virtual bool IsLineOfSightClear( CBaseEntity *entity, CBaseEntity **hit = NULL ) const = 0;
     virtual bool IsLineOfSightClear( const Vector &pos, CBaseEntity *entityToIgnore = NULL, CBaseEntity **hit = NULL ) const = 0;
+
+protected:
+    SpotVector m_CoverSpots;
+    CountdownTimer m_UpdateCoverSpotsTimer;
+    bool m_bOnlyFeelPlayers;
 };
 
 #endif // IBOT_DECISION_H

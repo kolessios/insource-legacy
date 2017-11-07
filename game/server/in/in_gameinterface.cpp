@@ -22,8 +22,8 @@ extern const char *COM_GetModDirectory();
 void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int &defaultMaxPlayers ) const
 {
     minplayers = 1; 
-    defaultMaxPlayers = MAX_PLAYERS;
-    maxplayers = MAX_PLAYERS;
+    defaultMaxPlayers = 16;
+    maxplayers = 16;
 }
 
 //================================================================================

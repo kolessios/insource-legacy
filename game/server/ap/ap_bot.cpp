@@ -1,82 +1,76 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "ap_bot.h"
+
+#include "bots\bot_manager.h"
 
 #include "ap_bot_schedules.h"
 #include "in_gamerules.h"
 #include "ai_hint.h"
 
+#include "in_utils.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //================================================================================
-// Crea los componentes que tendrá el Bot
+// Create the components that the bot will have
+//================================================================================
+void CAP_Bot::SetUpComponents()
+{
+    ADD_COMPONENT(CBotVision);
+    ADD_COMPONENT(CBotFollow);
+    ADD_COMPONENT(CBotLocomotion);
+    ADD_COMPONENT(CBotMemory);
+    ADD_COMPONENT(CBotAttack);
+    ADD_COMPONENT(CAP_BotDecision); // This component is mandatory!
+}
+
+//================================================================================
+// Create the schedules that the bot will have
 //================================================================================
 void CAP_Bot::SetUpSchedules()
 {
-    /*
-	ADD_SCHEDULE( CInvestigateSoundSchedule );
-    ADD_SCHEDULE( CInvestigateLocationSchedule );
-    ADD_SCHEDULE( CHuntEnemySchedule );
-    ADD_SCHEDULE( CReloadSchedule );
-    ADD_SCHEDULE( CCoverSchedule );
-    ADD_SCHEDULE( CHideSchedule );
-    ADD_SCHEDULE( CChangeWeaponSchedule );
-    ADD_SCHEDULE( CHideAndHealSchedule );
-    ADD_SCHEDULE( CHideAndReloadSchedule );
-    ADD_SCHEDULE( CHelpDejectedFriendSchedule );
-    ADD_SCHEDULE( CMoveAsideSchedule );
-    //ADD_SCHEDULE( CCallBackupSchedule );
-    ADD_SCHEDULE( CDefendSpawnSchedule );
+    ADD_COMPONENT(CHuntEnemySchedule);
+    ADD_COMPONENT(CReloadSchedule);
+    ADD_COMPONENT(CCoverSchedule);
+    ADD_COMPONENT(CHideSchedule);
+    ADD_COMPONENT(CChangeWeaponSchedule);
+    ADD_COMPONENT(CHideAndHealSchedule);
+    ADD_COMPONENT(CHideAndReloadSchedule);
+    ADD_COMPONENT(CMoveAsideSchedule);
+    ADD_COMPONENT(CCallBackupSchedule);
+    ADD_COMPONENT(CDefendSpawnSchedule);
+    ADD_COMPONENT(CHelpDejectedFriendSchedule);
 
-	// Survival: Debemos buscar recursos
-    if ( TheGameRules->IsGameMode( GAME_MODE_SURVIVAL ) ) {
-        ADD_SCHEDULE( CSearchResourcesSchedule );
+    // Survival: We must look for resources to survive
+    if ( TheGameRules->IsGameMode(GAME_MODE_SURVIVAL) ) {
+        ADD_COMPONENT(CSearchResourcesSchedule);
 
-        // Soldados
-        // TODO
-        if ( GetHost()->GetTeamNumber() == TEAM_SOLDIERS )
-            ADD_SCHEDULE( CCleanBuildingSchedule );
+        // Soldiers: If we see a building, we must clean up any threat
+        if ( IsSoldier() ) {
+            ADD_COMPONENT(CCleanBuildingSchedule);
+        }
     }
-    */
+
+    // Assault: Soldiers must protect their lands!
+    if ( TheGameRules->IsGameMode(GAME_MODE_ASSAULT) ) {
+        // Some soldiers must remain in a cover position
+        if ( IsSoldier() ) {
+            if ( GetPlayer()->GetPlayerClass() == PLAYER_CLASS_SOLDIER_LEVEL1 ) {
+                ADD_COMPONENT(CMaintainCoverSchedule);
+            }
+        }
+    }
 }
 
 //================================================================================
+// Player Spawn
 //================================================================================
-bool CAP_Bot::ShouldAimOnlyVisibleInterestingSpots() 
-{
-    // Quitamos un poco la desventaja de poder ver lugares interesantes sin tener visión
-    return ( TheGameRules->IsGameMode(GAME_MODE_SURVIVAL) || TheGameRules->IsGameMode(GAME_MODE_ASSAULT) );
-}
-
-//================================================================================
-//================================================================================
-bool CAP_Bot::ShouldLookSquadMember() 
-{
-    // En survival a veces es extraño que miren a miembros del escuadron aunque esten lejos
-    if ( TheGameRules->IsGameMode(GAME_MODE_SURVIVAL) )
-        return false;
-
-    return false;
-    //return BaseClass::ShouldLookSquadMember();
-}
-
-//----------------------------------------------------------------------------------------
-
-//================================================================================
-// Constructor
-//================================================================================
-CAP_BotSoldier::CAP_BotSoldier( CBasePlayer *parent ) : BaseClass( parent )
-{
-    m_BuildingList.EnsureCapacity( 32 );
-}
-
-//================================================================================
-// Creación en el mundo
-//================================================================================
-void CAP_BotSoldier::Spawn()
+void CAP_Bot::Spawn()
 {
     BaseClass::Spawn();
 
@@ -86,9 +80,69 @@ void CAP_BotSoldier::Spawn()
 }
 
 //================================================================================
-// Devuelve si el soldado esta limpiando un edificio.
+// Run the custom artificial intelligence of the Bot.
 //================================================================================
-bool CAP_BotSoldier::IsCleaningBuilding()
+void CAP_Bot::RunCustomAI()
+{
+    BaseClass::RunCustomAI();
+
+    if ( IsSoldier() ) {
+        if ( TheGameRules->IsGameMode(GAME_MODE_SURVIVAL) ) {
+            FindBuilding();
+        }
+    }
+}
+
+//================================================================================
+// 
+//================================================================================
+void CAP_Bot::FindBuilding()
+{
+    if ( !GetMemory() )
+        return;
+
+    CBaseEntity *pEntrance = GetDataMemoryEntity("BuildingEntrance");
+
+    if ( pEntrance )
+        return;
+
+    CSpotCriteria criteria;
+    criteria.SetMaxRange(GetHost()->GetSenses()->GetDistLook());
+    criteria.SetPlayer(GetHost());
+    criteria.SetTacticalMode(GetTacticalMode());
+    criteria.SetFlags(FLAG_USE_NEAREST | FLAG_ONLY_VISIBLE);
+
+    CHintCriteria hintCriteria;
+    hintCriteria.AddHintType(HINT_TACTICAL_PINCH);
+    hintCriteria.AddIncludePosition(criteria.GetOrigin(), criteria.GetMaxRange());
+
+    CUtlVector<CAI_Hint *> collector;
+    CAI_HintManager::FindAllHints(criteria.GetOrigin(), hintCriteria, &collector);
+
+    FOR_EACH_VEC(collector, it)
+    {
+        CAI_Hint *pHint = collector[it];
+
+        if ( !pHint )
+            continue;
+
+        Vector position = pHint->GetAbsOrigin();
+
+        if ( !Utils::IsValidSpot(position, criteria) )
+            continue;
+
+        if ( HasBuildingCleaned(STRING(pHint->GetGroup())) )
+            continue;
+
+        GetMemory()->UpdateDataMemory("BuildingEntrance", pHint, 10.0f);
+        break;
+    }
+}
+
+//================================================================================
+// Returns if the soldier is cleaning a building
+//================================================================================
+bool CAP_Bot::IsCleaningBuilding()
 {
     if ( m_pCleaningBuilding )
         return true;
@@ -97,10 +151,9 @@ bool CAP_BotSoldier::IsCleaningBuilding()
 }
 
 //================================================================================
-// Devuelve si el soldado es miembro de un escuadron cuyo líder indico
-// que deben limpiar un edificio.
+// Returns if the squad leader has ordered to clean a building
 //================================================================================
-bool CAP_BotSoldier::IsMinionCleaningBuilding()
+bool CAP_Bot::IsMinionCleaningBuilding()
 {
     CPlayer *pLeader = GetSquadLeader();
 
@@ -110,6 +163,7 @@ bool CAP_BotSoldier::IsMinionCleaningBuilding()
     if ( pLeader == GetHost() )
         return false;
 
+    // TODO: Humans Leader
     if ( !pLeader->IsBot() )
         return false;
 
@@ -117,62 +171,69 @@ bool CAP_BotSoldier::IsMinionCleaningBuilding()
 }
 
 //================================================================================
-// Indica que el soldado empezará a limpiar de enemigos un edificio.
+// Order the soldier to clean a building
 //================================================================================
-void CAP_BotSoldier::StartBuildingClean( CAI_Hint *pHint )
+void CAP_Bot::StartBuildingClean(CAI_Hint *pHint)
 {
-    if ( HasBuildingCleaned( STRING( pHint->GetGroup() ) ) ) {
-        Assert( 0 );
+    const char *pGroupName = STRING(pHint->GetGroup());
+
+    // This building is clean, that's what we remember
+    if ( HasBuildingCleaned(pGroupName) ) {
+        Assert(!"It has been ordered to clean a building that is already clean!");
         return;
     }
 
-    CBuildingInfo *info = GetBuildingInfo( STRING( pHint->GetGroup() ) );
+    CBuildingInfo *info = GetBuildingInfo(pGroupName);
 
+    // We are already cleaning one, but we are ordered to clean another...
     if ( m_pCleaningBuilding && m_pCleaningBuilding != info ) {
-        Assert( 0 );
+        Assert(!"It has been ordered to clean a building, but I am already cleaning one!");
         FinishBuildingClean();
-    }    
+    }
 
     if ( !info ) {
-        m_pCleaningBuilding = new CBuildingInfo( pHint );
-        m_BuildingList.AddToTail( m_pCleaningBuilding );
+        // I want this clean building, squad!
+        m_pCleaningBuilding = new CBuildingInfo(pHint);
+        m_BuildingList.AddToTail(m_pCleaningBuilding);
     }
     else {
-        DebugAddMessage( "Resuming Building Clean..." );
+        // Tango eliminated, we continue ...
+        DebugAddMessage("Resuming Building Clean...");
         m_pCleaningBuilding = info;
     }
 }
 
 //================================================================================
-// Indica que se ha terminado de limpiar un edificio.
+// Order the cleaning of the building to be completed
 //================================================================================
-void CAP_BotSoldier::FinishBuildingClean()
+void CAP_Bot::FinishBuildingClean()
 {
-    Assert( m_pCleaningBuilding );
+    Assert(m_pCleaningBuilding);
 
+    // But we were not cleaning any buildings, huh?
     if ( !m_pCleaningBuilding )
         return;
 
-    SetScanningArea( NULL );
+    SetScanningArea(NULL);
 
-    m_pCleaningBuilding->expired.Start( BUILDING_MEMORY_TIME );
+    m_pCleaningBuilding->expired.Start(BUILDING_MEMORY_TIME);
     m_pCleaningBuilding = NULL;
 }
 
 //================================================================================
-// Devuelve la información del edificio en la memoria del enemigo
+// Returns memory building information
 //================================================================================
-CBuildingInfo *CAP_BotSoldier::GetBuildingInfo( const char * pName )
+CBuildingInfo *CAP_Bot::GetBuildingInfo(const char * pName)
 {
     if ( m_BuildingList.Count() == 0 )
         return NULL;
 
-    FOR_EACH_VEC( m_BuildingList, it )
+    FOR_EACH_VEC(m_BuildingList, it)
     {
         CBuildingInfo *info = m_BuildingList[it];
-        Assert( info );
+        Assert(info);
 
-        if ( FStrEq( info->name, pName ) )
+        if ( FStrEq(info->name, pName) )
             return info;
     }
 
@@ -180,11 +241,12 @@ CBuildingInfo *CAP_BotSoldier::GetBuildingInfo( const char * pName )
 }
 
 //================================================================================
+// Returns the information of the building we are cleaning
 //================================================================================
-CBuildingInfo * CAP_BotSoldier::GetBuildingInfo()
+CBuildingInfo * CAP_Bot::GetBuildingInfo()
 {
     if ( IsMinionCleaningBuilding() ) {
-        CAP_BotSoldier *pAI = dynamic_cast<CAP_BotSoldier *>( GetSquadLeaderAI() );
+        CAP_Bot *pAI = dynamic_cast<CAP_Bot *>(GetSquadLeaderAI());
         return pAI->GetBuildingInfo();
     }
 
@@ -192,11 +254,11 @@ CBuildingInfo * CAP_BotSoldier::GetBuildingInfo()
 }
 
 //================================================================================
-// Devuelve si el edificio indicado ha sido limpiado
+// Returns if the building is clean
 //================================================================================
-bool CAP_BotSoldier::HasBuildingCleaned( const char * pName )
+bool CAP_Bot::HasBuildingCleaned(const char * pName)
 {
-    CBuildingInfo *info = GetBuildingInfo( pName );
+    CBuildingInfo *info = GetBuildingInfo(pName);
 
     if ( !info )
         return false;
@@ -211,16 +273,16 @@ bool CAP_BotSoldier::HasBuildingCleaned( const char * pName )
 }
 
 //================================================================================
-// Escanea las [Nav Areas] en el radio del edificio.
+// Scan the navigation areas within the radius of the building.
 //================================================================================
 void CBuildingInfo::Scan()
 {
     CHintCriteria hintCriteria;
-    hintCriteria.SetHintType( HINT_TACTICAL_AREA );
-    hintCriteria.SetGroup( entrance->GetGroup() );
+    hintCriteria.SetHintType(HINT_TACTICAL_AREA);
+    hintCriteria.SetGroup(entrance->GetGroup());
 
-    CAI_Hint *pHint = CAI_HintManager::FindHint( entrance->GetAbsOrigin(), hintCriteria );
-    Assert( pHint );
+    CAI_Hint *pHint = CAI_HintManager::FindHint(entrance->GetAbsOrigin(), hintCriteria);
+    Assert(pHint);
 
     if ( !pHint )
         return;
@@ -228,25 +290,26 @@ void CBuildingInfo::Scan()
     float radius = pHint->GetRadius();
 
     NavAreaCollector collector;
-    collector.m_area.EnsureCapacity( 1000 );
-    TheNavMesh->ForAllAreasInRadius( collector, pHint->GetAbsOrigin(), radius );
+    collector.m_area.EnsureCapacity(1000);
+    TheNavMesh->ForAllAreasInRadius(collector, pHint->GetAbsOrigin(), radius);
 
-    FOR_EACH_VEC( collector.m_area, it )
+    FOR_EACH_VEC(collector.m_area, it)
     {
         CNavArea *pArea = collector.m_area[it];
+
+        // Possible place of resources, we must examine it
+        if ( pArea->HasAttributes(NAV_MESH_RESOURCES) ) {
+            areas.AddToTail(pArea);
+            continue;
+        }
 
         if ( pArea->IsUnderwater() )
             continue;
 
-        if ( pArea->HasAttributes( NAV_MESH_RESOURCES ) ) {
-            areas.AddToTail( pArea );
-            continue;
-        }
-
-        if ( pArea->IsBlocked( TEAM_ANY ) || pArea->HasAvoidanceObstacle() )
+        if ( pArea->IsBlocked(TEAM_ANY) || pArea->HasAvoidanceObstacle() )
             continue;
 
-        
+        // Very small area, probably not important
         if ( pArea->GetSizeX() < 60.0f || pArea->GetSizeY() < 60.0f )
             continue;
 
@@ -255,18 +318,18 @@ void CBuildingInfo::Scan()
         vecFloor.z -= 300.0f;
 
         trace_t tr;
-        UTIL_TraceLine( pArea->GetCenter(), vecFloor, MASK_SOLID, NULL, COLLISION_GROUP_NONE, &tr );
+        UTIL_TraceLine(pArea->GetCenter(), vecFloor, MASK_SOLID, NULL, COLLISION_GROUP_NONE, &tr);
 
-        // Es una textura de utilidad
-        if ( strstr( tr.surface.name, "TOOLS/" ) )
+        // Invalid area
+        if ( strstr(tr.surface.name, "TOOLS/") )
             continue;
 
-        // Un modelo?
-        if ( strstr( tr.surface.name, "studio" ) )
+        // Invalid area
+        if ( strstr(tr.surface.name, "studio") )
             continue;
 
-        areas.AddToTail( pArea );
+        areas.AddToTail(pArea);
     }
 
-    Assert( areas.Count() > 0 );
+    Assert(areas.Count() > 0);
 }

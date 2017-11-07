@@ -45,9 +45,7 @@ SET_SCHEDULE_INTERRUPTS( CDefendSpawnSchedule )
     ADD_INTERRUPT( BCOND_MOBBED_BY_ENEMIES );
     ADD_INTERRUPT( BCOND_GOAL_UNREACHABLE );
 
-    if ( GetDecision()->ShouldHelpFriends() ) {
         ADD_INTERRUPT( BCOND_SEE_DEJECTED_FRIEND );
-    }
 }
 
 //================================================================================

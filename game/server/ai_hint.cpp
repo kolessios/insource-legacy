@@ -980,7 +980,7 @@ void CAI_Hint::UpdateOnRemove( void )
 //------------------------------------------------------------------------------
 void CAI_Hint::GetPosition(CBaseCombatCharacter *pBCC, Vector *vPosition)
 {
-	if ( m_NodeData.nNodeID != NO_NODE )
+	if ( pBCC && m_NodeData.nNodeID != NO_NODE )
 	{
 		*vPosition = g_pBigAINet->GetNodePosition( pBCC, m_NodeData.nNodeID );
 	}

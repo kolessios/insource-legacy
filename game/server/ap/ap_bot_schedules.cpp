@@ -1,9 +1,10 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 
 #include "cbase.h"
 
-/*
 #include "ap_bot.h"
 #include "ap_bot_schedules.h"
 #include "in_utils.h"
@@ -17,44 +18,49 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-BEGIN_SCHEDULE( CSearchResourcesSchedule )
-	//ADD_TASK( BTASK_RUN,                NULL )
-	ADD_TASK( BTASK_RELOAD_ASYNC,       NULL )
-	ADD_TASK( BTASK_GET_RESOURCES_SPOT, NULL )
-	ADD_TASK( BTASK_MOVE_DESTINATION,   NULL )
+//================================================================================
+//================================================================================
+SET_SCHEDULE_TASKS(CSearchResourcesSchedule)
+{
+    ADD_TASK(BTASK_RELOAD, true);
+    ADD_TASK(BTASK_GET_RESOURCES_SPOT, NULL);
+    ADD_TASK(BTASK_MOVE_DESTINATION, NULL);
+}
 
-	ADD_INTERRUPT( BCOND_NEW_ENEMY )
-    ADD_INTERRUPT( BCOND_SEE_ENEMY )
-	ADD_INTERRUPT( BCOND_SEE_FEAR )
-    ADD_INTERRUPT( BCOND_LIGHT_DAMAGE )
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE )
-    ADD_INTERRUPT( BCOND_LOW_HEALTH )
-    ADD_INTERRUPT( BCOND_DEJECTED )
-    ADD_INTERRUPT( BCOND_BETTER_WEAPON_AVAILABLE )
-END_SCHEDULE()
+SET_SCHEDULE_INTERRUPTS(CSearchResourcesSchedule)
+{
+    ADD_INTERRUPT(BCOND_NEW_ENEMY);
+    ADD_INTERRUPT(BCOND_SEE_ENEMY);
+    ADD_INTERRUPT(BCOND_SEE_FEAR);
+    ADD_INTERRUPT(BCOND_LIGHT_DAMAGE);
+    ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
+    ADD_INTERRUPT(BCOND_LOW_HEALTH);
+    ADD_INTERRUPT(BCOND_DEJECTED);
+    ADD_INTERRUPT(BCOND_BETTER_WEAPON_AVAILABLE);
+}
 
 //================================================================================
 //================================================================================
-CSearchResourcesSchedule::CSearchResourcesSchedule() 
+CSearchResourcesSchedule::CSearchResourcesSchedule(IBot *bot) : BaseClass(bot)
 {
 	m_nTimer.Start( 10 );
 }
 
 //================================================================================
 //================================================================================
-float CSearchResourcesSchedule::GetDesire()
+float CSearchResourcesSchedule::GetDesire() const
 {
-	if ( !CanMove() )
-		return 0.0f;
+	if ( !GetDecision()->CanMove() )
+		return BOT_DESIRE_NONE;
 
     if ( IsCombating() || IsAlerted() )
-		return 0.0f;
+		return BOT_DESIRE_NONE;
 
-	if ( GetBot()->HasDestination() )
-		return 0.0f;
+	if ( GetLocomotion()->HasDestination() )
+		return BOT_DESIRE_NONE;
 
-	if ( GetBot()->IsFollowingSomeone() )
-		return 0.0f;
+	if ( GetFollow()->IsFollowingActive() )
+		return BOT_DESIRE_NONE;
 
 	if ( IsIdle() && m_nTimer.IsElapsed() )
 		return 0.15f;
@@ -64,13 +70,14 @@ float CSearchResourcesSchedule::GetDesire()
 
 //================================================================================
 //================================================================================
-void CSearchResourcesSchedule::OnEnd()
+void CSearchResourcesSchedule::Finish()
 {
-	BaseClass::OnEnd();
+	BaseClass::Finish();
 	m_nTimer.Start( RandomInt(5, 6) );
 }
 
 //================================================================================
+// 
 //================================================================================
 void CSearchResourcesSchedule::GetWander() 
 {
@@ -100,6 +107,7 @@ void CSearchResourcesSchedule::GetWander()
 }
 
 //================================================================================
+// 
 //================================================================================
 void CSearchResourcesSchedule::GetResources() 
 {
@@ -141,37 +149,53 @@ void CSearchResourcesSchedule::TaskStart()
         case BTASK_GET_RESOURCES_SPOT:
         {
             bool wander = false;
+            int randomInt = RandomInt(1, 10);
 
-            // Dependiendo del nivel de dificultad, podemos
-            // vagar en vez de ir por los recursos
-            if ( GetSkill()->IsEasy() )
-                wander = (RandomInt( 0, 10 ) > 4);
-            if ( GetSkill()->IsMedium() )
-                wander = (RandomInt( 0, 10 ) > 6);
-            if ( GetSkill()->IsHard() )
-                wander = (RandomInt( 0, 10 ) > 8);
+            // Depending on the difficulty level:
+            // Sometimes we fail finding resources.
+            if ( GetProfile()->IsEasy() ) {
+                wander = (randomInt > 2);
+            }
+            else if ( GetProfile()->IsMedium() ) {
+                wander = (randomInt > 4);
+            }
+            else if ( GetProfile()->IsHard() ) {
+                wander = (randomInt > 6);
+            }
+            else {
+                wander = (randomInt > 8);
+            }
 
-            // Limpiamos las areas candidatas para ir
+            // Clean
             m_CandidateAreas.Purge();
 
+            // We found a place to wander or a place with delicious resources.
             if ( wander ) {
                 GetWander();
             }
             else {
                 GetResources();
+
+                // We have not found anything...
+                // We wander a little
+                if ( m_CandidateAreas.Count() == 0 ) {
+                    GetWander();
+                }
             }
 
-            // No hay lugares candidatos para el mapa!
+            Assert(m_CandidateAreas.Count() > 0);
+
+            // We have not found anything...
             if ( m_CandidateAreas.Count() == 0 ) {
-                Fail( "m_CandidateAreas == 0!" );
+                Fail( "We have not found anything..." );
                 return;
             }
 
-            // Solo hay una
+            // We only found one place
             if ( m_CandidateAreas.Count() == 1 ) {
                 CNavArea *pArea = m_CandidateAreas[0];
 
-                m_vecLocation = pArea->GetRandomPoint();
+                SavePosition(pArea->GetRandomPoint());
                 TaskComplete();
             }
             else {
@@ -180,7 +204,7 @@ void CSearchResourcesSchedule::TaskStart()
                 CNavArea *pArea = m_CandidateAreas[key];
                 Assert( pArea );
 
-                m_vecLocation = pArea->GetRandomPoint();
+                SavePosition(pArea->GetRandomPoint());
                 TaskComplete();
             }
 
@@ -218,137 +242,123 @@ void CSearchResourcesSchedule::TaskRun()
 
 //--------------------------------------------------------------------------------------------------
 
-BEGIN_SCHEDULE( CCleanBuildingSchedule )
-    CAP_BotSoldier *pSoldierAI = (CAP_BotSoldier *)GetBot();
-    AssertOnce( pSoldierAI );
+SET_SCHEDULE_TASKS(CCleanBuildingSchedule)
+{
+    CAP_Bot *pSoldier = dynamic_cast<CAP_Bot *>(GetBot());
+    AssertOnce(pSoldier);
 
-    if ( pSoldierAI->IsMinionCleaningBuilding() ) {
-        ADD_TASK( BTASK_WALK, NULL )
-        ADD_TASK( BTASK_WAIT_LEADER, NULL )
-        ADD_TASK( BTASK_SNEAK, NULL )
-        ADD_TASK( BTASK_TACTICAL_COVER, NULL )
+    if ( pSoldier->IsMinionCleaningBuilding() ) {
+        // We follow our leader
+        ADD_TASK(BTASK_WALK, NULL);
+        ADD_TASK(BTASK_WAIT_LEADER, NULL);
+        ADD_TASK(BTASK_SNEAK, NULL);
+        ADD_TASK(BTASK_TACTICAL_COVER, NULL);
     }
     else {
-        if ( !pSoldierAI->IsCleaningBuilding() ) {
-            ADD_TASK( BTASK_SET_TOLERANCE, RandomFloat( 400.0f, 480.0f ) )
-            ADD_TASK( BTASK_MOVE_DESTINATION, m_pHint )
+        if ( !pSoldier->IsCleaningBuilding() ) {
+            CBaseEntity *pEntrance = GetDataMemoryEntity("BuildingEntrance");
 
-            ADD_TASK( BTASK_SNEAK, NULL )
-            ADD_TASK( BTASK_SET_TOLERANCE, RandomFloat( 250.0f, 380.0f ) )
-            ADD_TASK( BTASK_MOVE_DESTINATION, m_pHint )
+            ADD_TASK(BTASK_SET_TOLERANCE, RandomFloat(400.0f, 480.0f));
+            ADD_TASK(BTASK_MOVE_DESTINATION, pEntrance);
 
-            ADD_TASK( BTASK_CROUCH, NULL )
-            ADD_TASK( BTASK_MOVE_DESTINATION, m_pHint )
-            ADD_TASK( BTASK_PLAY_GESTURE, ACT_SIGNAL_HALT )
-            ADD_TASK( BTASK_WAIT, RandomFloat( 2.0f, 5.0f ) )
+            ADD_TASK(BTASK_SNEAK, NULL);
+            ADD_TASK(BTASK_SET_TOLERANCE, RandomFloat(250.0f, 380.0f));
+            ADD_TASK(BTASK_MOVE_DESTINATION, pEntrance);
+
+            ADD_TASK(BTASK_CROUCH, NULL);
+            ADD_TASK(BTASK_MOVE_DESTINATION, pEntrance);
+            ADD_TASK(BTASK_PLAY_GESTURE, ACT_SIGNAL_HALT);
+            ADD_TASK(BTASK_WAIT, RandomFloat(2.0f, 5.0f));
         }
 
-        ADD_TASK( BTASK_STANDUP, NULL )
-        ADD_TASK( BTASK_CLEAN_AREA, NULL )
+        ADD_TASK(BTASK_STANDUP, NULL);
+        ADD_TASK(BTASK_CLEAN_AREA, NULL);
     }
-
-    ADD_INTERRUPT( BCOND_NEW_ENEMY )
-    ADD_INTERRUPT( BCOND_SEE_ENEMY )
-    ADD_INTERRUPT( BCOND_SEE_FEAR )
-    ADD_INTERRUPT( BCOND_LIGHT_DAMAGE )
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE )
-    ADD_INTERRUPT( BCOND_LOW_HEALTH )
-    ADD_INTERRUPT( BCOND_DEJECTED )
-    ADD_INTERRUPT( BCOND_BETTER_WEAPON_AVAILABLE )
-END_SCHEDULE()
-
-CCleanBuildingSchedule::CCleanBuildingSchedule()
-{
-     m_pHint = NULL;
 }
 
-float CCleanBuildingSchedule::GetDesire()
+SET_SCHEDULE_INTERRUPTS(CCleanBuildingSchedule)
 {
-    CAP_BotSoldier *pSoldierAI = (CAP_BotSoldier *)GetBot();
-    AssertOnce( pSoldierAI );
+    ADD_INTERRUPT(BCOND_NEW_ENEMY);
+    ADD_INTERRUPT(BCOND_SEE_ENEMY);
+    ADD_INTERRUPT(BCOND_SEE_FEAR);
+    ADD_INTERRUPT(BCOND_LIGHT_DAMAGE);
+    ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
+    ADD_INTERRUPT(BCOND_LOW_HEALTH);
+    ADD_INTERRUPT(BCOND_DEJECTED);
+    ADD_INTERRUPT(BCOND_BETTER_WEAPON_AVAILABLE);
+}
 
-    if ( !CanMove() )
+//================================================================================
+//================================================================================
+CCleanBuildingSchedule::CCleanBuildingSchedule(IBot *bot) : BaseClass(bot)
+{
+     //m_pHint = NULL;
+}
+
+//================================================================================
+//================================================================================
+float CCleanBuildingSchedule::GetDesire() const
+{
+    CAP_Bot *pSoldier = dynamic_cast<CAP_Bot *> (GetBot());
+    AssertOnce( pSoldier );
+
+    if ( !pSoldier )
+        return BOT_DESIRE_NONE;
+
+    if ( !GetDecision()->CanMove() )
         return BOT_DESIRE_NONE;
 
     if ( IsCombating() || IsAlerted() )
         return BOT_DESIRE_NONE;
 
     if ( GetBot()->GetSquad() && !GetBot()->IsSquadLeader() ) {
-        // Mi líder entro en proceso de limpiar un edificio
-        // Sigamos lo mismo que el.
-        if ( pSoldierAI->IsMinionCleaningBuilding() )
+        // My leader has ordered that we must clean a building, I follow it loyally.
+        if ( pSoldier->IsMinionCleaningBuilding() )
             return 0.28f;
 
         return BOT_DESIRE_NONE;
     }
 
-    if ( !pSoldierAI )
-        return BOT_DESIRE_NONE;
+    CBaseEntity *pEntrance = GetDataMemoryEntity("BuildingEntrance");
 
-    if ( m_pHint )
+    // We found an uncleaned building
+    if ( pEntrance )
         return 0.28f;
-
-    CSpotCriteria criteria;
-    criteria.OnlyVisible( true );
-    criteria.SetMaxRange( GetHost()->GetSenses()->GetDistLook() );
-    criteria.SetOrigin( GetAbsOrigin() );
-    criteria.SetTacticalMode( GetBot()->GetTacticalMode() );
-
-    CHintCriteria hintCriteria;
-    hintCriteria.AddHintType( HINT_TACTICAL_PINCH );
-    hintCriteria.AddIncludePosition( criteria.m_vecOrigin, criteria.m_flMaxRange );
-
-    CUtlVector<CAI_Hint *> collector;
-    CAI_HintManager::FindAllHints( criteria.m_vecOrigin, hintCriteria, &collector );
-
-    FOR_EACH_VEC( collector, it )
-    {
-        CAI_Hint *pHint = collector[it];
-
-        if ( !pHint )
-            continue;
-
-        Vector position = pHint->GetAbsOrigin();
-
-        if ( !Utils::IsValidSpot( position, criteria.m_vecOrigin, criteria, GetHost() ) )
-            continue;
-
-        if ( pSoldierAI->HasBuildingCleaned( STRING( pHint->GetGroup() ) ) )
-            continue;
-
-        m_pHint = pHint;
-        return 0.28f;
-    }
 
     return BOT_DESIRE_NONE;
 }
 
+//================================================================================
+//================================================================================
 void CCleanBuildingSchedule::Start()
 {
     BaseClass::Start();
 
-    m_vecSpot.Invalidate();
-
     if ( GetBot()->IsSquadLeader() ) {
-        Assert( m_pHint );
-        ((CAP_BotSoldier *)GetBot())->StartBuildingClean( m_pHint );
+        CAI_Hint *pEntrance = dynamic_cast<CAI_Hint*>(GetDataMemoryEntity("BuildingEntrance"));
+        Assert(pEntrance);
+
+        ((CAP_Bot *)GetBot())->StartBuildingClean(pEntrance);
     }
 }
 
-void CCleanBuildingSchedule::OnEnd()
+//================================================================================
+//================================================================================
+void CCleanBuildingSchedule::Finish()
 {
-    BaseClass::OnEnd();
-    m_vecSpot.Invalidate();
+    BaseClass::Finish();
 }
 
-void CCleanBuildingSchedule::Think()
+//================================================================================
+//================================================================================
+void CCleanBuildingSchedule::Update()
 {
-    BaseClass::Think();
+    BaseClass::Update();
 
-    CAP_BotSoldier *pSoldierBot = (CAP_BotSoldier *)GetBot();
+    CAP_Bot *pSoldier = (CAP_Bot *)GetBot();
 
     if ( GetBot()->IsSquadLeader() ) {
-        CBuildingInfo *info = pSoldierBot->GetBuildingInfo();
+        CBuildingInfo *info = pSoldier->GetBuildingInfo();
         
         if ( !info )
             return;
@@ -368,23 +378,27 @@ void CCleanBuildingSchedule::Think()
     }
 }
 
+//================================================================================
+//================================================================================
 void CCleanBuildingSchedule::LookAround()
 {
-    if ( !GetBot()->Aim() )
+    if ( !GetVision() || !GetMemory() )
         return;
 
-    GetBot()->Aim()->BlockLookAround( 2.0f );
+    // We block aiming to other sides a moment
+    GetMemory()->UpdateDataMemory("BlockLookAround", 1, 2.0f);
 
     CSpotCriteria criteria;
     criteria.SetMaxRange( 700.0f );
-    criteria.OnlyVisible( true );
+    criteria.SetPlayer( GetHost() );
     criteria.SetTacticalMode( GetBot()->GetTacticalMode() );
+    criteria.SetFlags(FLAG_USE_NEAREST | FLAG_IGNORE_RESERVED | FLAG_INTERESTING_SPOT);
 
     Vector vecSpot;
     vecSpot.Invalidate();
 
     SpotVector list;
-    Utils::FillIntestingPositions( &list, GetHost(), criteria );
+    Utils::GetSpotCriteria(NULL, criteria, &list);
 
     if ( list.Count() == 0 )
         return;
@@ -424,31 +438,31 @@ void CCleanBuildingSchedule::LookAround()
     if ( !vecSpot.IsValid() )
         return;
 
-    m_vecSpot = vecSpot;
-    GetBot()->LookAt( "Tactical Spot", vecSpot, PRIORITY_HIGH, 1.0f );
+    GetVision()->LookAt( "Tactical Spot", vecSpot, PRIORITY_HIGH, 1.0f );
 }
 
+//================================================================================
+//================================================================================
 void CCleanBuildingSchedule::TaskStart()
 {
     BotTaskInfo_t *pTask = GetActiveTask();
-    CAP_BotSoldier *pSoldierBot = (CAP_BotSoldier *)GetBot();
+    CAP_Bot *pSoldier = (CAP_Bot *)GetBot();
 
-    CBuildingInfo *info = pSoldierBot->GetBuildingInfo();
+    CBuildingInfo *info = pSoldier->GetBuildingInfo();
     Assert( info );
 
     if ( !info ) {
-        Fail("info == NULL");
+        Fail("Trying to clean a building without knowing which");
         return;
     }
 
     switch ( pTask->task ) {
         case BTASK_CLEAN_AREA:
         {
-            // Ya no quedan más areas que examinar, el edificio esta limpio.
+            // We have examined all areas of this building
             if ( info->areas.Count() == 0 ) {
-                pSoldierBot->FinishBuildingClean();
+                pSoldier->FinishBuildingClean();
                 GetHost()->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_SIGNAL_GROUP );
-                m_pHint = NULL;
 
                 TaskComplete();
                 return;
@@ -487,25 +501,24 @@ void CCleanBuildingSchedule::TaskStart()
 
             // Esto jamás debería ocurrir...
             if ( !pArea ) {
-                pSoldierBot->FinishBuildingClean();
+                pSoldier->FinishBuildingClean();
                 GetHost()->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_SIGNAL_GROUP );
-                m_pHint = NULL;
 
                 TaskComplete();
                 return;
             }
 
             info->areas.Remove( key );
-            pSoldierBot->SetScanningArea( pArea );
+            pSoldier->SetScanningArea( pArea );
 
-            ADD_TASK( BTASK_SNEAK, NULL )
-            ADD_TASK( BTASK_PLAY_GESTURE, ACT_SIGNAL_FORWARD )
-            ADD_TASK( BTASK_MOVE_DESTINATION, pArea->GetCenter() )
-            ADD_TASK( BTASK_CROUCH, NULL )
-            ADD_TASK( BTASK_TACTICAL_LOOK_AROUND, NULL )
-            ADD_TASK( BTASK_WAIT, RandomFloat( 3.0f, 7.0f ) )
-            ADD_TASK( BTASK_STANDUP, NULL )
-            ADD_TASK( BTASK_CLEAN_AREA, NULL )
+            ADD_TASK(BTASK_SNEAK, NULL);
+            ADD_TASK( BTASK_PLAY_GESTURE, ACT_SIGNAL_FORWARD );
+            ADD_TASK( BTASK_MOVE_DESTINATION, pArea->GetCenter() );
+            ADD_TASK( BTASK_CROUCH, NULL );
+            ADD_TASK( BTASK_TACTICAL_LOOK_AROUND, NULL );
+            ADD_TASK( BTASK_WAIT, RandomFloat( 3.0f, 7.0f ) );
+            ADD_TASK( BTASK_STANDUP, NULL );
+            ADD_TASK( BTASK_CLEAN_AREA, NULL );
 
             TaskComplete();
             break;
@@ -520,13 +533,13 @@ void CCleanBuildingSchedule::TaskStart()
 
         case BTASK_WAIT_LEADER:
         {
-            GetBot()->ResumeFollow();
+            GetFollow()->Enable();
             break;
         }
 
         case BTASK_TACTICAL_COVER:
         {
-            GetBot()->PauseFollow();
+            GetFollow()->Disable();
             break;
         }
 
@@ -538,15 +551,17 @@ void CCleanBuildingSchedule::TaskStart()
     }
 }
 
+//================================================================================
+//================================================================================
 void CCleanBuildingSchedule::TaskRun()
 {
-    CAP_BotSoldier *pSoldierBot = dynamic_cast<CAP_BotSoldier *>(GetBot());
+    CAP_Bot *pSoldier = dynamic_cast<CAP_Bot *>(GetBot());
     BotTaskInfo_t *pTask = GetActiveTask();
 
     CPlayer *pLeader = GetBot()->GetSquadLeader();
-    CAP_BotSoldier *pSoldierLeader = dynamic_cast<CAP_BotSoldier *>(pLeader->GetAI());
+    CAP_Bot *pSoldierLeader = dynamic_cast<CAP_Bot *>(pLeader->GetBotController());
 
-    CBuildingInfo *info = pSoldierBot->GetBuildingInfo();
+    CBuildingInfo *info = pSoldier->GetBuildingInfo();
     Assert( info );
 
     if ( !info ) {
@@ -569,50 +584,51 @@ void CCleanBuildingSchedule::TaskRun()
 
         case BTASK_TACTICAL_COVER:
         {
-            if ( !pSoldierBot->IsMinionCleaningBuilding() ) {
+            if ( !pSoldier->IsMinionCleaningBuilding() ) {
                 TaskComplete();
                 return;
             }
 
             CSpotCriteria criteria;
             criteria.SetMaxRange( 500.0f );
-            criteria.SetOrigin( pLeader->GetAbsOrigin() );
+            criteria.SetPlayer( pLeader );
             criteria.AvoidTeam( GetHost()->GetTeamNumber() );
-            criteria.SetMinDistanceAvoid( 80.0f );
+            criteria.SetMinRangeFromAvoid( 80.0f );
+            criteria.SetFlags(FLAG_USE_NEAREST | FLAG_COVER_SPOT);
 
             SpotVector list;
-            Utils::FillCoverPositions( &list, GetHost(), criteria );
+            Utils::GetSpotCriteria(NULL, criteria, &list);
 
             Assert( list.Count() > 0 );
 
             if ( list.Count() == 0 )
                 return;
 
-            m_vecLocation.Invalidate();
+            Vector vecLocation;
 
             FOR_EACH_VEC( list, it )
             {
                 if ( GetBot()->GetSquad()->IsSomeoneGoing( list[it], GetHost() ) )
                     continue;
 
-                m_vecLocation = list[it];
+                vecLocation = list[it];
                 break;
             }
 
-            Assert( m_vecLocation.IsValid() );
+            Assert(vecLocation.IsValid() );
 
-            if ( !m_vecLocation.IsValid() )
+            if ( !vecLocation.IsValid() )
                 return;
 
-            float flDistance = GetAbsOrigin().DistTo( m_vecLocation );
-            float flTolerance = GetBot()->GetDestinationDistanceTolerance();
+            float flDistance = GetAbsOrigin().DistTo(vecLocation);
+            float flTolerance = GetLocomotion()->GetDistanceToDestination();
 
             if ( flDistance <= flTolerance ) {
-                GetBot()->Crouch();
+                GetLocomotion()->Crouch();
                 return;
             }
 
-            GetBot()->SetDestination( m_vecLocation, PRIORITY_HIGH );
+            GetLocomotion()->DriveTo("Tactical Cover", vecLocation, PRIORITY_HIGH );
             break;
         }
 
@@ -623,4 +639,3 @@ void CCleanBuildingSchedule::TaskRun()
         }
     }
 }
-*/

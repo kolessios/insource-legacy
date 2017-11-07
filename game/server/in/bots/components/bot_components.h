@@ -256,6 +256,7 @@ public:
     virtual CDataMemory *AddDataMemoryList( const char *name, CDataMemory *value, float forgetTime = -1.0f );
     virtual CDataMemory *RemoveDataMemoryList( const char *name, CDataMemory *value, float forgetTime = -1.0f );
 
+    virtual bool HasDataMemory(const char *name) const;
     virtual CDataMemory *GetDataMemory( const char *name, bool forceIfNotExists = false ) const;
 
     virtual void ForgetData( const char *name );
@@ -296,6 +297,7 @@ public:
 
     CBotDecision( IBot *bot ) : BaseClass( bot )
     {
+        
     }
 
     virtual void Update() {
@@ -308,6 +310,7 @@ public:
     virtual bool ShouldLookRandomSpot() const;
     virtual bool ShouldLookSquadMember() const;
 
+    virtual void PerformSensing() const;
     virtual bool ShouldLookThreat() const;
 
     virtual bool ShouldFollow() const;
@@ -362,7 +365,13 @@ public:
     virtual bool ShouldMustBeCareful() const;
 
     virtual void SwitchToBestWeapon();
-    virtual bool GetNearestCover( float radius = GET_COVER_RADIUS, Vector *vecCoverSpot = NULL ) const;
+
+    virtual bool ShouldUpdateCoverSpots() const;
+    virtual float GetUpdateCoverRate() const;
+    virtual void GetCoverCriteria(CSpotCriteria &criteria);
+
+    virtual void UpdateCoverSpots();
+    virtual bool GetNearestCover( Vector *vecCoverSpot = NULL ) const;
     virtual bool IsInCoverPosition() const;
 
     virtual float GetWeaponIdealRange( CBaseWeapon *pWeapon = NULL ) const;

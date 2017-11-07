@@ -707,11 +707,16 @@ void CInGameRules::InitDefaultAIRelationships()
 //====================================================================
 int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTarget )
 {
+    VPROF_BUDGET("CInGameRules::PlayerRelationship", VPROF_BUDGETGROUP_OTHER_UNACCOUNTED);
+
     CPlayer *pPlayer = ToInPlayer( pCharacter );
     Assert( pPlayer );
 
-    if ( pPlayer->GetEnemy() == pTarget )
-        return GR_ENEMY;
+    {
+        VPROF_BUDGET("GetEnemy", VPROF_BUDGETGROUP_OTHER_UNACCOUNTED);
+        if ( pPlayer->GetEnemy() == pTarget )
+            return GR_ENEMY;
+    }
 
     if ( !pTarget->MyCombatCharacterPointer() )
         return GR_NEUTRAL;
@@ -720,15 +725,19 @@ int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTar
         if ( pCharacter->InSameTeam( pTarget ) )
             return GR_ALLY;
     }
+    
+    // SLOW
+    /*{
+        VPROF_BUDGET("GetSquad", VPROF_BUDGETGROUP_OTHER_UNACCOUNTED);
+        CPlayer *pTargetPlayer = ToInPlayer(pTarget);
 
-    CPlayer *pTargetPlayer = ToInPlayer( pTarget );
-
-    // El objetivo también es un jugador y estamos en un escuadron
-    if ( pTargetPlayer && pPlayer->GetSquad() ) {
-        // En el mismo escuadron
-        if ( pPlayer->GetSquad()->IsMember( pTargetPlayer ) )
-            return GR_ALLY;
-    }
+        // El objetivo también es un jugador y estamos en un escuadron
+        if ( pTargetPlayer && pPlayer->GetSquad() ) {
+            // En el mismo escuadron
+            if ( pPlayer->GetSquad()->IsMember(pTargetPlayer) )
+                return GR_ALLY;
+        }
+    }*/
 
     // Aliados
     if ( pPlayer->IRelationType( pTarget ) == D_LI )

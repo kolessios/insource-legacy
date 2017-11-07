@@ -58,21 +58,17 @@ bool CEntityMemory::IsLost()
 bool CEntityMemory::IsHitboxVisible( HitboxType part )
 {
     switch ( part ) {
-        case HITGROUP_HEAD:
+        case HEAD:
             return (m_VisibleHitbox.head.IsValid());
             break;
 
-        case HITGROUP_CHEST:
+        case CHEST:
         default:
             return (m_VisibleHitbox.chest.IsValid());
             break;
 
-        case HITGROUP_LEFTLEG:
-            return (m_VisibleHitbox.leftLeg.IsValid());
-            break;
-
-        case HITGROUP_RIGHTLEG:
-            return (m_VisibleHitbox.rightLeg.IsValid());
+        case FEET:
+            return (m_VisibleHitbox.feet.IsValid());
             break;
     }
 
@@ -113,16 +109,18 @@ bool CEntityMemory::IsFriend() const
 //================================================================================
 bool CEntityMemory::GetVisibleHitboxPosition( Vector & vecPosition, HitboxType favorite )
 {
+    VPROF_BUDGET("CEntityMemory::GetVisibleHitboxPosition", VPROF_BUDGETGROUP_BOTS);
+
     if ( IsHitboxVisible( favorite ) ) {
         switch ( favorite ) {
-            case HITGROUP_HEAD:
+            case HEAD:
             {
                 vecPosition = m_VisibleHitbox.head;
                 return true;
                 break;
             }
 
-            case HITGROUP_CHEST:
+            case CHEST:
             default:
             {
                 vecPosition = m_VisibleHitbox.chest;
@@ -130,39 +128,27 @@ bool CEntityMemory::GetVisibleHitboxPosition( Vector & vecPosition, HitboxType f
                 break;
             }
 
-            case HITGROUP_LEFTLEG:
+            case FEET:
             {
-                vecPosition = m_VisibleHitbox.leftLeg;
-                return true;
-                break;
-            }
-
-            case HITGROUP_RIGHTLEG:
-            {
-                vecPosition = m_VisibleHitbox.rightLeg;
+                vecPosition = m_VisibleHitbox.feet;
                 return true;
                 break;
             }
         }
     }
 
-    if ( favorite != HITGROUP_CHEST && IsHitboxVisible( HITGROUP_CHEST ) ) {
+    if ( favorite != CHEST && IsHitboxVisible( CHEST ) ) {
         vecPosition = m_VisibleHitbox.chest;
         return true;
     }
 
-    if ( favorite != HITGROUP_HEAD && IsHitboxVisible( HITGROUP_HEAD ) ) {
+    if ( favorite != HEAD && IsHitboxVisible( HEAD ) ) {
         vecPosition = m_VisibleHitbox.head;
         return true;
     }
 
-    if ( favorite != HITGROUP_LEFTLEG && IsHitboxVisible( HITGROUP_LEFTLEG ) ) {
-        vecPosition = m_VisibleHitbox.leftLeg;
-        return true;
-    }
-
-    if ( favorite != HITGROUP_RIGHTLEG && IsHitboxVisible( HITGROUP_RIGHTLEG ) ) {
-        vecPosition = m_VisibleHitbox.rightLeg;
+    if ( favorite != FEET && IsHitboxVisible( FEET ) ) {
+        vecPosition = m_VisibleHitbox.feet;
         return true;
     }
 
@@ -174,33 +160,37 @@ bool CEntityMemory::GetVisibleHitboxPosition( Vector & vecPosition, HitboxType f
 //================================================================================
 void CEntityMemory::UpdateHitboxAndVisibility()
 {
+    VPROF_BUDGET("CEntityMemory::UpdateHitboxAndVisibility", VPROF_BUDGETGROUP_BOTS);
+
+    // For now let's assume that we do not know Hitbox and therefore we have no vision
     UpdateVisibility( false );
     m_Hitbox.Reset();
     m_VisibleHitbox.Reset();
 
+    // We obtain the positions of the Hitbox
     Utils::GetHitboxPositions( GetEntity(), m_Hitbox );
 
     if ( !m_Hitbox.IsValid() )
         return;
 
-    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.head ) ) {
-        m_VisibleHitbox.head = m_Hitbox.head;
-        UpdateVisibility( true );
-    }
+    {
+        VPROF_BUDGET("CEntityMemory::UpdateHitboxAndVisibility::UpdateVisibility", VPROF_BUDGETGROUP_BOTS);
 
-    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.chest ) ) {
-        m_VisibleHitbox.chest = m_Hitbox.chest;
-        UpdateVisibility( true );
-    }
+        // Now let's check if we can see any of them
+        if ( m_pBot->GetDecision()->IsAbleToSee(m_Hitbox.head) ) {
+            m_VisibleHitbox.head = m_Hitbox.head;
+            UpdateVisibility(true);
+        }
 
-    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.leftLeg ) ) {
-        m_VisibleHitbox.leftLeg = m_Hitbox.leftLeg;
-        UpdateVisibility( true );
-    }
+        if ( m_pBot->GetDecision()->IsAbleToSee(m_Hitbox.chest) ) {
+            m_VisibleHitbox.chest = m_Hitbox.chest;
+            UpdateVisibility(true);
+        }
 
-    if ( m_pBot->GetDecision()->IsAbleToSee( m_Hitbox.rightLeg ) ) {
-        m_VisibleHitbox.rightLeg = m_Hitbox.rightLeg;
-        UpdateVisibility( true );
+        if ( m_pBot->GetDecision()->IsAbleToSee(m_Hitbox.feet) ) {
+            m_VisibleHitbox.feet = m_Hitbox.feet;
+            UpdateVisibility(true);
+        }
     }
 
     // We update the ideal position

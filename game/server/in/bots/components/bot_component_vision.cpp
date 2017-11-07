@@ -29,6 +29,8 @@
 //================================================================================
 void CBotVision::Update()
 {
+    VPROF_BUDGET("CBotVision::Update", VPROF_BUDGETGROUP_BOTS);
+
     LookNavigation(); // PRIORITY_LOW
 
     LookAround();
@@ -249,24 +251,24 @@ float CBotVision::GetStiffness()
 
     switch ( speed ) {
         case AIM_SPEED_VERYLOW:
-            return 100.0f;
+            return 120.0f;
             break;
 
         case AIM_SPEED_LOW:
-            return 150.0f;
+            return 170.0f;
             break;
 
         case AIM_SPEED_NORMAL:
         default:
-            return 200.0f;
+            return 220.0f;
             break;
 
         case AIM_SPEED_FAST:
-            return 250.0f;
+            return 270.0f;
             break;
 
         case AIM_SPEED_VERYFAST:
-            return 300.0f;
+            return 330.0f;
             break;
 
         case AIM_SPEED_INSTANT:
@@ -435,13 +437,17 @@ void CBotVision::LookInterestingSpot()
 
     CSpotCriteria criteria;
     criteria.SetMaxRange( 1000.0f );
-    criteria.OnlyVisible( !GetDecision()->CanLookNoVisibleSpots() );
-    criteria.UseRandom( true );
+    criteria.SetPlayer(GetHost());
     criteria.SetTacticalMode( GetBot()->GetTacticalMode() );
+    criteria.SetFlags(FLAG_IGNORE_RESERVED | FLAG_INTERESTING_SPOT);
+
+    if ( !GetDecision()->CanLookNoVisibleSpots() ) {
+        criteria.SetFlags(FLAG_ONLY_VISIBLE);
+    }
 
     Vector vecSpot;
 
-    if ( !Utils::FindIntestingPosition( &vecSpot, GetHost(), criteria ) )
+    if ( !Utils::GetSpotCriteria( &vecSpot, criteria ) )
         return;
 
     float duration = 2.0f;

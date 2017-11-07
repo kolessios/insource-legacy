@@ -180,22 +180,27 @@ public:
 
     CDataMemory( int value ) : BaseClass( value )
     {
+        OnSet();
     }
 
     CDataMemory( Vector value ) : BaseClass( value )
     {
+        OnSet();
     }
 
     CDataMemory( float value ) : BaseClass( value )
     {
+        OnSet();
     }
 
     CDataMemory( const char *value ) : BaseClass( value )
     {
+        OnSet();
     }
 
     CDataMemory( CBaseEntity *value ) : BaseClass( value )
     {
+        OnSet();
     }
 
     virtual void Reset() {
@@ -215,9 +220,17 @@ public:
             return false;
 
         if ( !m_LastUpdate.HasStarted() )
-            return false;
+            return true;
 
         return (m_LastUpdate.GetElapsedTime() >= m_flForget);
+    }
+
+    float GetRemainingTime() const
+    {
+        if ( m_flForget <= 0.0f )
+            return 0.0f;
+
+        return (m_flForget - m_LastUpdate.GetElapsedTime());
     }
 
     float GetElapsedTimeSinceUpdated() const {

@@ -62,6 +62,7 @@ DECLARE_DEBUG_COMMAND( bot_debug_cmd, "0", "" )
 DECLARE_DEBUG_COMMAND( bot_debug_conditions, "0", "" )
 DECLARE_DEBUG_COMMAND( bot_debug_desires, "0", "" )
 DECLARE_DEBUG_COMMAND( bot_debug_max_msgs, "10", "" )
+DECLARE_DEBUG_COMMAND(bot_debug_data_memory, "0", "")
 
 DECLARE_DEBUG_COMMAND( bot_optimize, "0", "" );
 DECLARE_REPLICATED_COMMAND( bot_far_distance, "2500", "" )
@@ -103,6 +104,7 @@ CPlayer *CreateBot( const char *pPlayername, const Vector *vecPosition, const QA
 
     if ( !pPlayer->GetBotController() ) {
         Warning( "There was a problem creating a bot. The player was created but the controller could not be created." );
+        pPlayer->Kick();
         return NULL;
     }
 
@@ -183,6 +185,10 @@ void CBot::Update()
 
     if ( CanRunAI() ) {
         RunAI();
+    }
+    else if ( m_lastCmd ) {
+        // We can not process the AI in this frame, but we must conserve the inputs
+        m_cmd = m_lastCmd;
     }
 
     PlayerMove( m_cmd );
@@ -270,7 +276,7 @@ void CBot::Upkeep()
 }
 
 //================================================================================
-// All the processing that can be heavy for the engine.
+// Run the artificial intelligence of the Bot.
 //================================================================================
 void CBot::RunAI()
 {
@@ -290,15 +296,28 @@ void CBot::RunAI()
 
     UpdateComponents( false );
 
-    UpdateSchedule();
+    RunCustomAI();
 
-    // We change to the best weapon for this situation
-    // TODO: A better place to put this.
-    GetDecision()->SwitchToBestWeapon();
+    UpdateSchedule();
 
     m_RunTimer.End();
 
     DebugDisplay();
+}
+
+//================================================================================
+// Run custom artificial intelligence of the Bot.
+//================================================================================
+void CBot::RunCustomAI()
+{
+    // Update the list of safe places to cover
+    if ( GetDecision()->ShouldUpdateCoverSpots() ) {
+        GetDecision()->UpdateCoverSpots();
+    }
+
+    // We change to the best weapon for this situation
+    // TODO: A better place to put this.
+    GetDecision()->SwitchToBestWeapon();
 }
 
 //================================================================================

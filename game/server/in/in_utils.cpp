@@ -15,7 +15,10 @@
 #include "doors.h"
 #include "func_breakablesurf.h"
 
+#include "bots\bot_manager.h"
 #include "bots\bot_defs.h"
+#include "bots\interfaces\ibot.h"
+
 #include "nav_pathfind.h"
 #include "util_shared.h"
 
@@ -29,13 +32,15 @@
 #include "ap_player.h"
 #endif
 
+#include "datacache/imdlcache.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 #ifdef INSOURCE_DLL
 extern ConVar sv_gameseed;
 #else
-ConVar sv_gameseed( "sv_gameseed", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER );
+ConVar sv_gameseed("sv_gameseed", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER);
 #endif
 
 #define COS_TABLE_SIZE 256
@@ -43,74 +48,74 @@ static float cosTable[COS_TABLE_SIZE];
 
 //================================================================================
 //================================================================================
-static int SeedLineHash( int seedvalue, const char *sharedname )
+static int SeedLineHash(int seedvalue, const char *sharedname)
 {
     CRC32_t retval;
 
-    CRC32_Init( &retval );
+    CRC32_Init(&retval);
 
-    CRC32_ProcessBuffer( &retval, (void *)&seedvalue, sizeof( int ) );
-    CRC32_ProcessBuffer( &retval, (void *)sharedname, Q_strlen( sharedname ) );
+    CRC32_ProcessBuffer(&retval, (void *)&seedvalue, sizeof(int));
+    CRC32_ProcessBuffer(&retval, (void *)sharedname, Q_strlen(sharedname));
 
-    CRC32_Final( &retval );
+    CRC32_Final(&retval);
 
     return (int)(retval);
 }
 
 //================================================================================
 //================================================================================
-float Utils::RandomFloat( const char *sharedname, float flMinVal, float flMaxVal )
+float Utils::RandomFloat(const char *sharedname, float flMinVal, float flMaxVal)
 {
-    int seed = SeedLineHash( sv_gameseed.GetInt(), sharedname );
-    RandomSeed( seed );
-    return ::RandomFloat( flMinVal, flMaxVal );
+    int seed = SeedLineHash(sv_gameseed.GetInt(), sharedname);
+    RandomSeed(seed);
+    return ::RandomFloat(flMinVal, flMaxVal);
 }
 
 //================================================================================
 //================================================================================
-int Utils::RandomInt( const char *sharedname, int iMinVal, int iMaxVal )
+int Utils::RandomInt(const char *sharedname, int iMinVal, int iMaxVal)
 {
-    int seed = SeedLineHash( sv_gameseed.GetInt(), sharedname );
-    RandomSeed( seed );
-    return ::RandomInt( iMinVal, iMaxVal );
+    int seed = SeedLineHash(sv_gameseed.GetInt(), sharedname);
+    RandomSeed(seed);
+    return ::RandomInt(iMinVal, iMaxVal);
 }
 
 //================================================================================
 //================================================================================
-Vector Utils::RandomVector( const char *sharedname, float minVal, float maxVal )
+Vector Utils::RandomVector(const char *sharedname, float minVal, float maxVal)
 {
-    int seed = SeedLineHash( sv_gameseed.GetInt(), sharedname );
-    RandomSeed( seed );
+    int seed = SeedLineHash(sv_gameseed.GetInt(), sharedname);
+    RandomSeed(seed);
     // HACK:  Can't call RandomVector/Angle because it uses rand() not vstlib Random*() functions!
     // Get a random vector.
     Vector random;
-    random.x = ::RandomFloat( minVal, maxVal );
-    random.y = ::RandomFloat( minVal, maxVal );
-    random.z = ::RandomFloat( minVal, maxVal );
+    random.x = ::RandomFloat(minVal, maxVal);
+    random.y = ::RandomFloat(minVal, maxVal);
+    random.z = ::RandomFloat(minVal, maxVal);
     return random;
 }
 
 //================================================================================
 //================================================================================
-QAngle Utils::RandomAngle( const char *sharedname, float minVal, float maxVal )
+QAngle Utils::RandomAngle(const char *sharedname, float minVal, float maxVal)
 {
-    Assert( CBaseEntity::GetPredictionRandomSeed() != -1 );
+    Assert(CBaseEntity::GetPredictionRandomSeed() != -1);
 
-    int seed = SeedLineHash( sv_gameseed.GetInt(), sharedname );
-    RandomSeed( seed );
+    int seed = SeedLineHash(sv_gameseed.GetInt(), sharedname);
+    RandomSeed(seed);
 
     // HACK:  Can't call RandomVector/Angle because it uses rand() not vstlib Random*() functions!
     // Get a random vector.
     Vector random;
-    random.x = ::RandomFloat( minVal, maxVal );
-    random.y = ::RandomFloat( minVal, maxVal );
-    random.z = ::RandomFloat( minVal, maxVal );
-    return QAngle( random.x, random.y, random.z );
+    random.x = ::RandomFloat(minVal, maxVal);
+    random.y = ::RandomFloat(minVal, maxVal);
+    random.z = ::RandomFloat(minVal, maxVal);
+    return QAngle(random.x, random.y, random.z);
 }
 
 //================================================================================
 //================================================================================
-void Utils::NormalizeAngle( float& fAngle )
+void Utils::NormalizeAngle(float& fAngle)
 {
     if ( fAngle < 0.0f )
         fAngle += 360.0f;
@@ -120,7 +125,7 @@ void Utils::NormalizeAngle( float& fAngle )
 
 //================================================================================
 //================================================================================
-void Utils::DeNormalizeAngle( float& fAngle )
+void Utils::DeNormalizeAngle(float& fAngle)
 {
     if ( fAngle < -180.0f )
         fAngle += 360.0f;
@@ -130,17 +135,17 @@ void Utils::DeNormalizeAngle( float& fAngle )
 
 //================================================================================
 //================================================================================
-void Utils::GetAngleDifference( QAngle const& angOrigin, QAngle const& angDestination, QAngle& angDiff )
+void Utils::GetAngleDifference(QAngle const& angOrigin, QAngle const& angDestination, QAngle& angDiff)
 {
     angDiff = angDestination - angOrigin;
 
-    Utils::DeNormalizeAngle( angDiff.x );
-    Utils::DeNormalizeAngle( angDiff.y );
+    Utils::DeNormalizeAngle(angDiff.x);
+    Utils::DeNormalizeAngle(angDiff.y);
 }
 
 //================================================================================
 //================================================================================
-bool Utils::IsBreakableSurf( CBaseEntity *pEntity )
+bool Utils::IsBreakableSurf(CBaseEntity *pEntity)
 {
     if ( !pEntity )
         return false;
@@ -162,7 +167,7 @@ bool Utils::IsBreakableSurf( CBaseEntity *pEntity )
 
 //================================================================================
 //================================================================================
-bool Utils::IsBreakable( CBaseEntity *pEntity )
+bool Utils::IsBreakable(CBaseEntity *pEntity)
 {
     if ( !pEntity )
         return false;
@@ -199,7 +204,7 @@ bool Utils::IsBreakable( CBaseEntity *pEntity )
 
 //================================================================================
 //================================================================================
-bool Utils::IsDoor( CBaseEntity *pEntity )
+bool Utils::IsDoor(CBaseEntity *pEntity)
 {
     if ( !pEntity )
         return false;
@@ -219,7 +224,7 @@ bool Utils::IsDoor( CBaseEntity *pEntity )
 
 //================================================================================
 //================================================================================
-CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxDist, float fMinMass, float fMaxMass, CBaseEntity *pFrom )
+CBaseEntity *Utils::FindNearestPhysicsObject(const Vector &vOrigin, float fMaxDist, float fMinMass, float fMaxMass, CBaseEntity *pFrom)
 {
     CBaseEntity *pFinalEntity = NULL;
     CBaseEntity *pThrowEntity = NULL;
@@ -228,7 +233,7 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
     // Buscamos los objetos que podemos lanzar
     do {
         // Objetos con físicas
-        pThrowEntity = gEntList.FindEntityByClassnameWithin( pThrowEntity, "prop_physics", vOrigin, fMaxDist );
+        pThrowEntity = gEntList.FindEntityByClassnameWithin(pThrowEntity, "prop_physics", vOrigin, fMaxDist);
 
         // Ya no existe
         if ( !pThrowEntity )
@@ -236,7 +241,7 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
 
         // La entidad que lo quiere no puede verlo
         if ( pFrom ) {
-            if ( !pFrom->FVisible( pThrowEntity ) )
+            if ( !pFrom->FVisible(pThrowEntity) )
                 continue;
         }
 
@@ -249,7 +254,7 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
             continue;
 
         Vector v_center = pThrowEntity->WorldSpaceCenter();
-        float flDist = UTIL_DistApprox2D( vOrigin, v_center );
+        float flDist = UTIL_DistApprox2D(vOrigin, v_center);
 
         // Esta más lejos que el objeto anterior
         if ( flDist > flNearestDist && flNearestDist != 0 )
@@ -264,10 +269,10 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
                 vecDirToEnemy.z = 0;
 
                 Vector vecDirToObject = pThrowEntity->WorldSpaceCenter() - vOrigin;
-                VectorNormalize( vecDirToObject );
+                VectorNormalize(vecDirToObject);
                 vecDirToObject.z = 0;
 
-                if ( DotProduct( vecDirToEnemy, vecDirToObject ) < 0.8 )
+                if ( DotProduct(vecDirToEnemy, vecDirToObject) < 0.8 )
                     continue;
             }
         }
@@ -289,12 +294,12 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
 
         if ( pFrom ) {
             Vector vecGruntKnees;
-            pFrom->CollisionProp()->NormalizedToWorldSpace( Vector( 0.5f, 0.5f, 0.25f ), &vecGruntKnees );
+            pFrom->CollisionProp()->NormalizedToWorldSpace(Vector(0.5f, 0.5f, 0.25f), &vecGruntKnees);
 
-            vcollide_t *pCollide = modelinfo->GetVCollide( pThrowEntity->GetModelIndex() );
+            vcollide_t *pCollide = modelinfo->GetVCollide(pThrowEntity->GetModelIndex());
 
             Vector objMins, objMaxs;
-            physcollision->CollideGetAABB( &objMins, &objMaxs, pCollide->solids[0], pThrowEntity->GetAbsOrigin(), pThrowEntity->GetAbsAngles() );
+            physcollision->CollideGetAABB(&objMins, &objMaxs, pCollide->solids[0], pThrowEntity->GetAbsOrigin(), pThrowEntity->GetAbsAngles());
 
             if ( objMaxs.z < vecGruntKnees.z )
                 continue;
@@ -316,7 +321,7 @@ CBaseEntity *Utils::FindNearestPhysicsObject( const Vector &vOrigin, float fMaxD
 
 //================================================================================
 //================================================================================
-bool Utils::IsMoveableObject( CBaseEntity *pEntity )
+bool Utils::IsMoveableObject(CBaseEntity *pEntity)
 {
     if ( !pEntity || pEntity->IsWorld() )
         return false;
@@ -335,7 +340,7 @@ bool Utils::IsMoveableObject( CBaseEntity *pEntity )
 
 //================================================================================
 //================================================================================
-bool Utils::RunOutEntityLimit( int iTolerance )
+bool Utils::RunOutEntityLimit(int iTolerance)
 {
     if ( gEntList.NumberOfEntities() < (gpGlobals->maxEntities - iTolerance) )
         return false;
@@ -345,13 +350,13 @@ bool Utils::RunOutEntityLimit( int iTolerance )
 
 //================================================================================
 //================================================================================
-IGameEvent *Utils::CreateLesson( const char *pLesson, CBaseEntity *pSubject )
+IGameEvent *Utils::CreateLesson(const char *pLesson, CBaseEntity *pSubject)
 {
-    IGameEvent *pEvent = gameeventmanager->CreateEvent( pLesson, true );
+    IGameEvent *pEvent = gameeventmanager->CreateEvent(pLesson, true);
 
     if ( pEvent ) {
         if ( pSubject )
-            pEvent->SetInt( "subject", pSubject->entindex() );
+            pEvent->SetInt("subject", pSubject->entindex());
     }
 
     return pEvent;
@@ -361,33 +366,33 @@ IGameEvent *Utils::CreateLesson( const char *pLesson, CBaseEntity *pSubject )
 //================================================================================
 // Aplica el modificador del atributo a todos los jugadores en el radio especificado
 //================================================================================
-bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, int team )
+bool Utils::AddAttributeModifier(const char *name, float radius, const Vector &vecPosition, int team)
 {
-    CTeamRecipientFilter filter( team );
-    return AddAttributeModifier( name, radius, vecPosition, filter );
+    CTeamRecipientFilter filter(team);
+    return AddAttributeModifier(name, radius, vecPosition, filter);
 }
 
 //================================================================================
 // Aplica el modificador a todos los jugadores
 //================================================================================
-bool Utils::AddAttributeModifier( const char *name, int team )
+bool Utils::AddAttributeModifier(const char *name, int team)
 {
-    return AddAttributeModifier( name, 0.0f, vec3_origin, team );
+    return AddAttributeModifier(name, 0.0f, vec3_origin, team);
 }
 
 //================================================================================
 // Aplica el modificador del atributo a todos los jugadores en el radio especificado
 //================================================================================
-bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter )
+bool Utils::AddAttributeModifier(const char *name, float radius, const Vector &vecPosition, CRecipientFilter &filter)
 {
     AttributeInfo info;
 
     // El modificador no existe
-    if ( !TheAttributeSystem->GetModifierInfo( name, info ) )
+    if ( !TheAttributeSystem->GetModifierInfo(name, info) )
         return false;
 
     for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+        CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(i));
 
         if ( !pPlayer )
             continue;
@@ -398,7 +403,7 @@ bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &
 
         // Esta muy lejos
         if ( radius > 0 ) {
-            float distance = pPlayer->GetAbsOrigin().DistTo( vecPosition );
+            float distance = pPlayer->GetAbsOrigin().DistTo(vecPosition);
 
             if ( distance > radius )
                 continue;
@@ -406,12 +411,12 @@ bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &
 
         // Verificamos si esta en el filtro
         for ( int s = 0; s < filter.GetRecipientCount(); ++s ) {
-            CPlayer *pItem = ToInPlayer( UTIL_PlayerByIndex( filter.GetRecipientIndex( s ) ) );
+            CPlayer *pItem = ToInPlayer(UTIL_PlayerByIndex(filter.GetRecipientIndex(s)));
 
             // Aquí esta
             if ( pItem == pPlayer ) {
                 // Agregamos el modificador
-                pPlayer->AddAttributeModifier( name );
+                pPlayer->AddAttributeModifier(name);
             }
         }
     }
@@ -424,28 +429,22 @@ bool Utils::AddAttributeModifier( const char *name, float radius, const Vector &
 // Set [bones] with the Hitbox IDs of the entity.
 // TODO: Rename? (I think technically there are no "bones" here.)
 //================================================================================
-bool Utils::GetEntityBones( CBaseEntity *pEntity, HitboxBones &bones )
+bool Utils::GetEntityBones(CBaseEntity *pEntity, HitboxBones &bones)
 {
     // Invalid
     bones.head = -1;
     bones.chest = -1;
-    bones.leftLeg = -1;
-    bones.rightLeg = -1;
 
 #ifdef APOCALYPSE
-    if ( pEntity->ClassMatches( "npc_infected" ) ) {
+    if ( pEntity->ClassMatches("npc_infected") ) {
         bones.head = 16;
         bones.chest = 10;
-        bones.leftLeg = 4;
-        bones.rightLeg = 7;
         return true;
     }
 
     if ( pEntity->IsPlayer() ) {
         bones.head = 12;
         bones.chest = 9;
-        bones.leftLeg = 1;
-        bones.rightLeg = 4;
         return true;
     }
 #elif HL2MP
@@ -460,8 +459,10 @@ bool Utils::GetEntityBones( CBaseEntity *pEntity, HitboxBones &bones )
 // If we do not have the Hitbox IDs of the entity then it will return generic positions.
 // Use with care: this is often heavy for the engine.
 //================================================================================
-bool Utils::GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions )
+bool Utils::ComputeHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positions)
 {
+    VPROF_BUDGET("Utils::ComputeHitboxPositions", VPROF_BUDGETGROUP_BOTS);
+
     positions.Reset();
 
     if ( pEntity == NULL )
@@ -469,19 +470,24 @@ bool Utils::GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions
 
     // Generic Positions
     positions.head = pEntity->EyePosition();
-    positions.chest = positions.leftLeg = positions.rightLeg = pEntity->WorldSpaceCenter();
+    positions.chest = pEntity->WorldSpaceCenter();
+
+    // It doesn't rely on bones
+    positions.feet = pEntity->GetAbsOrigin();
+    positions.feet.z += 5.0f;
 
     CBaseAnimating *pModel = pEntity->GetBaseAnimating();
 
     if ( pModel == NULL )
         return false;
 
+    MDLCACHE_CRITICAL_SECTION();
     CStudioHdr *studioHdr = pModel->GetModelPtr();
 
     if ( studioHdr == NULL )
         return false;
 
-    mstudiohitboxset_t *set = studioHdr->pHitboxSet( pModel->GetHitboxSet() );
+    mstudiohitboxset_t *set = studioHdr->pHitboxSet(pModel->GetHitboxSet());
 
     if ( set == NULL )
         return false;
@@ -490,62 +496,75 @@ bool Utils::GetHitboxPositions( CBaseEntity *pEntity, HitboxPositions &positions
     mstudiobbox_t *box = NULL;
     HitboxBones bones;
 
-    if ( !GetEntityBones( pEntity, bones ) )
+    if ( !GetEntityBones(pEntity, bones) )
         return false;
 
     if ( bones.head >= 0 ) {
-        box = set->pHitbox( bones.head );
-        pModel->GetBonePosition( box->bone, positions.head, angles );
+        box = set->pHitbox(bones.head);
+        pModel->GetBonePosition(box->bone, positions.head, angles);
     }
 
     if ( bones.chest >= 0 ) {
-        box = set->pHitbox( bones.chest );
-        pModel->GetBonePosition( box->bone, positions.chest, angles );
+        box = set->pHitbox(bones.chest);
+        pModel->GetBonePosition(box->bone, positions.chest, angles);
     }
 
-    if ( bones.leftLeg >= 0 ) {
-        box = set->pHitbox( bones.leftLeg );
-        pModel->GetBonePosition( box->bone, positions.leftLeg, angles );
-    }
-
-    if ( bones.rightLeg >= 0 ) {
-        box = set->pHitbox( bones.rightLeg );
-        pModel->GetBonePosition( box->bone, positions.rightLeg, angles );
-    }
-
+    positions.frame = gpGlobals->framecount;
     return true;
+}
+
+HitboxPositions g_CacheHitboxPositions[2048];
+
+//================================================================================
+// Fill in [positions] with the entity's hitbox positions
+// Use the cache of the current frame if it exists, together we avoid mistreating the engine.
+//================================================================================
+bool Utils::GetHitboxPositions(CBaseEntity * pEntity, HitboxPositions & positions)
+{
+    HitboxPositions *info = &g_CacheHitboxPositions[pEntity->entindex()];
+
+    // Use cache!
+    if ( info->IsValid() ) {
+        positions = *info;
+        return true;
+    }
+
+    // We compute... The engine screams in pain.
+    if ( ComputeHitboxPositions(pEntity, *info) ) {
+        positions = *info;
+        Assert(g_CacheHitboxPositions[pEntity->entindex()].IsValid());
+        return true;
+    }
+
+    return false;
 }
 
 //================================================================================
 // Sets [vecPosition] to the desired hitbox position of the entity'
 // 
 //================================================================================
-bool Utils::GetHitboxPosition( CBaseEntity *pEntity, Vector &vecPosition, HitboxType type )
+bool Utils::GetHitboxPosition(CBaseEntity *pEntity, Vector &vecPosition, HitboxType type)
 {
     vecPosition.Invalidate();
 
     HitboxPositions positions;
-    GetHitboxPositions( pEntity, positions );
+    GetHitboxPositions(pEntity, positions);
 
     if ( !positions.IsValid() )
         return false;
 
     switch ( type ) {
-        case HITGROUP_HEAD:
+        case HEAD:
             vecPosition = positions.head;
             break;
 
-        case HITGROUP_CHEST:
+        case CHEST:
         default:
             vecPosition = positions.chest;
             break;
 
-        case HITGROUP_LEFTLEG:
-            vecPosition = positions.leftLeg;
-            break;
-
-        case HITGROUP_RIGHTLEG:
-            vecPosition = positions.rightLeg;
+        case FEET:
+            vecPosition = positions.feet;
             break;
     }
 
@@ -558,31 +577,31 @@ void Utils::InitBotTrig()
 {
     for ( int i = 0; i<COS_TABLE_SIZE; ++i ) {
         float angle = (float)(2.0f * M_PI * i / (float)(COS_TABLE_SIZE - 1));
-        cosTable[i] = (float)cos( angle );
+        cosTable[i] = (float)cos(angle);
     }
 }
 
 //================================================================================
 //================================================================================
-float Utils::BotCOS( float angle )
+float Utils::BotCOS(float angle)
 {
-    angle = AngleNormalizePositive( angle );
+    angle = AngleNormalizePositive(angle);
     int i = (int)(angle * (COS_TABLE_SIZE - 1) / 360.0f);
     return cosTable[i];
 }
 
 //================================================================================
 //================================================================================
-float Utils::BotSIN( float angle )
+float Utils::BotSIN(float angle)
 {
-    angle = AngleNormalizePositive( angle - 90 );
+    angle = AngleNormalizePositive(angle - 90);
     int i = (int)(angle * (COS_TABLE_SIZE - 1) / 360.0f);
     return cosTable[i];
 }
 
 //================================================================================
 //================================================================================
-bool Utils::IsIntersecting2D( const Vector &startA, const Vector &endA, const Vector &startB, const Vector &endB, Vector *result )
+bool Utils::IsIntersecting2D(const Vector &startA, const Vector &endA, const Vector &startB, const Vector &endB, Vector *result)
 {
     float denom = (endA.x - startA.x) * (endB.y - startB.y) - (endA.y - startA.y) * (endB.x - startB.x);
     if ( denom == 0.0f ) {
@@ -619,13 +638,13 @@ bool Utils::IsIntersecting2D( const Vector &startA, const Vector &endA, const Ve
 
 //================================================================================
 //================================================================================
-CPlayer *Utils::GetClosestPlayer( const Vector &vecPosition, float *distance, CPlayer *pIgnore, int team )
+CPlayer *Utils::GetClosestPlayer(const Vector &vecPosition, float *distance, CPlayer *pIgnore, int team)
 {
     CPlayer *pClosest = NULL;
     float closeDist = 999999999999.9f;
 
     for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+        CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(i));
 
         if ( !pPlayer )
             continue;
@@ -640,7 +659,7 @@ CPlayer *Utils::GetClosestPlayer( const Vector &vecPosition, float *distance, CP
             continue;
 
         Vector position = pPlayer->GetAbsOrigin();
-        float dist = vecPosition.DistTo( position );
+        float dist = vecPosition.DistTo(position);
 
         if ( dist < closeDist ) {
             closeDist = dist;
@@ -658,10 +677,10 @@ CPlayer *Utils::GetClosestPlayer( const Vector &vecPosition, float *distance, CP
 // Devuelve si algún jugador del equipo especificado esta en el rango indicado
 // cerca de la posición indicada
 //================================================================================
-bool Utils::IsSpotOccupied( const Vector &vecPosition, CPlayer *pIgnore, float closeRange, int avoidTeam )
+bool Utils::IsSpotOccupied(const Vector &vecPosition, CPlayer *pIgnore, float closeRange, int avoidTeam)
 {
     float distance;
-    CPlayer *pPlayer = Utils::GetClosestPlayer( vecPosition, &distance, pIgnore, avoidTeam );
+    CPlayer *pPlayer = Utils::GetClosestPlayer(vecPosition, &distance, pIgnore, avoidTeam);
 
     if ( pPlayer && distance < closeRange )
         return true;
@@ -669,13 +688,13 @@ bool Utils::IsSpotOccupied( const Vector &vecPosition, CPlayer *pIgnore, float c
     return false;
 }
 
-CPlayer * Utils::GetClosestPlayerByClass( const Vector & vecPosition, Class_T classify, float *distance, CPlayer *pIgnore )
+CPlayer * Utils::GetClosestPlayerByClass(const Vector & vecPosition, Class_T classify, float *distance, CPlayer *pIgnore)
 {
     CPlayer *pClosest = NULL;
     float closeDist = 999999999999.9f;
 
     for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+        CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(i));
 
         if ( !pPlayer )
             continue;
@@ -690,7 +709,7 @@ CPlayer * Utils::GetClosestPlayerByClass( const Vector & vecPosition, Class_T cl
             continue;
 
         Vector position = pPlayer->GetAbsOrigin();
-        float dist = vecPosition.DistTo( position );
+        float dist = vecPosition.DistTo(position);
 
         if ( dist < closeDist ) {
             closeDist = dist;
@@ -704,10 +723,10 @@ CPlayer * Utils::GetClosestPlayerByClass( const Vector & vecPosition, Class_T cl
     return pClosest;
 }
 
-bool Utils::IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, CPlayer * pIgnore, float closeRange )
+bool Utils::IsSpotOccupiedByClass(const Vector &vecPosition, Class_T classify, CPlayer * pIgnore, float closeRange)
 {
     float distance;
-    CPlayer *pPlayer = Utils::GetClosestPlayerByClass( vecPosition, classify, &distance, pIgnore );
+    CPlayer *pPlayer = Utils::GetClosestPlayerByClass(vecPosition, classify, &distance, pIgnore);
 
     if ( pPlayer && distance < closeRange )
         return true;
@@ -719,10 +738,10 @@ bool Utils::IsSpotOccupiedByClass( const Vector &vecPosition, Class_T classify, 
 // Devuelve si algún jugador esta en la línea de fuego (FOV) de un punto de salida
 // a un punto de destino
 //================================================================================
-bool Utils::IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore, int ignoreTeam )
+bool Utils::IsCrossingLineOfFire(const Vector &vecStart, const Vector &vecFinish, CPlayer *pIgnore, int ignoreTeam)
 {
     for ( int i = 1; i <= gpGlobals->maxClients; ++i ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( i ) );
+        CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(i));
 
         if ( !pPlayer )
             continue;
@@ -738,15 +757,15 @@ bool Utils::IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinis
 
         // compute player's unit aiming vector 
         Vector viewForward;
-        AngleVectors( pPlayer->EyeAngles() + pPlayer->GetPunchAngle(), &viewForward );
+        AngleVectors(pPlayer->EyeAngles() + pPlayer->GetPunchAngle(), &viewForward);
 
         const float longRange = 5000.0f;
         Vector playerOrigin = pPlayer->GetAbsOrigin();
         Vector playerTarget = playerOrigin + longRange * viewForward;
 
-        Vector result( 0, 0, 0 );
+        Vector result(0, 0, 0);
 
-        if ( IsIntersecting2D( vecStart, vecFinish, playerOrigin, playerTarget, &result ) ) {
+        if ( IsIntersecting2D(vecStart, vecFinish, playerOrigin, playerTarget, &result) ) {
             // simple check to see if intersection lies in the Z range of the path
             float loZ, hiZ;
 
@@ -770,61 +789,116 @@ bool Utils::IsCrossingLineOfFire( const Vector &vecStart, const Vector &vecFinis
 //================================================================================
 // Devuelve si la posición es válida usando los filtros de [criteria]
 //================================================================================
-bool Utils::IsValidSpot( const Vector & vecSpot, const Vector & vecOrigin, const CSpotCriteria & criteria, CPlayer * pOwner )
+bool Utils::IsValidSpot(const Vector & vecSpot, const CSpotCriteria & criteria)
 {
-    // Esta lejos del limite
-    if ( criteria.m_flMaxRange > 0 && vecOrigin.DistTo( vecSpot ) > criteria.m_flMaxRange ) {
-        return false;
-    }
-
-    // Este escondite esta en la línea de fuego
-    if ( criteria.m_bOutOfLineOfFire && IsCrossingLineOfFire( vecOrigin, vecSpot, pOwner ) ) {
-        return false;
-    }
-
-    // Tenemos que evitar escondites cerca del equipo enemigo
-    if ( criteria.m_iAvoidTeam && IsSpotOccupied( vecSpot, pOwner, criteria.m_flMinDistanceFromEnemy, criteria.m_iAvoidTeam ) ) {
-        return false;
-    }
-
-#ifdef INSOURCE_DLL
-    CUsersRecipientFilter filter( criteria.m_iAvoidTeam, false );
-
-    // Fuera de la visibilidad del equipo enemigo
-    if ( criteria.m_iAvoidTeam && criteria.m_bOutOfVisibility && ThePlayersSystem->IsAbleToSee( vecSpot, filter, CBaseCombatCharacter::DISREGARD_FOV ) ) {
-        return false;
-    }
-
-    // No es visible
-    if ( criteria.m_bOnlyVisible && pOwner && !pOwner->IsAbleToSee( vecSpot, CBaseCombatCharacter::DISREGARD_FOV ) ) {
-        return false;
-    }
-#else
-    if ( criteria.m_iAvoidTeam && criteria.m_bOutOfVisibility ) {
-        for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-            CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( it ) );
-
-            if ( !pPlayer )
-                continue;
-
-            if ( !pPlayer->IsAlive() )
-                continue;
-
-            if ( pPlayer->GetTeamNumber() != criteria.m_iAvoidTeam )
-                return false;
-
-            if ( pPlayer->FVisible( vecSpot ) && pPlayer->IsInFieldOfView( vecSpot ) )
-                return false;
+    // Only if it is within the limit range
+    if ( criteria.GetMaxRange() > 0 ) {
+        if ( criteria.GetOrigin().DistTo(vecSpot) > criteria.GetMaxRange() ) {
+            return false;
         }
     }
 
-    if ( criteria.m_bOnlyVisible && pOwner ) {
-        if ( !pOwner->FVisible( vecSpot ) || !pOwner->IsInFieldOfView( vecSpot ) )
+#ifdef INSOURCE_DLL
+    // Only if we can see it
+    if ( criteria.HasFlags(FLAG_ONLY_VISIBLE) && criteria.GetPlayer() ) {
+        if ( !criteria.GetPlayer()->IsAbleToSee(vecSpot, CBaseCombatCharacter::DISREGARD_FOV) ) {
             return false;
+        }
     }
 #endif
 
+    // Only if it is out of the line of fire of other players
+    if ( criteria.HasFlags(FLAG_OUT_OF_LINE_OF_FIRE) ) {
+        if ( IsCrossingLineOfFire(criteria.GetOrigin(), vecSpot, criteria.GetPlayer()) ) {
+            return false;
+        }
+    }
+
+    // We have to avoid players of a team, they can be enemies.
+    if ( criteria.GetAvoidTeam() != TEAM_UNASSIGNED ) {
+        // Only if there are no enemies nearby
+        if ( IsSpotOccupied(vecSpot, criteria.GetPlayer(), criteria.GetMinRangeFromAvoid(), criteria.GetAvoidTeam()) ) {
+            return false;
+        }
+
+#ifdef INSOURCE_DLL
+        CUsersRecipientFilter filter(criteria.GetAvoidTeam(), false);
+
+        // Only if it is outside the enemy's vision
+        if ( criteria.HasFlags(FLAG_OUT_OF_AVOID_VISIBILITY) ) {
+            if ( ThePlayersSystem->IsAbleToSee(vecSpot, filter, CBaseCombatCharacter::DISREGARD_FOV) ) {
+                return false;
+            }
+        }
+
+        // Only places where we have the opportunity to shoot while standing.
+        if ( criteria.HasFlags(FLAG_FIRE_OPPOORTUNITY) ) {
+            // Position where the eyes would be when standing.
+            Vector vecEyes = vecSpot;
+            vecEyes.z += VEC_VIEW.z;
+
+            // There is no visibility towards any enemy
+            if ( !ThePlayersSystem->IsAbleToSee(vecEyes, filter, CBaseCombatCharacter::DISREGARD_FOV) ) {
+                return false;
+            }
+        }
+#endif
+    }
+
+    // Only places that are not being used by another Bot.
+    if ( !criteria.HasFlags(FLAG_IGNORE_RESERVED) ) {
+        if ( TheBots->IsSpotReserved(vecSpot) ) {
+            return false;
+        }
+    }
+
     return true;
+}
+
+//================================================================================
+//================================================================================
+Vector g_OriginSort;
+
+int SortNearestSpot(const Vector *spot1, const Vector *spot2)
+{
+    Assert(g_OriginSort.IsValid());
+
+    if ( !g_OriginSort.IsValid() )
+        return 0;
+
+    float distance1 = g_OriginSort.DistTo(*spot1);
+    float distance2 = g_OriginSort.DistTo(*spot2);
+
+    if ( distance1 > distance2 ) {
+        return 1;
+    }
+    else if ( distance1 == distance2 ) {
+        return 0;
+    }
+    else {
+        return -1;
+    }
+}
+
+int SortNearestHint(CAI_Hint * const *spot1, CAI_Hint * const *spot2)
+{
+    Assert(g_OriginSort.IsValid());
+
+    if ( !g_OriginSort.IsValid() )
+        return 0;
+
+    float distance1 = g_OriginSort.DistTo((*spot1)->GetAbsOrigin());
+    float distance2 = g_OriginSort.DistTo((*spot2)->GetAbsOrigin());
+
+    if ( distance1 > distance2 ) {
+        return 1;
+    }
+    else if ( distance1 == distance2 ) {
+        return 0;
+    }
+    else {
+        return -1;
+    }
 }
 
 //================================================================================
@@ -832,82 +906,54 @@ bool Utils::IsValidSpot( const Vector & vecSpot, const Vector & vecOrigin, const
 //================================================================================
 // Los Bots lo usan como primera opción para ocultarse de los enemigos.
 //================================================================================
-bool Utils::FindNavCoverSpot( Vector *vecResult, const Vector &vecOrigin, const CSpotCriteria &criteria, CPlayer *pPlayer, SpotVector *list )
+bool Utils::FindNavCoverSpot(const CSpotCriteria &criteria, SpotVector *outputList)
 {
-    if ( vecResult )
-        vecResult->Invalidate();
-
-    CNavArea *pStartArea = TheNavMesh->GetNearestNavArea( vecOrigin );
+    CNavArea *pStartArea = TheNavMesh->GetNearestNavArea(criteria.GetOrigin());
 
     if ( !pStartArea )
         return false;
 
-    int hidingType = (criteria.m_bIsSniper) ? HidingSpot::IDEAL_SNIPER_SPOT : HidingSpot::IN_COVER;
+    // Type of cover we are looking for
+    int hidingType = (criteria.HasFlags(FLAG_USE_SNIPER_POSITIONS)) ? HidingSpot::IDEAL_SNIPER_SPOT : HidingSpot::IN_COVER;
 
     while ( true ) {
-        CollectHidingSpotsFunctor collector( pPlayer, vecOrigin, criteria.m_flMaxRange, hidingType );
-        SearchSurroundingAreas( pStartArea, vecOrigin, collector, criteria.m_flMaxRange );
+        // We seek cover positions within the range
+        CollectHidingSpotsFunctor collector(criteria.GetPlayer(), criteria.GetOrigin(), criteria.GetMaxRange(), hidingType);
+        SearchSurroundingAreas(pStartArea, criteria.GetOrigin(), collector, criteria.GetMaxRange());
 
-        // Filtros
         for ( int i = 0; i < collector.m_count; ++i ) {
-            if ( !IsValidSpot( *collector.m_hidingSpot[i], vecOrigin, criteria, pPlayer ) ) {
-                collector.RemoveSpot( i );
-                --i;
+            Vector vecSpot = *collector.m_hidingSpot[i];
+
+            // Invalid spot
+            if ( !IsValidSpot(vecSpot, criteria) ) {
                 continue;
             }
 
-            if ( list ) {
-                Vector vec = *collector.m_hidingSpot[i];
-                list->AddToTail( vec );
-            }
+            // We add it to the list of results
+            outputList->AddToTail(vecSpot);
         }
 
-        if ( !vecResult )
-            return false;
-
-        // No se ha encontrado ningún lugar 
-        if ( collector.m_count == 0 ) {
-            // Intentemos con un lugar para Sniper
+        // So we have not found any place
+        if ( outputList->Count() == 0 ) {
+            // It's over man
             if ( hidingType == HidingSpot::IN_COVER ) {
-                hidingType = HidingSpot::IDEAL_SNIPER_SPOT;
-
-                if ( criteria.m_bIsSniper )
-                    break;
+                break;
             }
 
-            // Intentemos con un lugar menos adecuado
-            if ( hidingType == HidingSpot::IDEAL_SNIPER_SPOT )
+            // Not the ideal, but at least it's something...
+            if ( hidingType == HidingSpot::IDEAL_SNIPER_SPOT ) {
                 hidingType = HidingSpot::GOOD_SNIPER_SPOT;
+                continue;
+            }
 
-            // No hay ningún lugar cerca
+            // Well, we have to hide, I suppose.
             if ( hidingType == HidingSpot::GOOD_SNIPER_SPOT ) {
                 hidingType = HidingSpot::IN_COVER;
-
-                if ( !criteria.m_bIsSniper )
-                    break;
+                continue;
             }
         }
         else {
-            if ( criteria.m_bUseNearest ) {
-                float closest = 9999999999999999999.0f;
-
-                for ( int it = 0; it < collector.m_count; ++it ) {
-                    Vector vecDummy = *collector.m_hidingSpot[it];
-                    float distance = vecOrigin.DistTo( vecDummy );
-
-                    if ( distance < closest ) {
-                        closest = distance;
-                        *vecResult = vecDummy;
-                    }
-                }
-
-                return true;
-            }
-            else {
-                int random = (criteria.m_bUseRandom) ? ::RandomInt( 0, collector.m_count - 1 ) : collector.GetRandomHidingSpot();
-                *vecResult = *collector.m_hidingSpot[random];
-                return true;
-            }
+            return true;
         }
     }
 
@@ -919,7 +965,8 @@ bool Utils::FindNavCoverSpot( Vector *vecResult, const Vector &vecOrigin, const 
 //================================================================================
 // Los Bots lo usan como última opción para ocultarse de los enemigos.
 //================================================================================
-bool Utils::FindNavCoverSpotInArea( Vector *vecResult, const Vector &vecOrigin, CNavArea *pArea, const CSpotCriteria &criteria, CPlayer *pPlayer, SpotVector *list )
+/*
+bool Utils::FindNavCoverSpotInArea(Vector *vecResult, const Vector &vecOrigin, CNavArea *pArea, const CSpotCriteria &criteria, CPlayer *pPlayer, SpotVector *list)
 {
     if ( vecResult )
         vecResult->Invalidate();
@@ -936,30 +983,30 @@ bool Utils::FindNavCoverSpotInArea( Vector *vecResult, const Vector &vecOrigin, 
         if ( !position.IsValid() )
             continue;
 
-        if ( collector.Find( position ) > -1 )
+        if ( collector.Find(position) > -1 )
             continue;
 
-        if ( !IsValidSpot( position, vecOrigin, criteria, pPlayer ) ) {
+        if ( !IsValidSpot(position, criteria) ) {
             continue;
         }
 
-        collector.AddToTail( position );
+        collector.AddToTail(position);
 
         // Lo agregamos a la lista
         if ( list )
-            list->AddToTail( position );
+            list->AddToTail(position);
     }
 
     if ( !vecResult )
         return false;
 
     if ( collector.Count() > 0 ) {
-        if ( criteria.m_bUseNearest ) {
-            float closest = 9999999999999999999.0f;
+        if ( criteria.HasFlags(FLAG_USE_NEAREST) ) {
+            float closest = MAX_TRACE_LENGTH;
 
             for ( int it = 0; it < collector.Count(); ++it ) {
-                Vector vecDummy = collector.Element( it );
-                float distance = vecOrigin.DistTo( vecDummy );
+                Vector vecDummy = collector.Element(it);
+                float distance = vecOrigin.DistTo(vecDummy);
 
                 if ( distance < closest ) {
                     closest = distance;
@@ -970,8 +1017,8 @@ bool Utils::FindNavCoverSpotInArea( Vector *vecResult, const Vector &vecOrigin, 
             return true;
         }
         else {
-            int random = (criteria.m_bUseRandom) ? ::RandomInt( 0, collector.Count() - 1 ) : 0;
-            *vecResult = collector.Element( random );
+            int random = ::RandomInt(0, collector.Count() - 1);
+            *vecResult = collector.Element(random);
 
             return true;
         }
@@ -979,240 +1026,179 @@ bool Utils::FindNavCoverSpotInArea( Vector *vecResult, const Vector &vecOrigin, 
 
     return false;
 }
+*/
 
 //================================================================================
 // Devuelve una posición donde ocultarse usando los ai_hint (CAI_Hint)
 //================================================================================
 // Los Bots lo usan como segunda opción para ocultarse de los enemigos.
 //================================================================================
-CAI_Hint *Utils::FindHintSpot( const Vector &vecOrigin, const CHintCriteria &hintCriteria, const CSpotCriteria &criteria, CPlayer *pPlayer, SpotVector *list )
+CAI_Hint *Utils::FindHintSpot(const CHintCriteria &hintCriteria, const CSpotCriteria &criteria, SpotVector *outputList)
 {
+    // We fill in a list of all the info_hints within the search criteria.
     CUtlVector<CAI_Hint *> collector;
-    CAI_HintManager::FindAllHints( vecOrigin, hintCriteria, &collector );
+    CAI_HintManager::FindAllHints(criteria.GetOrigin(), hintCriteria, &collector);
 
+    // None...
     if ( collector.Count() == 0 )
         return NULL;
 
-    FOR_EACH_VEC( collector, it )
+    CUtlVector<CAI_Hint *> list;
+
+    FOR_EACH_VEC(collector, it)
     {
         CAI_Hint *pHint = collector[it];
+        Assert(pHint);
 
         if ( !pHint )
             continue;
 
         Vector position = pHint->GetAbsOrigin();
 
-        if ( !IsValidSpot( position, vecOrigin, criteria, pPlayer ) ) {
-            collector.Remove( it );
-            --it;
+        // Invalid spot
+        if ( !IsValidSpot(position, criteria) ) {
             continue;
         }
 
-        if ( list ) {
-            Vector vec = position;
-            list->AddToTail( vec );
-        }
+        // We add it to the list of results
+        outputList->AddToTail(position);
+        list.AddToTail(pHint);
     }
 
-    if ( collector.Count() > 0 ) {
-        if ( criteria.m_bUseNearest ) {
-            float closest = 9999999999999999999.0f;
-            CAI_Hint *pClosest = NULL;
+    // None...
+    if ( list.Count() == 0 )
+        return NULL;
 
-            for ( int it = 0; it < collector.Count(); ++it ) {
-                CAI_Hint *pDummy = collector[it];
-                Vector vecDummy = pDummy->GetAbsOrigin();
-                float distance = vecOrigin.DistTo( vecDummy );
+    // We sort the list, the first ones are the closest
+    if ( list.Count() > 1 && criteria.HasFlags(FLAG_USE_NEAREST) ) {
+        g_OriginSort = criteria.GetOrigin();
+        list.Sort(SortNearestHint);
+    }
 
-                if ( distance < closest ) {
-                    closest = distance;
-                    pClosest = pDummy;
-                }
-            }
-
-            return pClosest;
-        }
-        else {
-            int random = (criteria.m_bUseRandom) ? ::RandomInt( 0, collector.Count() - 1 ) : 0;
-            return collector[random];
-        }
+    if ( list.Count() == 1 || criteria.HasFlags(FLAG_USE_NEAREST) ) {
+        return list[0];
+    }
+    else {
+        int random = ::RandomInt(0, list.Count() - 1);
+        return list[random];
     }
 
     return NULL;
 }
 
 //================================================================================
-// Devuelve un lugar interesante para el jugador
 //================================================================================
-bool Utils::FindIntestingPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotCriteria &criteria )
+bool Utils::GetSpotCriteria(Vector * vecResult, CSpotCriteria & criteria, SpotVector *outputList)
 {
-    Vector vecOrigin = pPlayer->GetAbsOrigin();
+    if ( !criteria.HasValidOrigin() ) {
+        Assert(!"This function requires a valid origin position");
+        return false;
+    }
 
-    if ( criteria.m_vecOrigin.IsValid() )
-        vecOrigin = criteria.m_vecOrigin;
+    if ( !outputList ) {
+        SpotVector theList;
+        outputList = &theList;
+    }
 
-    // Hints
-    if ( ::RandomInt( 0, 10 ) < 6 ) {
+    Assert(outputList);
+
+    // info_hint
+    {
         CHintCriteria hintCriteria;
-        hintCriteria.AddHintType( HINT_WORLD_VISUALLY_INTERESTING );
-        hintCriteria.AddHintType( HINT_WORLD_WINDOW );
 
-        if ( criteria.m_iTacticalMode == TACTICAL_MODE_STEALTH )
-            hintCriteria.AddHintType( HINT_WORLD_VISUALLY_INTERESTING_STEALTH );
+        // We are looking for interesting places
+        if ( criteria.HasFlags(FLAG_INTERESTING_SPOT) ) {
+            hintCriteria.AddHintType(HINT_WORLD_VISUALLY_INTERESTING);
+            hintCriteria.AddHintType(HINT_WORLD_WINDOW);
 
-        if ( criteria.m_iTacticalMode == TACTICAL_MODE_ASSAULT ) {
 #ifdef INSOURCE_DLL
-            hintCriteria.AddHintType( HINT_TACTICAL_VISUALLY_INTERESTING );
-            hintCriteria.AddHintType( HINT_TACTICAL_ASSAULT_APPROACH );
-#endif
-            hintCriteria.AddHintType( HINT_TACTICAL_PINCH );
-        }
-
-        //if ( criteria.m_bUseNearest )
-        //hintCriteria.SetFlag( bits_HINT_NODE_NEAREST );
-
-        if ( criteria.m_flMaxRange > 0 )
-            hintCriteria.AddIncludePosition( vecOrigin, criteria.m_flMaxRange );
-
-        CAI_Hint *pHint = FindHintSpot( vecOrigin, hintCriteria, criteria, pPlayer );
-
-        if ( pHint ) {
-            if ( vecResult ) {
-                pHint->GetPosition( pPlayer, vecResult );
+            if ( criteria.GetTacticalMode() == TACTICAL_MODE_STEALTH ) {
+                hintCriteria.AddHintType(HINT_WORLD_VISUALLY_INTERESTING_STEALTH);
             }
 
-            return true;
+            if ( criteria.GetTacticalMode() == TACTICAL_MODE_ASSAULT ) {
+                hintCriteria.AddHintType(HINT_TACTICAL_VISUALLY_INTERESTING);
+                hintCriteria.AddHintType(HINT_TACTICAL_ASSAULT_APPROACH);
+                hintCriteria.AddHintType(HINT_TACTICAL_PINCH);
+            }
+#endif
         }
+
+        // We are looking for cover places
+        if ( criteria.HasFlags(FLAG_COVER_SPOT) ) {
+#ifdef INSOURCE_DLL
+            hintCriteria.AddHintType(HINT_TACTICAL_COVER);
+#else
+            hintCriteria.AddHintType(HINT_TACTICAL_COVER_MED);
+            hintCriteria.AddHintType(HINT_TACTICAL_COVER_LOW);
+#endif
+        }
+
+        // Within a range
+        if ( criteria.GetMaxRange() > 0.0f ) {
+            hintCriteria.AddIncludePosition(criteria.GetOrigin(), criteria.GetMaxRange());
+        }
+
+        FindHintSpot(hintCriteria, criteria, outputList);
     }
 
-    // NavMesh
-    if ( FindNavCoverSpot( vecResult, vecOrigin, criteria, pPlayer ) ) {
+    // Navigation Mesh
+    {
+        FindNavCoverSpot(criteria, outputList);
+    }
+
+    if ( outputList->Count() == 0 )
+        return false;
+
+    // We sort the list, the first ones are the closest
+    if ( outputList->Count() > 1 && criteria.HasFlags(FLAG_USE_NEAREST) ) {
+        g_OriginSort = criteria.GetOrigin();
+        outputList->Sort(SortNearestSpot);
+    }
+
+    // We do not want a result, we were probably just looking for a list.
+    if ( !vecResult ) {
+        return (outputList->Count() > 0);
+    }
+
+    if ( outputList->Count() == 1 || criteria.HasFlags(FLAG_USE_NEAREST) ) {
+        *vecResult = outputList->Element(0);
+        return true;
+    }
+    else {
+        int random = ::RandomInt(0, outputList->Count() - 1);
+        *vecResult = outputList->Element(random);
         return true;
     }
 
     return false;
 }
 
-//================================================================================
-// Devuelve una posición donde el jugador puede ocultarse
-//================================================================================
-bool Utils::FindCoverPosition( Vector *vecResult, CPlayer *pPlayer, const CSpotCriteria &criteria )
-{
-    Vector vecOrigin = pPlayer->GetAbsOrigin();
-
-    if ( criteria.m_vecOrigin.IsValid() )
-        vecOrigin = criteria.m_vecOrigin;
-
-    // NavMesh
-    if ( FindNavCoverSpot( vecResult, vecOrigin, criteria, pPlayer ) )
-        return true;
-
-    // Hints
-    CHintCriteria hintCriteria;
-#ifdef INSOURCE_DLL
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER );
-#else
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER_MED );
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER_LOW );
-#endif
-
-    CAI_Hint *pHint = FindHintSpot( vecOrigin, hintCriteria, criteria, pPlayer );
-
-    if ( pHint ) {
-        if ( vecResult ) {
-            pHint->GetPosition( pPlayer, vecResult );
-        }
-
-        return true;
-    }
-
-    // Random Area Spot
-    if ( FindNavCoverSpotInArea( vecResult, vecOrigin, pPlayer->GetLastKnownArea(), criteria, pPlayer ) )
-        return true;
-
-    return false;
-}
-
-//================================================================================
-//================================================================================
-void Utils::FillIntestingPositions( SpotVector * list, CPlayer * pPlayer, const CSpotCriteria & criteria )
-{
-    Vector vecOrigin = pPlayer->GetAbsOrigin();
-
-    if ( criteria.m_vecOrigin.IsValid() )
-        vecOrigin = criteria.m_vecOrigin;
-
-    // Hints
-    CHintCriteria hintCriteria;
-    hintCriteria.AddHintType( HINT_WORLD_VISUALLY_INTERESTING );
-    hintCriteria.AddHintType( HINT_WORLD_WINDOW );
-
-    if ( criteria.m_iTacticalMode == TACTICAL_MODE_STEALTH )
-        hintCriteria.AddHintType( HINT_WORLD_VISUALLY_INTERESTING_STEALTH );
-
-    if ( criteria.m_iTacticalMode == TACTICAL_MODE_ASSAULT ) {
-#ifdef INSOURCE_DLL
-        hintCriteria.AddHintType( HINT_TACTICAL_VISUALLY_INTERESTING );
-#endif
-        //hintCriteria.AddHintType( HINT_TACTICAL_ASSAULT_APPROACH );
-        hintCriteria.AddHintType( HINT_TACTICAL_PINCH );
-    }
-
-    if ( criteria.m_flMaxRange > 0 )
-        hintCriteria.AddIncludePosition( vecOrigin, criteria.m_flMaxRange );
-
-    FindHintSpot( vecOrigin, hintCriteria, criteria, pPlayer, list );
-
-    // NavMesh
-    //FindNavCoverSpot( NULL, vecOrigin, criteria, pPlayer, list );
-}
-
-//================================================================================
-//================================================================================
-void Utils::FillCoverPositions( SpotVector * list, CPlayer * pPlayer, const CSpotCriteria & criteria )
-{
-    Vector vecOrigin = pPlayer->GetAbsOrigin();
-
-    if ( criteria.m_vecOrigin.IsValid() )
-        vecOrigin = criteria.m_vecOrigin;
-
-    // NavMesh
-    FindNavCoverSpot( NULL, vecOrigin, criteria, pPlayer, list );
-
-    // Hints
-    CHintCriteria hintCriteria;
-#ifdef INSOURCE_DLL
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER );
-#else
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER_MED );
-    hintCriteria.AddHintType( HINT_TACTICAL_COVER_LOW );
-#endif
-
-    FindHintSpot( vecOrigin, hintCriteria, criteria, pPlayer, list );
-
-    // Random Area Spot
-    FindNavCoverSpotInArea( NULL, vecOrigin, pPlayer->GetLastKnownArea(), criteria, pPlayer, list );
-}
-
 #ifdef INSOURCE_DLL
 //================================================================================
 //================================================================================
-void Utils::AlienFX_SetColor( CPlayer *pPlayer, unsigned int lights, unsigned int color, float duration )
+void Utils::AlienFX_SetColor(CPlayer *pPlayer, unsigned int lights, unsigned int color, float duration)
 {
     if ( !pPlayer || !pPlayer->IsNetClient() )
         return;
 
-    if ( pPlayer->ShouldThrottleUserMessage( "AlienFX" ) )
+    if ( pPlayer->ShouldThrottleUserMessage("AlienFX") )
         return;
 
-    CSingleUserRecipientFilter user( pPlayer );
+    CSingleUserRecipientFilter user(pPlayer);
     user.MakeReliable();
 
-    UserMessageBegin( user, "AlienFX" );
-    WRITE_SHORT( ALIENFX_SETCOLOR );
-    WRITE_LONG( lights );
-    WRITE_LONG( color );
-    WRITE_FLOAT( duration );
+    UserMessageBegin(user, "AlienFX");
+    WRITE_SHORT(ALIENFX_SETCOLOR);
+    WRITE_LONG(lights);
+    WRITE_LONG(color);
+    WRITE_FLOAT(duration);
     MessageEnd();
 }
 #endif
+
+void CSpotCriteria::SetPlayer(CPlayer * pPlayer)
+{
+    m_pPlayer = pPlayer;
+    SetOrigin(pPlayer->GetAbsOrigin());
+}

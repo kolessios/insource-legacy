@@ -924,6 +924,9 @@ bool DirectorManager::IsTooClose( CBaseEntity *pEntity )
         if ( !pPlayer->IsAlive() )
             continue;
 
+        if ( pPlayer->IsBot() )
+            continue;
+
         float distance = pPlayer->GetAbsOrigin().DistTo( pEntity->GetAbsOrigin() );
 
         // Este jugador lo tiene cerca!
@@ -939,29 +942,51 @@ bool DirectorManager::IsTooClose( CBaseEntity *pEntity )
 //================================================================================
 bool DirectorManager::IsUnreachable( CBaseEntity *pEntity )
 {
-    // No es un NPC
-    if ( !pEntity->IsNPC() )
+    if ( !pEntity )
+        return false;
+
+    // No debemos hacer esta verificación
+    if ( !director_manager_check_unreachable.GetBool() )
+        return false;    
+
+    // Estas muy cerca de algún jugador, evitamos que
+    // de repente desaparezcas
+    if ( IsTooClose(pEntity) )
         return false;
 
     CAI_BaseNPC *pNPC = pEntity->MyNPCPointer();
 
-    // No debemos hacer esta verificación
-    if ( !director_manager_check_unreachable.GetBool() )
-        return false;
+    if ( pNPC ) {
+        // No tiene un enemigo aún
+        if ( !pNPC->GetEnemy() )
+            return false;
 
-    // Estas muy cerca de algún jugador, evitamos que
-    // de repente desaparezcas
-    if ( IsTooClose(pNPC) )
-        return false;
+        // Solo verificamos si el enemigo es un Jugador
+        if ( !pNPC->GetEnemy()->IsPlayer() )
+            return false;
 
-    // No tiene un enemigo aún
-    if ( !pNPC->GetEnemy() )
-        return false;
+        // No puedes alcanzar a tu objetivo
+        return pNPC->IsUnreachable(pNPC->GetEnemy());
+    }
 
-    // Solo verificamos si el enemigo es un Jugador
-    if ( !pNPC->GetEnemy()->IsPlayer() )
-        return false;
+    if ( pEntity->IsPlayer() ) {
+        CPlayer *pPlayer = ToInPlayer(pEntity);
 
-    // No puedes alcanzar a tu objetivo
-    return pNPC->IsUnreachable( pNPC->GetEnemy() );
+        if ( pPlayer->IsBot() && pPlayer->GetBotController() ) {
+            IBot *pBot = pPlayer->GetBotController();
+
+            if ( !pBot->GetEnemy() )
+                return false;
+
+            if ( !pBot->GetEnemy()->IsPlayer() )
+                return false;
+
+            if ( pBot->GetLocomotion()->IsStuck() && pBot->GetLocomotion()->GetStuckDuration() >= 3.6f )
+                return true;
+
+            return pBot->HasCondition(BCOND_GOAL_UNREACHABLE);
+        }
+    }
+
+    return true;
 }

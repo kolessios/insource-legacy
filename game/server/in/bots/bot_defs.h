@@ -387,10 +387,10 @@ enum
     SCHEDULE_DEFEND_SPAWN,
 
 #ifdef APOCALYPSE
-    SCHEDULE_SOLDIER_COVER,
 	SCHEDULE_SEARCH_RESOURCES,
 	SCHEDULE_WANDER,
     SCHEDULE_CLEAN_BUILDING,
+    SCHEDULE_MAINTAIN_COVER,
 #elif HL2MP
     SCHEDULE_WANDER,
 #endif
@@ -420,10 +420,10 @@ static const char *g_BotSchedules[LAST_BOT_SCHEDULE] =
     "DEFEND_SPAWN",
 
 #ifdef APOCALYPSE
-    "SOLDIER_COVER",
 	"SEARCH_RESOURCES",
 	"WANDER",
     "CLEAN_BUILDING",
+    "MAINTAIN_COVER",
 #elif HL2MP
     "WANDER",
 #endif
@@ -573,33 +573,36 @@ enum BotPerformance
 //================================================================================
 // Stores the assigned Hitbox number for each body part
 //================================================================================
+enum HitboxType
+{
+    HEAD = 0,
+    CHEST,
+    FEET
+};
+
 struct HitboxBones
 {
     int head;
     int chest;
-    int leftLeg;
-    int rightLeg;
 };
-
-typedef int HitboxType;
 
 struct HitboxPositions
 {
     void Reset() {
         head.Invalidate();
         chest.Invalidate();
-        leftLeg.Invalidate();
-        rightLeg.Invalidate();
+        feet.Invalidate();
+        frame = -10;
     }
 
     bool IsValid() {
-        return (head.IsValid() && chest.IsValid());
+        return ((frame + 5) >= gpGlobals->framecount && head.IsValid() && chest.IsValid());
     }
 
     Vector head;
     Vector chest;
-    Vector leftLeg;
-    Vector rightLeg;
+    Vector feet;
+    int frame;
 };
 
 //================================================================================

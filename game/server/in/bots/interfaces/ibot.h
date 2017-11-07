@@ -34,6 +34,7 @@ class CPlayer;
 // Information
 //================================================================================
 
+typedef CUtlVector<Vector> SpotVector;
 static int g_botID = 0;
 
 //================================================================================
@@ -127,6 +128,7 @@ public:
     virtual bool CanRunAI() = 0;
     virtual void Upkeep() = 0;
     virtual void RunAI() = 0;
+    virtual void RunCustomAI() = 0;
 
     virtual void UpdateComponents( bool important = false ) = 0;
 

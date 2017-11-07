@@ -43,6 +43,7 @@ public:
     virtual bool CanRunAI();
     virtual void Upkeep();
     virtual void RunAI();
+    virtual void RunCustomAI();
 
     virtual void UpdateComponents( bool important = false );
 

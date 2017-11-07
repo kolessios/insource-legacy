@@ -85,10 +85,16 @@ public:
     virtual CDataMemory *AddDataMemoryList( const char *name, CDataMemory *value, float forgetTime = -1.0f ) = 0;
     virtual CDataMemory *RemoveDataMemoryList( const char *name, CDataMemory *value, float forgetTime = -1.0f ) = 0;
 
+    virtual bool HasDataMemory(const char *name) const = 0;
     virtual CDataMemory *GetDataMemory( const char *name, bool forceIfNotExists = false ) const = 0;
 
     virtual void ForgetData( const char *name ) = 0;
     virtual void ForgetAllData() = 0;
+
+    virtual int GetDataCount() const
+    {
+        return m_DataMemory.Count();
+    }
 
 public:
     virtual void Reset()
@@ -139,15 +145,16 @@ public:
         m_flNearbyDistance = distance;
     }
 
+public:
+    CUtlMap<int, CEntityMemory *> m_Memory;
+    CUtlMap<string_t, CDataMemory *> m_DataMemory;
+
 protected:
     bool m_bEnabled;
     CEntityMemory *m_pPrimaryThreat;
     CEntityMemory *m_pIdealThreat;
 
     float m_flNearbyDistance;
-
-    CUtlMap<int, CEntityMemory *> m_Memory;
-    CUtlMap<string_t, CDataMemory *> m_DataMemory;
 
     friend class CBot;
 };

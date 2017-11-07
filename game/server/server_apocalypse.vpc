@@ -30,8 +30,15 @@ $Project "Server (Apocalypse)"
 				{
 					$Folder "Schedules"
 					{
+						$File "ap\ap_bot_schedule_maintain_cover.cpp"
 						$File "ap\ap_bot_schedules.cpp"
 						$File "ap\ap_bot_schedules.h"
+					}
+
+					$Folder "Components"
+					{
+						$File "ap\ap_bot_component_decision.cpp"
+						$File "ap\ap_bot_components.h"
 					}
 
 					$File "ap\ap_bot.cpp"
