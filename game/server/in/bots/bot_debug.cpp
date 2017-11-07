@@ -165,7 +165,7 @@ void CBot::DebugDisplay()
     // Memory
     if ( GetMemory() ) {
         DebugScreenText( "" );
-        DebugScreenText( msg.sprintf("Memory (Ents: %i) (%.3f ms):", GetMemory()->GetKnownCount(), GetMemory()->GetUpdateCost() ), red );
+        DebugScreenText( msg.sprintf("Memory (Ents: %i) (%.3f ms):", GetMemory()->GetTotalKnownCount(), GetMemory()->GetUpdateCost() ), red );
 
         DebugScreenText( msg.sprintf( "    Threats: %i (Nearby: %i - Dangerous: %i)", GetMemory()->GetThreatCount(), GetDataMemoryInt( "NearbyThreats" ), GetDataMemoryInt( "NearbyDangerousThreats" ) ), red );
         DebugScreenText( msg.sprintf( "    Friends: %i (Nearby: %i)", GetMemory()->GetFriendCount(), GetDataMemoryInt( "NearbyFriends" ) ), green );
@@ -328,10 +328,11 @@ void CBot::DebugDisplay()
 
     // Deep Memory
     if ( bot_debug_memory.GetBool() && GetMemory() ) {
-        FOR_EACH_MAP_FAST( GetMemory()->m_Memory, it )
-        {
+        for( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
             CEntityMemory *memory = GetMemory()->m_Memory[it];
-            Assert( memory );
+            
+            if ( !memory )
+                continue;
 
             CBaseEntity *pEntity = memory->GetEntity();
             Assert( pEntity );

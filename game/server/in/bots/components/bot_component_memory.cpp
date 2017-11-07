@@ -61,49 +61,48 @@ void CBotMemory::UpdateMemory()
         }
     }
 
-    if ( m_Memory.Count() > 0 ) {
-        int nearbyThreats = 0;
-        int nearbyFriends = 0;
-        int nearbyDangerousThreats = 0;
+    int nearbyThreats = 0;
+    int nearbyFriends = 0;
+    int nearbyDangerousThreats = 0;
 
-        FOR_EACH_MAP_FAST(m_Memory, it)
-        {
-            CEntityMemory *memory = m_Memory[it];
-            Assert(memory);
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
+        CEntityMemory *memory = m_Memory[it];
 
-            CBaseEntity *pEntity = memory->GetEntity();
+        if ( !memory )
+            continue;
 
-            // The entity has been deleted.
-            if ( pEntity == NULL || pEntity->IsMarkedForDeletion() || !pEntity->IsAlive() ) {
-                ForgetEntity(it);
-                continue;
-            }
+        CBaseEntity *pEntity = memory->GetEntity();
 
-            // New frame, we need to recheck if we can see it.
-            memory->UpdateVisibility(false);
+        // The entity has been deleted.
+        if ( pEntity == NULL || pEntity->IsMarkedForDeletion() || !pEntity->IsAlive() ) {
+            ForgetEntity(it);
+            continue;
+        }
 
-            if ( !memory->IsLost() ) {
-                // The last known position of this entity is close to us.
-                // We mark how many allied/enemy entities are close to us to make better decisions.
-                if ( memory->IsInRange(m_flNearbyDistance) ) {
-                    if ( memory->IsEnemy() ) {
-                        if ( GetDecision()->IsDangerousEnemy(pEntity) ) {
-                            ++nearbyDangerousThreats;
-                        }
+        // New frame, we need to recheck if we can see it.
+        memory->UpdateVisibility(false);
 
-                        ++nearbyThreats;
+        if ( !memory->IsLost() ) {
+            // The last known position of this entity is close to us.
+            // We mark how many allied/enemy entities are close to us to make better decisions.
+            if ( memory->IsInRange(m_flNearbyDistance) ) {
+                if ( memory->IsEnemy() ) {
+                    if ( GetDecision()->IsDangerousEnemy(pEntity) ) {
+                        ++nearbyDangerousThreats;
                     }
-                    else if ( memory->IsFriend() ) {
-                        ++nearbyFriends;
-                    }
+
+                    ++nearbyThreats;
+                }
+                else if ( memory->IsFriend() ) {
+                    ++nearbyFriends;
                 }
             }
         }
-
-        UpdateDataMemory("NearbyThreats", nearbyThreats);
-        UpdateDataMemory("NearbyFriends", nearbyFriends);
-        UpdateDataMemory("NearbyDangerousThreats", nearbyDangerousThreats);
     }
+
+    UpdateDataMemory("NearbyThreats", nearbyThreats);
+    UpdateDataMemory("NearbyFriends", nearbyFriends);
+    UpdateDataMemory("NearbyDangerousThreats", nearbyDangerousThreats);
 
     // We see, we smell, we feel
     GetDecision()->PerformSensing();
@@ -118,10 +117,11 @@ void CBotMemory::UpdateIdealThreat()
 
     CEntityMemory *pIdeal = NULL;
 
-   FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -130,9 +130,9 @@ void CBotMemory::UpdateIdealThreat()
             continue;
 
         CBaseEntity *pEnt = memory->GetEntity();
-        Assert( pEnt );
+        Assert(pEnt);
 
-        if ( !pIdeal || GetDecision()->IsBetterEnemy( pEnt, pIdeal->GetEntity() ) ) {
+        if ( !pIdeal || GetDecision()->IsBetterEnemy(pEnt, pIdeal->GetEntity()) ) {
             pIdeal = memory;
         }
     }
@@ -239,7 +239,7 @@ CEntityMemory * CBotMemory::UpdateEntityMemory( CBaseEntity * pEnt, const Vector
 {
     VPROF_BUDGET( "CBotMemory::UpdateEntityMemory", VPROF_BUDGETGROUP_BOTS );
 
-    if ( pEnt == NULL || pEnt->IsMarkedForDeletion() )
+    if ( !pEnt || pEnt->IsMarkedForDeletion() )
         return NULL;
 
     // We do not need to remember ourselves...
@@ -278,9 +278,11 @@ CEntityMemory * CBotMemory::UpdateEntityMemory( CBaseEntity * pEnt, const Vector
         GetBot()->GetSquad()->ReportEnemy( GetHost(), pEnt );
     }
 
+    AssertOnce(pEnt->entindex() <= MAX_ENTITY_MEMORY);
+
     if ( !memory ) {
         memory = new CEntityMemory( GetBot(), pEnt, pInformer );
-        m_Memory.Insert( pEnt->entindex(), memory );
+        m_Memory[pEnt->entindex() % MAX_ENTITY_MEMORY] = memory;
     }
 
     memory->UpdatePosition( vecPosition );
@@ -295,8 +297,7 @@ CEntityMemory * CBotMemory::UpdateEntityMemory( CBaseEntity * pEnt, const Vector
 //================================================================================
 void CBotMemory::ForgetEntity( CBaseEntity * pEnt )
 {
-    int index = m_Memory.Find( pEnt->entindex() );
-    ForgetEntity( index );
+    ForgetEntity(pEnt->entindex());
 }
 
 //================================================================================
@@ -307,14 +308,11 @@ void CBotMemory::ForgetEntity( CBaseEntity * pEnt )
 //================================================================================
 void CBotMemory::ForgetEntity( int index )
 {
-    if ( !m_Memory.IsValidIndex( index ) )
-        return;
-
-    CEntityMemory *memory = m_Memory.Element( index );
+    CEntityMemory *memory = m_Memory[index];
     Assert( memory );
 
-    // Remove from array
-    m_Memory.RemoveAt( index );
+    if ( !memory )
+        return;
 
     // We check and set null all known pointers
     // Iván: Noob question...
@@ -328,10 +326,7 @@ void CBotMemory::ForgetEntity( int index )
         m_pIdealThreat = NULL;
     }
 
-    //m_Threats.FindAndRemove( memory );
-    //m_Friends.FindAndRemove( memory );
-
-    DevMsg(2, "Deleting index %i from memory...\n", index);
+    m_Memory[index] = NULL;
 
     // Delete pointer ???
     delete memory;
@@ -349,7 +344,7 @@ void CBotMemory::ForgetAllEntities()
 //================================================================================
 CEntityMemory * CBotMemory::GetEntityMemory( CBaseEntity * pEnt ) const
 {
-    if ( pEnt == NULL ) {
+    if ( !pEnt ) {
         if ( GetPrimaryThreat() == NULL )
             return NULL;
 
@@ -358,7 +353,7 @@ CEntityMemory * CBotMemory::GetEntityMemory( CBaseEntity * pEnt ) const
 
     Assert( pEnt );
 
-    if ( pEnt == NULL )
+    if ( !pEnt )
         return NULL;
 
     return GetEntityMemory( pEnt->entindex() );
@@ -368,12 +363,7 @@ CEntityMemory * CBotMemory::GetEntityMemory( CBaseEntity * pEnt ) const
 //================================================================================
 CEntityMemory * CBotMemory::GetEntityMemory( int entindex ) const
 {
-    int index = m_Memory.Find( entindex );
-
-    if ( !m_Memory.IsValidIndex( index ) )
-        return NULL;
-
-    return m_Memory.Element( index );
+    return m_Memory[entindex];
 }
 
 //================================================================================
@@ -390,10 +380,11 @@ CEntityMemory * CBotMemory::GetClosestThreat( float *distance ) const
     float closest = MAX_TRACE_LENGTH;
     CEntityMemory *closestMemory = NULL;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -422,10 +413,11 @@ int CBotMemory::GetThreatCount( float range ) const
 {
     int count = 0;
     
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -450,10 +442,11 @@ int CBotMemory::GetThreatCount() const
 {
     int count = 0;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -474,10 +467,11 @@ CEntityMemory * CBotMemory::GetClosestFriend( float *distance ) const
     float closest = MAX_TRACE_LENGTH;
     CEntityMemory *closestMemory = NULL;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -506,10 +500,11 @@ int CBotMemory::GetFriendCount( float range ) const
 {
     int count = 0;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -534,10 +529,11 @@ int CBotMemory::GetFriendCount() const
 {
     int count = 0;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -558,10 +554,11 @@ CEntityMemory * CBotMemory::GetClosestKnown( int teamnum, float *distance ) cons
     float closest = MAX_TRACE_LENGTH;
     CEntityMemory *closestMemory = NULL;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -590,10 +587,11 @@ int CBotMemory::GetKnownCount( int teamnum, float range ) const
 {
     int count = 0;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;
@@ -614,14 +612,22 @@ int CBotMemory::GetKnownCount( int teamnum, float range ) const
 
 //================================================================================
 //================================================================================
+int CBotMemory::GetTotalKnownCount() const
+{
+    return 0;
+}
+
+//================================================================================
+//================================================================================
 float CBotMemory::GetTimeSinceVisible( int teamnum ) const
 {
     float closest = -1.0f;
 
-    FOR_EACH_MAP_FAST( m_Memory, it )
-    {
+    for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
         CEntityMemory *memory = m_Memory[it];
-        Assert( memory );
+        
+        if ( !memory )
+            continue;
 
         if ( memory->IsLost() )
             continue;

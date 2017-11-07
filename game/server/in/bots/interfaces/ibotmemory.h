@@ -22,6 +22,9 @@ class CDataMemory;
 #define GetDataMemoryString(name) GetMemory()->GetDataMemory(name, true)->GetString()
 #define GetDataMemoryEntity(name) GetMemory()->GetDataMemory(name, true)->GetEntity()
 
+// Maximum number of entities that we can store
+#define MAX_ENTITY_MEMORY 1024
+
 //================================================================================
 // Memory component
 // The bot memory about the position of friends and enemies / data memory.
@@ -34,7 +37,6 @@ public:
 
     IBotMemory( IBot *bot ) : BaseClass( bot )
     {
-        SetDefLessFunc( m_Memory );
         SetDefLessFunc( m_DataMemory );
     }
 
@@ -68,10 +70,7 @@ public:
 
     virtual CEntityMemory *GetClosestKnown( int teamnum, float *distance = NULL ) const = 0;
     virtual int GetKnownCount( int teamnum, float range = MAX_TRACE_LENGTH ) const = 0;
-
-    virtual int GetKnownCount() const {
-        return m_Memory.Count();
-    }
+    virtual int GetTotalKnownCount() const = 0;
 
     virtual float GetTimeSinceVisible( int teamnum ) const = 0;
 
@@ -106,7 +105,10 @@ public:
         m_pIdealThreat = NULL;
         m_flNearbyDistance = 1000.0;
 
-        m_Memory.Purge();
+        for ( int it = 0; it < MAX_ENTITY_MEMORY; it++ ) {
+            m_Memory[it] = NULL;
+        }
+
         m_DataMemory.Purge();
     }
 
@@ -146,7 +148,8 @@ public:
     }
 
 public:
-    CUtlMap<int, CEntityMemory *> m_Memory;
+    CEntityMemory *m_Memory[MAX_ENTITY_MEMORY];
+    //CUtlMap<int, CEntityMemory *> m_Memory;
     CUtlMap<string_t, CDataMemory *> m_DataMemory;
 
 protected:

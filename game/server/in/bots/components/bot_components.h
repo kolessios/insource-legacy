@@ -243,6 +243,7 @@ public:
 
     virtual CEntityMemory *GetClosestKnown( int teamnum, float *distance = NULL ) const;
     virtual int GetKnownCount( int teamnum, float range = MAX_TRACE_LENGTH ) const;
+    virtual int GetTotalKnownCount() const;
 
     virtual float GetTimeSinceVisible( int teamnum ) const;
 
