@@ -10,10 +10,6 @@
 #include "c_in_player.h"
 #include "sound_instance.h"
 
-class C_SurvivorPlayer;
-class C_SoldierPlayer;
-class C_MonsterPlayer;
-
 //================================================================================
 // Un Jugador de SCP
 //================================================================================
@@ -45,10 +41,10 @@ public:
     virtual void UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity );
 
     // Velocidad
-    virtual void UpdateSpeed();
+    virtual float GetSpeed();
 
 protected:
-    SoundInstance *m_nMovementSound;
+    CSoundInstance *m_pMovementSound;
 };
 
 #endif // C_SCP_BASEPLAYER_H

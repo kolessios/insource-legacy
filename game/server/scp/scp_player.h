@@ -1,7 +1,9 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
-#ifndef SCP_BASEPLAYER_H
-#define SCP_BASEPLAYER_H
+#ifndef SCP_PLAYER_H
+#define SCP_PLAYER_H
 
 #ifdef _WIN32
 #pragma once
@@ -10,12 +12,8 @@
 #include "in_player.h"
 #include "sound_instance.h"
 
-class CSurvivorPlayer;
-class CSoldierPlayer;
-class CMonsterPlayer;
-
 //================================================================================
-// Código compartido entre jugadores, soldados y SCP's
+// An SCP player
 //================================================================================
 class CSCP_Player : public CPlayer
 {
@@ -49,7 +47,7 @@ public:
     virtual void OnPlayerClass( int playerClass );
 
     // Velocidad
-    virtual void UpdateSpeed();
+    virtual float GetSpeed();
 
     // Equipo
     virtual void ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent );
@@ -59,7 +57,7 @@ public:
     virtual void PrepareModel();
 
     // Features
-    virtual void CreateFeatures();
+    virtual void CreateComponents();
 
     // Utilidades
     virtual const char *GetSpawnEntityName();
@@ -74,9 +72,9 @@ public:
     virtual void UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity );
 
 protected:
-    SoundInstance *m_nMovementSound;
+    CSoundInstance *m_pMovementSound;
 };
 
 CONVERT_PLAYER_FUNCTION( CSCP_Player, Scp );
 
-#endif // SCP_BASEPLAYER_H
+#endif // SCP_PLAYER_H

@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "in_gamerules.h"
@@ -19,24 +21,21 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
-// Comandos
+// Commands
 //================================================================================
 
 extern ConVar sv_player_walk_speed;
 extern ConVar sv_player_speed;
 extern ConVar sv_player_sprint_speed;
 
-// Velocidades de SCP-173
-DECLARE_NOTIFY_COMMAND( sv_player_scp173_walk_speed, "100.0", "Velocidad al caminar." )
-DECLARE_NOTIFY_COMMAND( sv_player_scp173_speed, "200.0", "Velocidad normal." )
-DECLARE_NOTIFY_COMMAND( sv_player_scp173_sprint_speed, "250.0", "Velocidad al correr." )
+// SCP-173 Speed
+DECLARE_NOTIFY_COMMAND( sv_player_scp173_walk_speed, "100.0", "" )
 
 //================================================================================
-// Crea el sistema de animación
 //================================================================================
 void CSCP_Player::CreateAnimationSystem()
 {
-    // SCP-173 no tiene animaciones
+    // SCP-173 has no animations
     if ( GetPlayerClass() == PLAYER_CLASS_SCP_173 )
         return;
 
@@ -56,15 +55,13 @@ void CSCP_Player::CreateAnimationSystem()
         data.m_flBodyYawRate = 160.0f;
     }
 
-    //data.m_iLegsAnimType        = LEGANIM_8WAY;
     data.m_nAimPitchPoseName = "aim_pitch";
     data.m_nAimYawPoseName = "aim_yaw";
 
-	m_pAnimState = CreatePlayerAnimationSystem( this, data );
+    m_pAnimationSystem = CreatePlayerAnimationSystem( this, data );
 }
 
 //====================================================================
-// Traduce una actividad a otra
 //====================================================================
 Activity CSCP_Player::TranslateActivity( Activity actBase )
 {
@@ -83,9 +80,6 @@ Activity CSCP_Player::TranslateActivity( Activity actBase )
             {
                 if ( GetPlayerStatus() == PLAYER_STATUS_DEJECTED )
                     return ACT_DIE_INCAP;
-
-                //if ( RandomInt(0, 10) == 0 )
-                //return ACT_TERROR_DIE_FROM_STAND;
 
                 return ACT_DIE_STANDING;
             }
@@ -226,35 +220,18 @@ Activity CSCP_Player::TranslateActivity( Activity actBase )
 }
 
 //================================================================================
-// Actualiza la velocidad máxima del Jugador
+// Devuelve la velocidad inicial del jugador
 //================================================================================
-void CSCP_Player::UpdateSpeed()
+float CSCP_Player::GetSpeed()
 {
-    // Velocidad normal
-    float flSpeed = sv_player_speed.GetFloat();
+    float flSpeed = BaseClass::GetSpeed();
 
     if ( GetPlayerClass() == PLAYER_CLASS_SCP_173 )
     {
-        flSpeed = sv_player_scp173_speed.GetFloat();
-
-        if ( IsWalking() )
-            flSpeed = sv_player_scp173_walk_speed.GetFloat();
-        else if ( IsSprinting() || IsCrouching() )
-            flSpeed = sv_player_scp173_sprint_speed.GetFloat();
-    }
-    else
-    {
-        if ( IsWalking() )
-            flSpeed = sv_player_walk_speed.GetFloat();
-        else if ( IsSprinting() || IsCrouching() )
-            flSpeed = sv_player_sprint_speed.GetFloat();
+        flSpeed = sv_player_scp173_walk_speed.GetFloat();
     }
 
-    // Modificaciones
-    SpeedModifier( flSpeed );
-
-    // Ajustamos la velocidad
-    SetMaxSpeed( flSpeed );
+    return flSpeed;
 }
 
 //================================================================================
@@ -283,34 +260,23 @@ void CSCP_Player::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOri
     // No se esta moviendo
     if ( speed <= 30.0f )
     {
-        m_nMovementSound->Fadeout( 0.1f );
+        m_pMovementSound->Fadeout( 0.1f );
         return;
     }
 
     // Pitch predeterminado
-    float pitch = m_nMovementSound->m_nInfo.m_nPitch;
-    float volume = m_nMovementSound->m_nInfo.m_flVolume;
-
-    if ( IsWalking() )
-    {
-        pitch -= 5.0f;
-        volume -= 0.3f;
-    }
-    else if ( IsSprinting() )
-    {
-        pitch += 5.0f;
-        volume += 0.2f;
-    }
+    float pitch = m_pMovementSound->m_nInfo.m_nPitch;
+    float volume = m_pMovementSound->m_nInfo.m_flVolume;
 
     volume = clamp( volume, 0.1f, 1.0f );
 
-    if ( m_nMovementSound->IsPlaying() )
+    if ( m_pMovementSound->IsPlaying() )
     {
-        m_nMovementSound->SetPitch( pitch, 0.01f );
-        m_nMovementSound->SetVolume( volume, 0.01f );
+        m_pMovementSound->SetPitch( pitch, 0.01f );
+        m_pMovementSound->SetVolume( volume, 0.01f );
     }
     else
     {
-        m_nMovementSound->Play( volume, pitch );
+        m_pMovementSound->Play( volume, pitch );
     }
 }

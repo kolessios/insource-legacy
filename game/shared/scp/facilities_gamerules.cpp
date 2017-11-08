@@ -1,4 +1,6 @@
-//==== Woots 2017. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "scp_gamerules.h"
@@ -31,7 +33,4 @@ REGISTER_GAMERULES_CLASS( CFacilitiesGameRules );
 CFacilitiesGameRules::CFacilitiesGameRules()
 {
     TheGameRules = this;
-
-    // Establecemos el modo de juego
-    SetGameMode( sv_gamemode.GetInt() );
 }

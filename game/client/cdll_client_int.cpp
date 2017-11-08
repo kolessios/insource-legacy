@@ -86,6 +86,7 @@
 #include "ihudlcd.h"
 #include "toolframework_client.h"
 #include "hltvcamera.h"
+#include "dirent.h"
 
 #if defined( REPLAY_ENABLED )
 #include "replaycamera.h"
@@ -1113,6 +1114,64 @@ int CHLClient::Connect( CreateInterfaceFn appSystemFactory, CGlobalVarsBase *pGl
 	return true;
 }
 
+static void AddDirectorySearchPath(const char *pDirectory)
+{
+    // We get the full path to the directory
+    char directory[MAX_PATH];
+    filesystem->RelativePathToFullPath(pDirectory, "GAME", directory, sizeof(directory));
+
+    DIR *gameDirectory = opendir(directory);
+    struct dirent *ent;
+
+    if ( gameDirectory ) {
+        // We read each file in the directory
+        while ( (ent = readdir(gameDirectory)) != NULL ) {
+            // File full path
+            const char *pFullPath = UTIL_VarArgs("%s\\%s", directory, ent->d_name);
+
+            // We make sure it is a valid directory
+            if ( !FStrEq(ent->d_name, ".") && !FStrEq(ent->d_name, "..") && filesystem->IsDirectory(pFullPath) ) {
+                filesystem->AddSearchPath(pFullPath, "GAME");
+            }
+        }
+    }
+    else {
+        Warning("[AddDirectorySearchPath] The directory could not be found: %s \n", pDirectory);
+    }
+}
+
+static void MountAdditionalContent()
+{
+    KeyValues *pMainFile = new KeyValues("gameinfo.txt");
+
+#ifndef _WINDOWS
+    // case sensitivity
+    pMainFile->LoadFromFile(filesystem, "GameInfo.txt", "MOD");
+    if ( !pMainFile )
+#endif
+
+        pMainFile->LoadFromFile(filesystem, "gameinfo.txt", "MOD");
+
+    if ( pMainFile ) {
+        KeyValues* pFileSystemInfo = pMainFile->FindKey("FileSystem");
+
+        if ( pFileSystemInfo ) {
+            KeyValues* pSearchPaths = pFileSystemInfo->FindKey("SearchPaths");
+
+            if ( pSearchPaths ) {
+                for ( KeyValues *pKey = pSearchPaths->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() ) {
+                    if ( strcmp(pKey->GetName(), "Content") == 0 ) {
+                        const char *pPath = pKey->GetString();
+                        AddDirectorySearchPath(pPath);
+                    }
+                }
+            }
+        }
+    }
+
+    pMainFile->deleteThis();
+}
+
 int CHLClient::Init( CreateInterfaceFn appSystemFactory, CGlobalVarsBase *pGlobals )
 {
 
@@ -1229,10 +1288,7 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CGlobalVarsBase *pGloba
 	g_pcv_ThreadMode = g_pCVar->FindVar( "host_thread_mode" );
     //g_pcv_ThreadMode->SetValue( true );
 
-	//filesystem->AddSearchPath("../../../steamapps/common/portal 2/portal2", "GAME");
-	//filesystem->AddSearchPath("../../../steamapps/common/left 4 dead/left4dead", "GAME");
-	//filesystem->AddSearchPath("../../../steamapps/common/left 4 dead 2/left4dead2", "GAME");
-
+    MountAdditionalContent();
 
 	COM_TimestampedLog( "InitGameSystems" );
 

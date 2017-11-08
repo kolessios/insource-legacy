@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "in_gamerules.h"
@@ -9,7 +11,7 @@
 extern ConVar sv_gamemode;
 
 //================================================================================
-// Instala las reglas del juego del modo actual
+// Install the rules of the game of the current mode
 //================================================================================
 void InstallGameRules()
 {

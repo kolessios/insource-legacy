@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "c_scp_player.h"
@@ -7,11 +9,11 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
-// Comandos
+// Commands
 //================================================================================
 
 //================================================================================
-// Información y Red
+// Data and network
 //================================================================================
 
 LINK_ENTITY_TO_CLASS( player, C_SCP_Player );
@@ -28,7 +30,7 @@ END_PREDICTION_DATA()
 C_SCP_Player::C_SCP_Player()
 {
     // TODO
-    m_nMovementSound = new SoundInstance( "SCP173.Movement", this, this );
+    m_pMovementSound = new CSoundInstance( "SCP173.Movement", this, this );
 }
 
 //================================================================================

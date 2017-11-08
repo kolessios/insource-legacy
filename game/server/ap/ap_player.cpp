@@ -127,6 +127,7 @@ void CAP_Player::SetUpBot()
 }
 
 //================================================================================
+// Initial Spawn, is called once when accessing the server.
 //================================================================================
 void CAP_Player::InitialSpawn()
 {
@@ -342,6 +343,7 @@ void CAP_Player::SetRandomPlayerClass()
 }
 
 //================================================================================
+// Change the team to where the player belongs
 //================================================================================
 void CAP_Player::ChangeTeam(int iTeamNum)
 {

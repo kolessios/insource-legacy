@@ -3,10 +3,10 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <GameDir>scp</GameDir>
-    <DebugParams>-console -window -dev -override_vpk -language english</DebugParams>
-    <GameBaseDir>C:\Users\Kolesias123\Documents\Proyectos\Woots\Juegos\Source\game\scp</GameBaseDir>
-    <SourceDir>C:\Users\Kolesias123\Documents\Proyectos\Woots\Juegos\Source\insource</SourceDir>
-    <EngineExeDir>C:\Program Files (x86)\Steam\SteamApps\common\Alien Swarm</EngineExeDir>
+    <DebugParams>-console -window -dev -override_vpk +cl_threaded_init 1 +sv_threaded_init 1</DebugParams>
+    <SourceDir>E:\Documentos\Proyectos\Woots\Juegos\Source\insource</SourceDir>
+    <GameBaseDir>E:\Documentos\Proyectos\Woots\Juegos\Source\game</GameBaseDir>
+    <EngineExeDir>E:\Steam\steamapps\common\Alien Swarm</EngineExeDir>
     <EngineExe>swarm.exe</EngineExe>
     <GameName>SCP</GameName>
   </PropertyGroup>

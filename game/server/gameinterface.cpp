@@ -107,6 +107,9 @@
 #include "tier2/tier2_logging.h"
 #include "fmtstr.h"
 
+#include "dirent.h"
+#undef CreateEvent
+
 #ifdef INFESTED_DLL
 #include "missionchooser/iasw_mission_chooser.h"
 #include "missionchooser/iasw_mission_chooser_source.h"
@@ -629,43 +632,62 @@ static bool InitGameSystems( CreateInterfaceFn appSystemFactory )
 	return true;
 }
 
+static void AddDirectorySearchPath(const char *pDirectory)
+{
+    // We get the full path to the directory
+    char directory[MAX_PATH];
+    filesystem->RelativePathToFullPath(pDirectory, "GAME", directory, sizeof(directory));
+
+    DIR *gameDirectory = opendir(directory);
+    struct dirent *ent;
+
+    if ( gameDirectory ) {
+        // We read each file in the directory
+        while ( (ent = readdir(gameDirectory)) != NULL ) {
+            // File full path
+            const char *pFullPath = UTIL_VarArgs("%s\\%s", directory, ent->d_name);
+
+            // We make sure it is a valid directory
+            if ( !FStrEq(ent->d_name, ".") && !FStrEq(ent->d_name, "..") && filesystem->IsDirectory(pFullPath) ) {
+                filesystem->AddSearchPath(pFullPath, "GAME");
+            }
+        }
+    }
+    else {
+        Warning("[AddDirectorySearchPath] The directory could not be found: %s \n", pDirectory);
+    }
+}
+
 static void MountAdditionalContent()
 {
-	KeyValues *pMainFile = new KeyValues( "gameinfo.txt" );
+    KeyValues *pMainFile = new KeyValues("gameinfo.txt");
 
 #ifndef _WINDOWS
-	// case sensitivity
-	pMainFile->LoadFromFile( filesystem, "GameInfo.txt", "MOD" );
-	if (!pMainFile)
+    // case sensitivity
+    pMainFile->LoadFromFile(filesystem, "GameInfo.txt", "MOD");
+    if ( !pMainFile )
 #endif
 
-	pMainFile->LoadFromFile( filesystem, "gameinfo.txt", "MOD" );
- 
-	if ( pMainFile )
-	{
-		KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
+        pMainFile->LoadFromFile(filesystem, "gameinfo.txt", "MOD");
 
-		if ( pFileSystemInfo )
-		{
-			for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
-			{
-				if ( strcmp(pKey->GetName(), "AdditionalContentId") == 0 )
-				{
-					int appid = abs(pKey->GetInt());
+    if ( pMainFile ) {
+        KeyValues* pFileSystemInfo = pMainFile->FindKey("FileSystem");
 
-					if ( appid )
-					{
-						if( filesystem->MountSteamContent(-appid) != FILESYSTEM_MOUNT_OK )
-							Warning("Unable to mount extra content with appId: %i\n", appid);
-						else
-							DevMsg("Mounted extra content with appId: %i\n", appid);
-					}
-				}
-			}
-		}
-	}	
+        if ( pFileSystemInfo ) {
+            KeyValues* pSearchPaths = pFileSystemInfo->FindKey("SearchPaths");
 
-	pMainFile->deleteThis();
+            if ( pSearchPaths ) {
+                for ( KeyValues *pKey = pSearchPaths->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() ) {
+                    if ( strcmp(pKey->GetName(), "Content") == 0 ) {
+                        const char *pPath = pKey->GetString();
+                        AddDirectorySearchPath(pPath);
+                    }
+                }
+            }
+        }
+    }
+
+    pMainFile->deleteThis();
 }
 
 CServerGameDLL g_ServerGameDLL;

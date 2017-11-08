@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #ifndef SCP_PLAYER_FEATURES_H
 #define SCP_PLAYER_FEATURES_H
@@ -7,18 +9,19 @@
 #pragma once
 #endif
 
-#include "in_player_features.h"
+#include "in_player_component.h"
 
 //====================================================================
-// Sistema de movimiento para SCP-173
+// Motion system for SCP-173
 //====================================================================
-class C173Behavior : public CPlayerBaseFeature
+class C173BehaviorComponent : public CPlayerComponent
 {
 public:
-	virtual int GetFeatureID() { return PLAYER_FEATURE_BLIND_MOVEMENT; }
+    DECLARE_CLASS_GAMEROOT(C173BehaviorComponent, CPlayerComponent);
+    DECLARE_PLAYER_COMPONENT(PLAYER_COMPONENT_BLIND_MOVEMENT);
 
 	virtual void Init();
-	virtual void OnUpdate();
+	virtual void Update();
 
     virtual void CheckDanger();
     virtual void ApplyDanger();

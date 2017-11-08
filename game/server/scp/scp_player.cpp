@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "scp_player.h"
@@ -13,17 +15,17 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
-// Comandos
+// Commands
 //================================================================================
 
 //================================================================================
-// Información y Red
+// Data and network
 //================================================================================
 
-LINK_ENTITY_TO_CLASS( player, CSCP_Player );
-PRECACHE_REGISTER( player );
+LINK_ENTITY_TO_CLASS(player, CSCP_Player);
+PRECACHE_REGISTER(player);
 
-IMPLEMENT_SERVERCLASS_ST( CSCP_Player, DT_SCP_Player )
+IMPLEMENT_SERVERCLASS_ST(CSCP_Player, DT_SCP_Player)
 END_SEND_TABLE()
 
 //================================================================================
@@ -31,11 +33,11 @@ END_SEND_TABLE()
 //================================================================================
 CSCP_Player::CSCP_Player()
 {
-    
+
 }
 
 //================================================================================
-// Clasificación del jugador
+// Classification of the entity
 //================================================================================
 Class_T CSCP_Player::Classify()
 {
@@ -52,33 +54,30 @@ Class_T CSCP_Player::Classify()
 }
 
 //================================================================================
-// Creación inicial, cuando el jugador se conecta
+// Initial Spawn, is called once when accessing the server.
 //================================================================================
 void CSCP_Player::InitialSpawn()
 {
     BaseClass::InitialSpawn();
-
-    // Debemos seleccionar un equipo
-    SetPlayerState( PLAYER_STATE_PICKING_TEAM );
 }
 
 //================================================================================
-// 
+// Precache important assets
 //================================================================================
 void CSCP_Player::Precache()
 {
     BaseClass::Precache();
 
-    PrecacheModel( "models/bloocobalt/player/l4d/riot_01.mdl" );
-    PrecacheModel( "models/humans/orange1/player/male_02.mdl" );
-    PrecacheModel( "models/vinrax/scp173/scp173.mdl" );
-    PrecacheModel( "models/shaklin/scp/096/scp_096.mdl" );
-    PrecacheModel( "models/vinrax/player/035_player.mdl" );
-    PrecacheModel( "models/vinrax/player/scp049_player.mdl" );
-    PrecacheModel( "models/vinrax/player/scp106_player.mdl" );
+    PrecacheModel("models/bloocobalt/player/l4d/riot_01.mdl");
+    PrecacheModel("models/humans/orange1/player/male_02.mdl");
+    PrecacheModel("models/vinrax/scp173/scp173.mdl");
+    PrecacheModel("models/shaklin/scp/096/scp_096.mdl");
+    PrecacheModel("models/vinrax/player/035_player.mdl");
+    PrecacheModel("models/vinrax/player/scp049_player.mdl");
+    PrecacheModel("models/vinrax/player/scp106_player.mdl");
 
-    PrecacheScriptSound( "SCP173.Attack" );
-    PrecacheScriptSound( "SCP173.Rattle" );
+    PrecacheScriptSound("SCP173.Attack");
+    PrecacheScriptSound("SCP173.Rattle");
 }
 
 //================================================================================
@@ -86,31 +85,30 @@ void CSCP_Player::Precache()
 //================================================================================
 void CSCP_Player::PlayerThink()
 {
-    SetNextThink( gpGlobals->curtime + 0.05f );
+    SetNextThink(gpGlobals->curtime + 0.05f);
 
-    // Es un SCP
-    if ( IsMonster() )
-    {
-        if ( IsButtonPressed( IN_ATTACK2 ) )
+    // SCP
+    if ( IsMonster() ) {
+        if ( IsButtonPressed(IN_ATTACK2) ) {
             PrimaryAttack();
-    }   
+        }
+    }
 }
 
 //================================================================================
-// Ataque primario para los SCP
-// Quizá en un futuro debamos mover esto al código de un arma
+// Primary attack for SCPs
+// TODO: Would this be better on a weapon?
 //================================================================================
 void CSCP_Player::PrimaryAttack()
 {
-    float flDistance = 40.0f;
+    Assert(IsMonster());
+    const float flDistance = 40.0f;
 
     // SCP-173
-    if ( GetPlayerClass() == PLAYER_CLASS_SCP_173 )
-    {
-        // Realizamos el ataque y obtenemos nuestra victima
-        CBaseEntity *pVictim = CheckTraceHullAttack( flDistance, -Vector( 16, 16, 12 ), Vector( 16, 16, 12 ), 200.0f, DMG_SLASH, 0.5f );
+    if ( GetPlayerClass() == PLAYER_CLASS_SCP_173 ) {
+        // We make an attack and we get a victim
+        CBaseEntity *pVictim = CheckTraceHullAttack(flDistance, -Vector(16, 16, 12), Vector(16, 16, 12), 200.0f, DMG_SLASH, 0.5f);
 
-        // No le hemos dado a nada
         if ( !pVictim )
             return;
 
@@ -120,92 +118,83 @@ void CSCP_Player::PrimaryAttack()
 
 //================================================================================
 //================================================================================
-void CSCP_Player::EnterPlayerState( int state )
+void CSCP_Player::EnterPlayerState(int state)
 {
-    BaseClass::EnterPlayerState( state );
+    BaseClass::EnterPlayerState(state);
 }
 
 //================================================================================
 // Hemos cambiado de clase
 //================================================================================
-void CSCP_Player::OnPlayerClass( int playerClass )
+void CSCP_Player::OnPlayerClass(int playerClass)
 {
-    if ( playerClass == PLAYER_CLASS_SCP_173 )
-    {
-        // Sonido de movimiento para SCP-173
-        m_nMovementSound = new SoundInstance( "SCP173.Movement", this, this );
-
-        // SCP-173 no puede recibir daño
+    if ( playerClass == PLAYER_CLASS_SCP_173 ) {
+        // SCP-173 can not take damage
         m_takedamage = DAMAGE_NO;
+
+        // Sonido de movimiento para SCP-173
+        m_pMovementSound = new CSoundInstance("SCP173.Movement", this, this);
     }
-    else
-    {
-        if ( m_nMovementSound )
-        {
-            m_nMovementSound->Destroy();
-            m_nMovementSound = NULL;
+    else {
+        if ( m_pMovementSound ) {
+            delete m_pMovementSound;
+            m_pMovementSound = NULL;
         }
     }
+
+    // Ready for the game
+    Spawn();
 }
 
 //================================================================================
-// Coloca al jugador en el equipo especificado
+// Change the team to where the player belongs
 //================================================================================
-void CSCP_Player::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent )
+void CSCP_Player::ChangeTeam(int iTeamNum, bool bAutoTeam, bool bSilent)
 {
-    BaseClass::ChangeTeam( iTeamNum, bAutoTeam, bSilent );
+    BaseClass::ChangeTeam(iTeamNum, bAutoTeam, bSilent);
 
-    // Algo ha ocurrido que no hemos cambiado de equipo
     if ( GetTeamNumber() != iTeamNum )
         return;
 
-    switch ( iTeamNum )
-    {
-        // Humanos y soldados
+    switch ( iTeamNum ) {
         case TEAM_HUMANS:
         case TEAM_SOLDIERS:
         {
-            // Linterna disponible
-            SetFlashlightEnabled( true );
+            // We have flashlight
+            SetFlashlightEnabled(true);
 
-            // Podemos saltar y agacharnos
-            EnableButtons( IN_JUMP | IN_DUCK );
+            // We can jump and crouch
+            EnableButtons(IN_JUMP | IN_DUCK);
 
-            // Los humanos si pueden recibir daño
+            // I am mortal!
             m_takedamage = DAMAGE_YES;
 
-            // Entramos al juego
-            SetPlayerClass( PLAYER_CLASS_NONE );
-            EnterToGame();
+            // For now there are no more classes...
+            SetPlayerClass(PLAYER_CLASS_NONE);
             break;
         }
 
-        // SCP
         case TEAM_SCP:
         {
-            // Los SCP no tienen linterna
-            SetFlashlightEnabled( false );
+            // I am a supreme thing of the unknown, but I can not jump or crouch ...
+            SetFlashlightEnabled(false);
+            DisableButtons(IN_JUMP | IN_DUCK);
 
-            // Los SCP no necesitan saltar ni agacharse
-            DisableButtons( IN_JUMP | IN_DUCK );
-
-            // Selecciona que clase de SCP serás
-            SetPlayerState( PLAYER_STATE_PICKING_CLASS );
+            // Select what kind of SCP you will be
+            SetPlayerState(PLAYER_STATE_PICKING_CLASS);
             break;
         }
     }
 }
 
 //================================================================================
-// Devuelve el modelo del jugador
+// Returns the model the player will use
 //================================================================================
 const char *CSCP_Player::GetPlayerModel()
 {
-    // Soldados
     if ( IsSoldier() )
         return "models/bloocobalt/player/l4d/riot_01.mdl";
 
-    // Humanos
     if ( IsSurvivor() )
         return "models/humans/orange1/player/male_02.mdl";
 
@@ -233,41 +222,36 @@ const char *CSCP_Player::GetPlayerModel()
 }
 
 //================================================================================
-// Prepara el modelo del jugador
+// Prepare the model with a visual style
 //================================================================================
 void CSCP_Player::PrepareModel()
 {
-    // Soldados
-    if ( IsSoldier() )
-    {
-        SetBodygroup( 1, 1 );
-        SetBodygroup( 2, 1 );
+    if ( IsSoldier() ) {
+        SetBodygroup(1, 1);
+        SetBodygroup(2, 1);
     }
 
-    if ( IsSurvivor() )
-    {
-        SetSkin( RandomInt( 0, 3 ) );
+    if ( IsSurvivor() ) {
+        SetSkin(RandomInt(0, 3));
     }
 }
 
 //================================================================================
-// Crea las características de este jugador
+// Create player components
 //================================================================================
-void CSCP_Player::CreateFeatures()
+void CSCP_Player::CreateComponents()
 {
     // SCP-173
-    if ( GetPlayerClass() == PLAYER_CLASS_SCP_173 )
-    {
-        AddFeature( new C173Behavior );
+    if ( GetPlayerClass() == PLAYER_CLASS_SCP_173 ) {
+        AddComponent(new C173BehaviorComponent);
     }
 }
 
 //================================================================================
-// Devuelve el nombre de la entidad que servirá para crear este jugador
+// Returns the name of the entity that will be used to create this player
 //================================================================================
 const char *CSCP_Player::GetSpawnEntityName()
 {
-    // Soldados
     if ( IsSoldier() )
         return "info_player_soldier";
 
@@ -297,29 +281,25 @@ const char *CSCP_Player::GetSpawnEntityName()
 //================================================================================
 // Procesa un comando enviado directamente desde el cliente
 //================================================================================
-bool CSCP_Player::ClientCommand( const CCommand & args )
+bool CSCP_Player::ClientCommand(const CCommand & args)
 {
     // Unirse a otro equipo
-    if ( FStrEq( args[0], "select_class" ) )
-    {
+    if ( FStrEq(args[0], "select_class") ) {
         // Solamente los SCP pueden seleccionar una clase
         if ( !IsMonster() )
             return false;
 
-        if ( args.ArgC() < 2 )
-        {
-            Warning( "Player sent bad select_class syntax \n" );
+        if ( args.ArgC() < 2 ) {
+            Warning("Player sent bad select_class syntax \n");
             return false;
         }
 
-        int playerClass = atoi(args[1]);        
+        int playerClass = atoi(args[1]);
 
         // Establecemos la clase y entramos al juego
-        SetPlayerClass( playerClass );
-        EnterToGame();
-
+        SetPlayerClass(playerClass);
         return true;
     }
 
-    return BaseClass::ClientCommand( args );
+    return BaseClass::ClientCommand(args);
 }
