@@ -149,6 +149,20 @@ bool IBotSchedule::ShouldInterrupted()
 
 //================================================================================
 //================================================================================
+bool IBotSchedule::ShouldRun()
+{
+    Assert(id() > 0);
+
+    int it = id() % 3;
+
+    if ( gpGlobals->tickcount % 3 == it )
+        return true;
+
+    return false;
+}
+
+//================================================================================
+//================================================================================
 float IBotSchedule::GetInternalDesire()
 {
     VPROF_BUDGET("IBotSchedule::GetInternalDesire", VPROF_BUDGETGROUP_BOTS);
@@ -159,7 +173,7 @@ float IBotSchedule::GetInternalDesire()
             return BOT_DESIRE_NONE;
 
         // It is important: no matter the current level of desire, it is necessary to complete all tasks.
-        if ( ItsImportant() )
+        if ( !ShouldRun() || ItsImportant() )
             return m_flLastDesire;
     }
     else {
@@ -169,6 +183,9 @@ float IBotSchedule::GetInternalDesire()
 
         // One of the interrupts is active
         if ( GetInterruption() != BCOND_NONE )
+            return BOT_DESIRE_NONE;
+
+        if ( !ShouldRun() )
             return BOT_DESIRE_NONE;
 
         // TODO: Slow!

@@ -158,10 +158,15 @@ void CBot::DebugDisplay()
             else if ( realDesire > BOT_DESIRE_NONE )
                 desireColor = green;
 
-            if ( pItem == GetActiveSchedule() )
-                DebugScreenText( msg.sprintf( "    %s = %.2f (%.2f)", g_BotSchedules[pItem->GetID()], pItem->GetInternalDesire(), pItem->GetDesire() ), red );
-            else
-                DebugScreenText( msg.sprintf( "    %s = %.2f (%.2f)", g_BotSchedules[pItem->GetID()], pItem->GetInternalDesire(), pItem->GetDesire() ), desireColor );
+            if ( pItem == GetActiveSchedule() ) {
+                DebugScreenText(msg.sprintf("    %s = %.2f (%.2f)", g_BotSchedules[pItem->GetID()], pItem->GetInternalDesire(), pItem->GetDesire()), red);
+            }
+            else if ( !pItem->ShouldRun() ) {
+                DebugScreenText(msg.sprintf("    %s = %.2f (%.2f)", g_BotSchedules[pItem->GetID()], pItem->GetInternalDesire(), pItem->GetDesire()), {100, 100, 100, 255});
+            }
+            else {
+                DebugScreenText(msg.sprintf("    %s = %.2f (%.2f)", g_BotSchedules[pItem->GetID()], pItem->GetInternalDesire(), pItem->GetDesire()), desireColor);
+            }
         }
     }
 

@@ -440,7 +440,7 @@ bool CBaseCombatCharacter::IsAbleToSee(const Vector & pos, FieldOfViewCheckType 
 //-----------------------------------------------------------------------------
 bool CBaseCombatCharacter::IsAbleToSee( CBaseEntity *pEntity, FieldOfViewCheckType checkFOV )
 {
-    Assert(false);
+    AssertOnce(false);
 
 	CBaseCombatCharacter *pBCC = const_cast<CBaseEntity *>( pEntity )->MyCombatCharacterPointer();
 	if ( pBCC )
@@ -459,7 +459,7 @@ static void ComputeSeeTestPosition( Vector *pEyePosition, CBaseCombatCharacter *
 
 bool CBaseCombatCharacter::IsAbleToSee( CBaseCombatCharacter *pBCC, FieldOfViewCheckType checkFOV )
 {
-    Assert(false);
+    AssertOnce(false);
 
 	Vector vecEyePosition, vecOtherEyePosition;
 	ComputeSeeTestPosition( &vecEyePosition, this );
@@ -580,7 +580,7 @@ by our field of view
 */
 bool CBaseCombatCharacter::IsInFieldOfView( CBaseEntity *entity )
 {
-    Assert(false);
+    AssertOnce(false);
 	CBasePlayer *pPlayer = ToBasePlayer( const_cast< CBaseCombatCharacter* >( this ) );
 	float flTolerance = pPlayer ? cos( DEG2RAD( pPlayer->GetFOV() * 0.5f ) ) : BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE;
 

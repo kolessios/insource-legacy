@@ -26,6 +26,11 @@
 #include "bots\interfaces\ibotcomponent.h"
 
 //================================================================================
+//================================================================================
+
+static int g_ScheduleID = 0;
+
+//================================================================================
 // Macros
 //================================================================================
 
@@ -49,6 +54,8 @@ public:
 
     IBotSchedule( IBot *bot ) : BaseClass( bot )
     {
+        ++g_ScheduleID;
+        m_id = g_ScheduleID;
     }
 
     virtual bool IsSchedule() const {
@@ -56,6 +63,11 @@ public:
     }
 
 public:
+    virtual int id()
+    {
+        return m_id;
+    }
+
     virtual void Install_Tasks() = 0;
     virtual void Install_Interruptions() = 0;
 
@@ -108,6 +120,8 @@ public:
 
     virtual BCOND GetInterruption();
     virtual bool ShouldInterrupted();
+
+    virtual bool ShouldRun();
     virtual float GetInternalDesire();
 
     virtual void Update();    
@@ -124,6 +138,8 @@ public:
     virtual void TaskComplete();
 
 protected:
+    int m_id;
+
     bool m_bFailed;
     bool m_bStarted;
     bool m_bFinished;
