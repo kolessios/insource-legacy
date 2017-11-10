@@ -47,6 +47,8 @@ SET_SCHEDULE_INTERRUPTS(CHideAndReloadSchedule)
 //================================================================================
 float CHideAndReloadSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CHideAndReloadSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetDecision()->CanMove() )
         return BOT_DESIRE_NONE;
 

@@ -42,6 +42,8 @@ SET_SCHEDULE_INTERRUPTS( CHideAndHealSchedule )
 //================================================================================
 float CHideAndHealSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CHideAndHealSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetDecision()->CanMove() )
         return BOT_DESIRE_NONE;
 

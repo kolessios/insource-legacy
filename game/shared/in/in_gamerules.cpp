@@ -726,7 +726,7 @@ int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTar
             return GR_ALLY;
     }
     
-    // SLOW
+    // TODO: SLOW
     /*{
         VPROF_BUDGET("GetSquad", VPROF_BUDGETGROUP_OTHER_UNACCOUNTED);
         CPlayer *pTargetPlayer = ToInPlayer(pTarget);
@@ -753,39 +753,32 @@ int CInGameRules::PlayerRelationship( CBaseEntity *pCharacter, CBaseEntity *pTar
 //====================================================================
 // Devuelve si el jugador indicado puede cambiar al arma indicada
 //====================================================================
-bool CInGameRules::FShouldSwitchWeapon( CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon )
+bool CInGameRules::FShouldSwitchWeapon(CBasePlayer *pPlayer, CBaseCombatWeapon *pWeapon)
 {
-	// Excepción no controlada en 0xFFFFFFFF en SWARM.EXE: 0xC0000005: Infracción de acceso al leer la ubicación 0xFFFFFFFF. ???
-	try
-	{
-		if ( !pPlayer || !pWeapon )
-			return false;
+    if ( !pPlayer || !pWeapon )
+        return false;
 
-		// Can't switch weapons for some reason.
-		if ( !pPlayer->Weapon_CanSwitchTo(pWeapon) )
-			return false;
+    // Can't switch weapons for some reason.
+    if ( !pPlayer->Weapon_CanSwitchTo(pWeapon) )
+        return false;
 
-		// Player doesn't have an active item, might as well switch.
-		if ( !pPlayer->GetActiveWeapon() )
-			return true;
+    // Player doesn't have an active item, might as well switch.
+    if ( !pPlayer->GetActiveWeapon() )
+        return true;
 
-		// The given weapon should not be auto switched to from another weapon.
-		if ( !pWeapon->AllowsAutoSwitchTo() )
-			return false;
+    // The given weapon should not be auto switched to from another weapon.
+    if ( !pWeapon->AllowsAutoSwitchTo() )
+        return false;
 
-		// The active weapon does not allow autoswitching away from it.
-		if ( !pPlayer->GetActiveWeapon()->AllowsAutoSwitchFrom() )
-			return false;
+    // The active weapon does not allow autoswitching away from it.
+    if ( !pPlayer->GetActiveWeapon()->AllowsAutoSwitchFrom() )
+        return false;
 
-		// Es un arma mucho mejor
-		if ( pWeapon->GetWeight() > pPlayer->GetActiveWeapon()->GetWeight() )
-			return true;
+    // Es un arma mucho mejor
+    if ( pWeapon->GetWeight() > pPlayer->GetActiveWeapon()->GetWeight() )
+        return true;
 
-		return false;
-	}
-	catch( ... ) {
-		return false;
-	}
+    return false;
 }
 
 //====================================================================

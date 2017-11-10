@@ -232,14 +232,14 @@ public:
 
 	// Visible starts with line of sight, and adds all the extra game checks like fog, smoke, camo...
     virtual bool IsAbleToSee(const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV);
-	virtual bool IsAbleToSee( const CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV);
+	virtual bool IsAbleToSee( CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV);
 	virtual bool IsAbleToSee( CBaseCombatCharacter *pBCC, FieldOfViewCheckType checkFOV = USE_FOV);
 
 	virtual bool IsLookingTowards( const CBaseEntity *target, float cosTolerance = BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE ) const;	// return true if our view direction is pointing at the given target, within the cosine of the angular tolerance. LINE OF SIGHT IS NOT CHECKED.
 	virtual bool IsLookingTowards( const Vector &target, float cosTolerance = BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE ) const;	// return true if our view direction is pointing at the given target, within the cosine of the angular tolerance. LINE OF SIGHT IS NOT CHECKED.
 
-	virtual bool IsInFieldOfView( CBaseEntity *entity ) const;	// Calls IsLookingTowards with the current field of view.  
-	virtual bool IsInFieldOfView( const Vector &pos ) const;
+	virtual bool IsInFieldOfView( CBaseEntity *entity );	// Calls IsLookingTowards with the current field of view.  
+	virtual bool IsInFieldOfView( const Vector &pos );
 
 	enum LineOfSightCheckType
 	{

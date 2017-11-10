@@ -47,6 +47,8 @@ SET_SCHEDULE_INTERRUPTS(CHelpDejectedFriendSchedule)
 //================================================================================
 bool CHelpDejectedFriendSchedule::ShouldHelp()
 {
+    VPROF_BUDGET("CHelpDejectedFriendSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetMemory() )
         return false;
 

@@ -65,6 +65,8 @@ SET_SCHEDULE_INTERRUPTS( CHuntEnemySchedule )
 //================================================================================
 float CHuntEnemySchedule::GetDesire() const
 {
+    VPROF_BUDGET("CHuntEnemySchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetMemory() || !GetLocomotion() )
         return BOT_DESIRE_NONE;
 

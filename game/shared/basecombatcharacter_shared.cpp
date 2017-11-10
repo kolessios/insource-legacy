@@ -413,7 +413,7 @@ static CCombatCharVisCache s_CombatCharVisCache;
 
 bool CBaseCombatCharacter::IsAbleToSee(const Vector & pos, FieldOfViewCheckType checkFOV)
 {
-    VPROF_BUDGET("CBaseCombatCharacter::IsAbleToSeePosition", "Bots");
+    Assert(false);
 
     // Test this every time; it's cheap.
     Vector vecEyePosition = EyePosition();
@@ -438,8 +438,10 @@ bool CBaseCombatCharacter::IsAbleToSee(const Vector & pos, FieldOfViewCheckType 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CBaseCombatCharacter::IsAbleToSee( const CBaseEntity *pEntity, FieldOfViewCheckType checkFOV )
+bool CBaseCombatCharacter::IsAbleToSee( CBaseEntity *pEntity, FieldOfViewCheckType checkFOV )
 {
+    Assert(false);
+
 	CBaseCombatCharacter *pBCC = const_cast<CBaseEntity *>( pEntity )->MyCombatCharacterPointer();
 	if ( pBCC )
 		return IsAbleToSee( pBCC, checkFOV );
@@ -457,7 +459,7 @@ static void ComputeSeeTestPosition( Vector *pEyePosition, CBaseCombatCharacter *
 
 bool CBaseCombatCharacter::IsAbleToSee( CBaseCombatCharacter *pBCC, FieldOfViewCheckType checkFOV )
 {
-    VPROF_BUDGET("CBaseCombatCharacter::IsAbleToSeeCharacter", "Bots");
+    Assert(false);
 
 	Vector vecEyePosition, vecOtherEyePosition;
 	ComputeSeeTestPosition( &vecEyePosition, this );
@@ -576,8 +578,9 @@ bool CBaseCombatCharacter::IsLookingTowards( const Vector &target, float cosTole
 Returns true if we are looking towards something within a tolerence determined 
 by our field of view
 */
-bool CBaseCombatCharacter::IsInFieldOfView( CBaseEntity *entity ) const
+bool CBaseCombatCharacter::IsInFieldOfView( CBaseEntity *entity )
 {
+    Assert(false);
 	CBasePlayer *pPlayer = ToBasePlayer( const_cast< CBaseCombatCharacter* >( this ) );
 	float flTolerance = pPlayer ? cos( DEG2RAD( pPlayer->GetFOV() * 0.5f ) ) : BCC_DEFAULT_LOOK_TOWARDS_TOLERANCE;
 
@@ -609,8 +612,9 @@ bool CBaseCombatCharacter::IsInFieldOfView( CBaseEntity *entity ) const
 Returns true if we are looking towards something within a tolerence determined 
 by our field of view
 */
-bool CBaseCombatCharacter::IsInFieldOfView( const Vector &pos ) const
+bool CBaseCombatCharacter::IsInFieldOfView( const Vector &pos )
 {
+    Assert(false);
 	CBasePlayer *pPlayer = ToBasePlayer( const_cast< CBaseCombatCharacter* >( this ) );
 
 	if ( pPlayer )

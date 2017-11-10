@@ -52,6 +52,8 @@ SET_SCHEDULE_INTERRUPTS( CDefendSpawnSchedule )
 //================================================================================
 float CDefendSpawnSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CDefendSpawnSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetMemory() )
         return BOT_DESIRE_NONE;
 

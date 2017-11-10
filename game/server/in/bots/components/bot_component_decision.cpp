@@ -86,7 +86,7 @@ bool CBotDecision::ShouldLookSquadMember() const
 
 //================================================================================
 //================================================================================
-void CBotDecision::PerformSensing() const
+void CBotDecision::PerformSensing()
 {
     VPROF_BUDGET("CBotDecision::PerformSensing", VPROF_BUDGETGROUP_BOTS);
 
@@ -1387,62 +1387,30 @@ BCOND CBotDecision::ShouldMeleeAttack2()
 
 //================================================================================
 //================================================================================
-bool CBotDecision::IsAbleToSee( CBaseEntity * entity, FieldOfViewCheckType checkFOV ) const
+bool CBotDecision::IsAbleToSee( CBaseEntity * entity, FieldOfViewCheckType checkFOV )
 {
-    VPROF_BUDGET("CBotDecision::IsAbleToSee::Entity", VPROF_BUDGETGROUP_BOTS);
-
-    if ( checkFOV == USE_FOV && !IsInFieldOfView(entity) ) {
-        return false;
-    }
-
-    {
-        VPROF_BUDGET("IsHiddenByFog", VPROF_BUDGETGROUP_BOTS);
-        if ( GetHost()->IsHiddenByFog(entity) ) {
-            return false;
-        }
-    }
-
-    {
-        VPROF_BUDGET("FVisible", VPROF_BUDGETGROUP_BOTS);
-        return GetHost()->FVisible(entity, MASK_VISIBLE_AND_NPCS);
-    }
+    return GetHost()->IsAbleToSee(entity, (CBaseCombatCharacter::FieldOfViewCheckType)checkFOV);
 }
 
 //================================================================================
 //================================================================================
-bool CBotDecision::IsAbleToSee( const Vector & pos, FieldOfViewCheckType checkFOV ) const
+bool CBotDecision::IsAbleToSee( const Vector & pos, FieldOfViewCheckType checkFOV )
 {
-    VPROF_BUDGET("CBotDecision::IsAbleToSee::Position", VPROF_BUDGETGROUP_BOTS);
-
-    if ( checkFOV == USE_FOV && !IsInFieldOfView(pos) ) {
-        return false;
-    }
-
-    if ( GetHost()->IsHiddenByFog(pos) ) {
-        return false;
-    }
-
-    return GetHost()->FVisible(pos, MASK_VISIBLE_AND_NPCS);
+    return GetHost()->IsAbleToSee(pos, (CBaseCombatCharacter::FieldOfViewCheckType)checkFOV);
 }
 
 //================================================================================
 //================================================================================
-bool CBotDecision::IsInFieldOfView( CBaseEntity * entity ) const
+bool CBotDecision::IsInFieldOfView( CBaseEntity * entity )
 {
-    VPROF_BUDGET("CBotDecision::IsInFieldOfView::Entity", VPROF_BUDGETGROUP_BOTS);
-
-    //return GetHost()->IsInFieldOfView( entity ); // Slow!
-    return GetHost()->FInViewCone(entity);
+    return GetHost()->IsInFieldOfView(entity);
 }
 
 //================================================================================
 //================================================================================
-bool CBotDecision::IsInFieldOfView( const Vector & pos ) const
+bool CBotDecision::IsInFieldOfView( const Vector & pos )
 {
-    VPROF_BUDGET("CBotDecision::IsInFieldOfView::Position", VPROF_BUDGETGROUP_BOTS);
-
-    //return GetHost()->IsInFieldOfView( pos ); // Slow!
-    return GetHost()->FInViewCone(pos);
+    return GetHost()->IsInFieldOfView(pos);
 }
 
 //================================================================================
@@ -1464,9 +1432,6 @@ bool CBotDecision::IsLineOfSightClear( CBaseEntity *entity, CBaseEntity **hit ) 
 //================================================================================
 bool CBotDecision::IsLineOfSightClear( const Vector & pos, CBaseEntity * entityToIgnore, CBaseEntity **hit ) const
 {
-    if ( !IsAbleToSee( pos ) )
-        return false;
-
     // We draw a line pretending to be the bullets
     CBulletsTraceFilter traceFilter( COLLISION_GROUP_NONE );
     traceFilter.AddEntityToIgnore( GetHost() );

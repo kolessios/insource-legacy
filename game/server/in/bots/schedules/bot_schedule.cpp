@@ -171,6 +171,7 @@ float IBotSchedule::GetInternalDesire()
         if ( GetInterruption() != BCOND_NONE )
             return BOT_DESIRE_NONE;
 
+        // TODO: Slow!
         /*if ( GetMemory() ) {
             int nextSchedule = GetDataMemoryInt("NextSchedule");
 

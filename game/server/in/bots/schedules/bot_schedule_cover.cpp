@@ -44,6 +44,8 @@ SET_SCHEDULE_INTERRUPTS( CCoverSchedule )
 //================================================================================
 float CCoverSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CCoverSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetDecision()->CanMove() )
         return BOT_DESIRE_NONE;
 

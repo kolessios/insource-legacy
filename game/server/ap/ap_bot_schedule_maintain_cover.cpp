@@ -41,6 +41,8 @@ SET_SCHEDULE_INTERRUPTS(CMaintainCoverSchedule)
 //================================================================================
 float CMaintainCoverSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CMaintainCoverSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetDecision()->CanMove() )
         return BOT_DESIRE_NONE;
 

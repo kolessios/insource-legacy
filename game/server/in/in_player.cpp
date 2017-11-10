@@ -998,6 +998,63 @@ CSound* CPlayer::GetBestScent()
 
 //================================================================================
 //================================================================================
+bool CPlayer::IsAbleToSee(const Vector & pos, FieldOfViewCheckType checkFOV)
+{
+    VPROF_BUDGET("CPlayer::IsAbleToSee::Position", VPROF_BUDGETGROUP_PLAYER);
+
+    if ( checkFOV == USE_FOV && !IsInFieldOfView(pos) ) {
+        return false;
+    }
+
+    if ( IsHiddenByFog(pos) ) {
+        return false;
+    }
+
+    return FVisible(pos, MASK_BLOCKLOS);
+}
+
+//================================================================================
+//================================================================================
+bool CPlayer::IsAbleToSee(CBaseEntity * entity, FieldOfViewCheckType checkFOV)
+{
+    VPROF_BUDGET("CPlayer::IsAbleToSee::Entity", VPROF_BUDGETGROUP_PLAYER);
+
+    if ( checkFOV == USE_FOV && !IsInFieldOfView(entity) ) {
+        return false;
+    }
+
+    if ( IsHiddenByFog(entity) ) {
+        return false;
+    }
+
+    return FVisible(entity, MASK_BLOCKLOS);
+}
+
+//================================================================================
+//================================================================================
+bool CPlayer::IsAbleToSee(CBaseCombatCharacter * pBCC, FieldOfViewCheckType checkFOV)
+{
+    return IsAbleToSee((CBaseEntity *)pBCC, checkFOV);
+}
+
+//================================================================================
+//================================================================================
+bool CPlayer::IsInFieldOfView(CBaseEntity * entity)
+{
+    VPROF_BUDGET("CPlayer::IsInFieldOfView::Entity", VPROF_BUDGETGROUP_PLAYER);
+    return FInViewCone(entity);
+}
+
+//================================================================================
+//================================================================================
+bool CPlayer::IsInFieldOfView(const Vector & pos)
+{
+    VPROF_BUDGET("CPlayer::IsInFieldOfView::Position", VPROF_BUDGETGROUP_PLAYER);
+    return FInViewCone(pos);
+}
+
+//================================================================================
+//================================================================================
 void CPlayer::HandleAnimEvent(animevent_t *event)
 {
     if ( event->Event() == AE_PLAYER_FOOTSTEP_LEFT || event->Event() == AE_PLAYER_FOOTSTEP_RIGHT ) {

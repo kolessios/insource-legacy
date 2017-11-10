@@ -67,7 +67,7 @@ public:
         m_bOnlyFeelPlayers = feel;
     }
 
-    virtual void PerformSensing() const = 0;
+    virtual void PerformSensing() = 0;
 
     virtual bool ShouldLookThreat() const = 0;
 
@@ -131,11 +131,11 @@ public:
     virtual BCOND ShouldMeleeAttack1() = 0;
     virtual BCOND ShouldMeleeAttack2() = 0;
 
-    virtual bool IsAbleToSee( CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV ) const = 0;
-    virtual bool IsAbleToSee( const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV ) const = 0;
+    virtual bool IsAbleToSee( CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV ) = 0;
+    virtual bool IsAbleToSee( const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV ) = 0;
 
-    virtual bool IsInFieldOfView( CBaseEntity *entity ) const = 0;
-    virtual bool IsInFieldOfView( const Vector &pos ) const = 0;
+    virtual bool IsInFieldOfView( CBaseEntity *entity ) = 0;
+    virtual bool IsInFieldOfView( const Vector &pos ) = 0;
 
     virtual bool IsLineOfSightClear( CBaseEntity *entity, CBaseEntity **hit = NULL ) const = 0;
     virtual bool IsLineOfSightClear( const Vector &pos, CBaseEntity *entityToIgnore = NULL, CBaseEntity **hit = NULL ) const = 0;

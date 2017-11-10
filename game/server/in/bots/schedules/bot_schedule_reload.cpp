@@ -33,6 +33,8 @@ SET_SCHEDULE_INTERRUPTS( CReloadSchedule )
 //================================================================================
 float CReloadSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CReloadSchedule", VPROF_BUDGETGROUP_BOTS);
+
 	if ( GetDecision()->ShouldCover() )
 		return BOT_DESIRE_NONE;
 

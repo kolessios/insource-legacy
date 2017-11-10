@@ -52,6 +52,8 @@ SET_SCHEDULE_INTERRUPTS( CChangeWeaponSchedule )
 //================================================================================
 float CChangeWeaponSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CChangeWeaponSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( !GetMemory() )
         return BOT_DESIRE_NONE;
 

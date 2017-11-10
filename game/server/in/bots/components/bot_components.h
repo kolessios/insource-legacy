@@ -311,7 +311,7 @@ public:
     virtual bool ShouldLookRandomSpot() const;
     virtual bool ShouldLookSquadMember() const;
 
-    virtual void PerformSensing() const;
+    virtual void PerformSensing();
     virtual bool ShouldLookThreat() const;
 
     virtual bool ShouldFollow() const;
@@ -382,11 +382,11 @@ public:
     virtual BCOND ShouldMeleeAttack1();
     virtual BCOND ShouldMeleeAttack2();
 
-    virtual bool IsAbleToSee( CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV ) const;
-    virtual bool IsAbleToSee( const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV ) const;
+    virtual bool IsAbleToSee( CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV );
+    virtual bool IsAbleToSee( const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV );
 
-    virtual bool IsInFieldOfView( CBaseEntity *entity ) const;
-    virtual bool IsInFieldOfView( const Vector &pos ) const;
+    virtual bool IsInFieldOfView( CBaseEntity *entity );
+    virtual bool IsInFieldOfView( const Vector &pos );
 
     virtual bool IsLineOfSightClear( CBaseEntity *entity, CBaseEntity **hit = NULL ) const;
     virtual bool IsLineOfSightClear( const Vector &pos, CBaseEntity *entityToIgnore = NULL, CBaseEntity **hit = NULL ) const;

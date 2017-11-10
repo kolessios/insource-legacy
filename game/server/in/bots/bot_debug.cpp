@@ -65,6 +65,16 @@ void CBot::DebugDisplay()
 {
     VPROF_BUDGET( "CBot::DebugDisplay", VPROF_BUDGETGROUP_BOTS );
 
+    float thinkTime = m_RunTimer.GetDuration().GetMillisecondsF();
+    float scheduleTime = m_ScheduleTimer.GetDuration().GetMicrosecondsF();
+
+    // General
+    if ( thinkTime >= think_limit.GetFloat() ) {
+        DebugAddMessage("RunAI: %.3f ms !!", thinkTime);
+        Msg("[%s] The AI of the Bot has taken %.3f ms!!\n", GetHost()->GetPlayerName(), thinkTime);
+        UTIL_Smoke(GetHost()->EyePosition(), 10.0f, 10.0f);
+    }
+
     if ( !ShouldShowDebug() )
         return;
 
@@ -77,14 +87,6 @@ void CBot::DebugDisplay()
     const Color blue = Color( 0, 255, 255, 200 );
     const Color pink = Color( 247, 129, 243, 200 );
     const Color white = Color( 255, 255, 255, 200 );
-
-    float thinkTime = m_RunTimer.GetDuration().GetMillisecondsF();
-    float scheduleTime = m_ScheduleTimer.GetDuration().GetMicrosecondsF();
-
-    // General
-    if ( thinkTime >= think_limit.GetFloat() ) {
-        DebugAddMessage( "RunAI: %.3f ms !!", thinkTime );
-    }
 
     DebugScreenText(msg.sprintf("%s (%.3f ms)", GetName(), thinkTime));
     DebugScreenText( msg.sprintf( "Profile: %s - Tactical Mode: %s", GetProfile()->GeSkillName(), g_TacticalModes[GetTacticalMode()] ) );

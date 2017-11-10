@@ -50,6 +50,8 @@ CSearchResourcesSchedule::CSearchResourcesSchedule(IBot *bot) : BaseClass(bot)
 //================================================================================
 float CSearchResourcesSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CSearchResourcesSchedule", VPROF_BUDGETGROUP_BOTS);
+
 	if ( !GetDecision()->CanMove() )
 		return BOT_DESIRE_NONE;
 
@@ -299,6 +301,8 @@ CCleanBuildingSchedule::CCleanBuildingSchedule(IBot *bot) : BaseClass(bot)
 //================================================================================
 float CCleanBuildingSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CCleanBuildingSchedule", VPROF_BUDGETGROUP_BOTS);
+
     CAP_Bot *pSoldier = dynamic_cast<CAP_Bot *> (GetBot());
     AssertOnce( pSoldier );
 

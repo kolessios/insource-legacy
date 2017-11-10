@@ -36,6 +36,8 @@ SET_SCHEDULE_INTERRUPTS( CMoveAsideSchedule )
 //================================================================================
 float CMoveAsideSchedule::GetDesire() const
 {
+    VPROF_BUDGET("CMoveAsideSchedule", VPROF_BUDGETGROUP_BOTS);
+
     if ( GetProfile()->IsEasiest() )
         return BOT_DESIRE_NONE;
 

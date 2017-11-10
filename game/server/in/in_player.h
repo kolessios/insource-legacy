@@ -214,6 +214,14 @@ public:
     virtual float HearingSensitivity() { return 1.0; }
     virtual bool OnlySeeAliveEntities( void ) { return true; }
 
+    // Vision
+    virtual bool IsAbleToSee(const Vector &pos, FieldOfViewCheckType checkFOV = USE_FOV);
+    virtual bool IsAbleToSee(CBaseEntity *entity, FieldOfViewCheckType checkFOV = USE_FOV);
+    virtual bool IsAbleToSee(CBaseCombatCharacter *pBCC, FieldOfViewCheckType checkFOV = USE_FOV);
+
+    virtual bool IsInFieldOfView(CBaseEntity *entity);
+    virtual bool IsInFieldOfView(const Vector &pos);
+
     // Animaciones
     virtual CPlayerAnimationSystem *GetAnimationSystem() { return m_pAnimationSystem; }
     virtual void HandleAnimEvent( animevent_t *event );
