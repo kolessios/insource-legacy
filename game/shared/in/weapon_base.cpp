@@ -4,7 +4,7 @@
 #include "weapon_base.h"
 
 #include "in_buttons.h"
-#include "in_shareddefs.h"
+
 
 #include "in_gamerules.h"
 
@@ -33,15 +33,15 @@
 // Comandos
 //================================================================================
 
-DECLARE_NOTIFY_COMMAND( sv_weapon_shot_is_bullet, "0", "" )
+DECLARE_NOTIFY_CMD( sv_weapon_shot_is_bullet, "0", "" )
 
-DECLARE_REPLICATED_CHEAT_COMMAND( sv_weapon_silence, "0", "" ) // TODO: Remove
-DECLARE_REPLICATED_CHEAT_COMMAND( sv_weapon_infinite_ammo, "0", "Indica si las armas no gastan munición al disparar" )
-DECLARE_REPLICATED_COMMAND( sv_weapon_serverside_hitmarker, "0", "" )
+DECLARE_SERVER_CHEAT_CMD( sv_weapon_silence, "0", "" ) // TODO: Remove
+DECLARE_SERVER_CHEAT_CMD( sv_weapon_infinite_ammo, "0", "Indica si las armas no gastan munición al disparar" )
+DECLARE_SERVER_CMD( sv_weapon_serverside_hitmarker, "0", "" )
 
-DECLARE_NOTIFY_COMMAND( sv_weapon_auto_reload, "0", "Indica si se debe recargar el arma al acabarse la munición del clip" )
-DECLARE_NOTIFY_COMMAND( sv_weapon_auto_fire, "0", "Indica si se puede dejar presionado el botón de ataque para disparar balas continuamente" )
-DECLARE_NOTIFY_COMMAND( sv_weapon_equip_touch, "0", "Indica si las armas se pueden recoger al tocarlas" )
+DECLARE_NOTIFY_CMD( sv_weapon_auto_reload, "0", "Indica si se debe recargar el arma al acabarse la munición del clip" )
+DECLARE_NOTIFY_CMD( sv_weapon_auto_fire, "0", "Indica si se puede dejar presionado el botón de ataque para disparar balas continuamente" )
+DECLARE_NOTIFY_CMD( sv_weapon_equip_touch, "0", "Indica si las armas se pueden recoger al tocarlas" )
 
 #define HIDEWEAPON_THINK_CONTEXT			"BaseCombatWeapon_HideThink"
 #define SHOWWEAPON_THINK_CONTEXT			"BaseCombatWeapon_ShowThink"
@@ -350,7 +350,6 @@ float CBaseWeapon::GetSpreadPerShot()
         CPlayer *pPlayer = GetPlayerOwner();
 
 #ifndef CLIENT_DLL
-#ifdef DEBUG
         // Testing Purposes: Without much spread until Bots can aim taking into account the spread.
         if ( pPlayer->IsBot() ) {
             if ( pPlayer->Classify() != CLASS_PLAYER_ALLY && pPlayer->Classify() != CLASS_PLAYER_ALLY_VITAL ) {
@@ -362,14 +361,12 @@ float CBaseWeapon::GetSpreadPerShot()
                 return VECTOR_CONE_1DEGREES.x;
             }
         }
-#else
         // Disperción aumentada para bots
-        if ( pPlayer->IsBot() && TheGameRules->GetSkillLevel() < SKILL_HARDEST ) {
+        /*if ( pPlayer->IsBot() && TheGameRules->GetSkillLevel() < SKILL_HARDEST ) {
             if ( pPlayer->Classify() != CLASS_PLAYER_ALLY && pPlayer->Classify() != CLASS_PLAYER_ALLY_VITAL ) {
                 spread *= GetWeaponInfo().m_flBotSpread;
             }
-        }
-#endif
+        }*/
 #endif
 
         // Agachado

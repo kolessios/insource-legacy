@@ -7,7 +7,7 @@
 #pragma once
 #endif
 
-#include "in_shareddefs.h"
+
 
 //====================================================================
 // Información de atributo

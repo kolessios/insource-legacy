@@ -649,7 +649,7 @@ static void AddDirectorySearchPath(const char *pDirectory)
 
             // We make sure it is a valid directory
             if ( !FStrEq(ent->d_name, ".") && !FStrEq(ent->d_name, "..") && filesystem->IsDirectory(pFullPath) ) {
-                filesystem->AddSearchPath(pFullPath, "GAME");
+                filesystem->AddSearchPath(pFullPath, "GAME", PATH_ADD_TO_HEAD);
             }
         }
     }
@@ -693,10 +693,23 @@ static void MountAdditionalContent()
 CServerGameDLL g_ServerGameDLL;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameDLL, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL, g_ServerGameDLL);
 
+static CExtendedLoggingListener *g_LoggingListener = NULL;
+
+static void ResetLoggingSystem()
+{
+    if ( !g_LoggingListener ) {
+        g_LoggingListener = new CExtendedLoggingListener();
+    }
+
+    LoggingSystem_ResetCurrentLoggingState();
+    LoggingSystem_RegisterLoggingListener(g_LoggingListener);
+}
+
 bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory, 
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
+    ResetLoggingSystem();
 
 	COM_TimestampedLog( "ConnectTier1/2/3Libraries - Start" );
 

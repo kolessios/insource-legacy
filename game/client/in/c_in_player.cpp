@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "c_in_player.h"
@@ -27,7 +29,6 @@
 #include "prediction.h"
 
 #include "iviewrender_beams.h"
-//#include "beam_shared.h"
 #include "alienfx.h"
 
 #include "in_playeranimstate_proxy.h"
@@ -46,7 +47,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-DECLARE_CHEAT_COMMAND( cl_player_itproxy, "0.98", "" );
+DECLARE_CHEAT_CMD( cl_player_itproxy, "0.98", "" );
 
 //=================================================================================================================
 // This is a last-minute hack to ship Orange Box on the 360!
@@ -94,20 +95,28 @@ protected:
 EXPOSE_MATERIAL_PROXY( CITMaterialProxy, IT );
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_PLAYER, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_PLAYER, __VA_ARGS__)
+
+//================================================================================
 // Comandos
 //================================================================================
 
-DECLARE_CHEAT_COMMAND( cl_playermodel_force_draw, "0", "Indica si se debe mostrar el modelo del Jugador en todo momento" );
+DECLARE_CHEAT_CMD( cl_playermodel_force_draw, "0", "Indica si se debe mostrar el modelo del Jugador en todo momento" );
 
-DECLARE_CHEAT_COMMAND( cl_flashlight_fov, "40", "" );
-DECLARE_CHEAT_COMMAND( cl_flashlight_far, "750", "" );
-DECLARE_CHEAT_COMMAND( cl_flashlight_linear, "3", "" );
+DECLARE_CHEAT_CMD( cl_flashlight_fov, "40", "" );
+DECLARE_CHEAT_CMD( cl_flashlight_far, "750", "" );
+DECLARE_CHEAT_CMD( cl_flashlight_linear, "3", "" );
 
-DECLARE_CHEAT_COMMAND( cl_flashlight_beam_haloscale, "10", "" );
-//DECLARE_CHEAT_COMMAND( cl_flashlight_beam_endwidth, "10", "" );
-DECLARE_CHEAT_COMMAND( cl_flashlight_beam_fadelength, "300", "" );
-DECLARE_CHEAT_COMMAND( cl_flashlight_beam_brightness, "32", "" );
-//DECLARE_CHEAT_COMMAND( cl_flashlight_beam_segments, "10", "" );
+DECLARE_CHEAT_CMD( cl_flashlight_beam_haloscale, "10", "" );
+//DECLARE_CHEAT_CMD( cl_flashlight_beam_endwidth, "10", "" );
+DECLARE_CHEAT_CMD( cl_flashlight_beam_fadelength, "300", "" );
+DECLARE_CHEAT_CMD( cl_flashlight_beam_brightness, "32", "" );
+//DECLARE_CHEAT_CMD( cl_flashlight_beam_segments, "10", "" );
 
 //DECLARE_COMMAND( cl_bullet_damage_effect, "1", "", 0 );
 
@@ -1362,11 +1371,94 @@ void C_Player::CalcInEyeCamView( Vector &eyeOrigin, QAngle &eyeAngles, float &fo
 }
 
 //================================================================================
+// Called in each frame to update the colors of the AlienFX lights.
+//================================================================================
+void C_Player::UpdateAlienFX()
+{
+    // Without life, we turn off the lights.
+    if ( !IsAlive() ) {
+        TheAlienFX->SetColor(LFX_ALL, LFX_BLACK | LFX_FULL_BRIGHTNESS);
+        return;
+    }
+
+    // Front Light
+    // Health
+    {
+        int health = GetHealth();
+
+        if ( GetPlayerStatus() == PLAYER_STATUS_FALLING ) {
+            TheAlienFX->UpdatePulse(0.05f);
+            return;
+        }
+        else if ( IsDejected() ) {
+            TheAlienFX->UpdatePulse(0.5f);
+            return;
+        }
+        else if ( health < 5 ) {
+            TheAlienFX->UpdatePulse(0.7f);
+            return;
+        }
+        else if ( health < 20 ) {
+            TheAlienFX->SetColor(LFX_ALL_FRONT, LFX_RED | LFX_FULL_BRIGHTNESS);
+        }
+        else if ( health < 50 ) {
+            TheAlienFX->SetColor(LFX_ALL_FRONT, LFX_ORANGE | LFX_FULL_BRIGHTNESS);
+        }
+        else if ( health < 80 ) {
+            TheAlienFX->SetColor(LFX_ALL_FRONT, LFX_YELLOW | LFX_FULL_BRIGHTNESS);
+        }
+        else {
+            TheAlienFX->SetColor(LFX_ALL_FRONT, LFX_GREEN | LFX_FULL_BRIGHTNESS);
+        }
+    }
+
+    // Right Light
+    // Ammo
+    {
+        CBaseWeapon *pWeapon = GetBaseWeapon();
+
+        if ( !pWeapon || pWeapon->IsMeleeWeapon() ) {
+            TheAlienFX->SetColor(LFX_ALL_RIGHT, LFX_WHITE | LFX_HALF_BRIGHTNESS);
+        }
+        else {
+            int ammo = GetAmmoCount(pWeapon->GetPrimaryAmmoType());
+            int max = 200;
+
+            if ( ammo < roundup(max*0.4) ) {
+                TheAlienFX->SetColor(LFX_ALL_RIGHT, LFX_RED | LFX_FULL_BRIGHTNESS);
+            }
+            else if ( ammo < roundup(max*0.6) ) {
+                TheAlienFX->SetColor(LFX_ALL_RIGHT, LFX_ORANGE | LFX_FULL_BRIGHTNESS);
+            }
+            else if ( ammo < roundup(max*0.8) ) {
+                TheAlienFX->SetColor(LFX_ALL_RIGHT, LFX_YELLOW | LFX_FULL_BRIGHTNESS);
+            }
+            else {
+                TheAlienFX->SetColor(LFX_ALL_RIGHT, LFX_GREEN | LFX_FULL_BRIGHTNESS);
+            }
+        }
+    }
+
+    // Left Light
+    // Status
+    {
+        if ( IsUnderAttack() ) {
+            TheAlienFX->SetColor(LFX_ALL_LEFT, LFX_RED | LFX_FULL_BRIGHTNESS);
+        }
+        else if ( IsOnCombat() ) {
+            TheAlienFX->SetColor(LFX_ALL_LEFT, LFX_ORANGE | LFX_FULL_BRIGHTNESS);
+        }
+        else {
+            TheAlienFX->SetColor(LFX_ALL_LEFT, LFX_CYAN | LFX_FULL_BRIGHTNESS);
+        }
+    }
+}
+
+//================================================================================
 // Transmite la luz al disparar un arma de fuego
 //================================================================================
 void C_Player::ProcessMuzzleFlashEvent()
 {
-    DevMsg("%s ProcessMuzzleFlashEvent! \n", GetPlayerName());
     return BaseClass::ProcessMuzzleFlashEvent();
 }
 

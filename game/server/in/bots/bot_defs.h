@@ -74,10 +74,10 @@ typedef CBaseCombatWeapon CBaseWeapon;
 #define DECLARE_ADMIN_COMMAND( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY )
 #define DECLARE_REPLICATED_CHEAT_COMMAND( name, value, description )	DECLARE_COMMAND( name, value, description, FCVAR_REPLICATED | FCVAR_CHEAT )
 #define DECLARE_REPLICATED_COMMAND( name, value, description )			DECLARE_COMMAND( name, value, description, FCVAR_SERVER )
-#define DECLARE_DEBUG_COMMAND( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY | FCVAR_CHEAT | FCVAR_NOTIFY )
+#define DECLARE_DEBUG_CMD( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY | FCVAR_CHEAT | FCVAR_NOTIFY )
 
-#define DECLARE_CHEAT_COMMAND DECLARE_REPLICATED_CHEAT_COMMAND
-#define DECLARE_NOTIFY_COMMAND( name, value, description ) DECLARE_COMMAND( name, value, description, FCVAR_SERVER | FCVAR_NOTIFY )
+#define DECLARE_CHEAT_CMD DECLARE_REPLICATED_CHEAT_COMMAND
+#define DECLARE_NOTIFY_CMD( name, value, description ) DECLARE_COMMAND( name, value, description, FCVAR_SERVER | FCVAR_NOTIFY )
 
 //================================================================================
 //================================================================================

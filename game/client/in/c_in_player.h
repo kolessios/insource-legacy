@@ -44,7 +44,7 @@ enum
 //================================================================================
 class C_Player : public C_BasePlayer
 {
-    DECLARE_CLASS( C_Player, C_BasePlayer );
+    DECLARE_CLASS(C_Player, C_BasePlayer);
     DECLARE_CLIENTCLASS();
     DECLARE_PREDICTABLE();
     DECLARE_INTERPOLATION();
@@ -54,33 +54,50 @@ public:
     ~C_Player();
 
     // Utilidades
-	virtual bool IsCrouching() const {
-		return (GetFlags() & FL_DUCKING) ? true : false;
-	}
+    virtual bool IsCrouching() const
+    {
+        return (GetFlags() & FL_DUCKING) ? true : false;
+    }
 
-	virtual bool IsOnGround() const {
-		return (GetFlags() & FL_ONGROUND) ? true : false;
-	}
+    virtual bool IsOnGround() const
+    {
+        return (GetFlags() & FL_ONGROUND) ? true : false;
+    }
 
-	virtual bool IsOnGodMode() const {
-		return (GetFlags() & FL_GODMODE) ? true : false;
-	}
+    virtual bool IsOnGodMode() const
+    {
+        return (GetFlags() & FL_GODMODE) ? true : false;
+    }
 
-	virtual bool IsUnderAttack() const {
-		return m_bUnderAttack;
-	}
+    virtual bool IsUnderAttack() const
+    {
+        return m_bUnderAttack;
+    }
 
-	virtual bool IsOnCombat() const {
-		return m_bOnCombat;
-	}
+    virtual bool IsOnCombat() const
+    {
+        return m_bOnCombat;
+    }
 
-    virtual int GetButtons() { return m_nButtons; }
-    virtual bool IsButtonPressing( int btn ) { return ((m_nButtons & btn)) ? true : false; }
-    virtual bool IsButtonPressed( int btn ) { return ((m_afButtonPressed & btn)) ? true : false; }
-    virtual bool IsButtonReleased( int btn ) { return ((m_afButtonReleased & btn)) ? true : false; }
+    virtual int GetButtons()
+    {
+        return m_nButtons;
+    }
+    virtual bool IsButtonPressing(int btn)
+    {
+        return ((m_nButtons & btn)) ? true : false;
+    }
+    virtual bool IsButtonPressed(int btn)
+    {
+        return ((m_afButtonPressed & btn)) ? true : false;
+    }
+    virtual bool IsButtonReleased(int btn)
+    {
+        return ((m_afButtonReleased & btn)) ? true : false;
+    }
 
     // Estaticos
-    static C_Player *GetLocalInPlayer( int nSlot = -1 );
+    static C_Player *GetLocalInPlayer(int nSlot = -1);
     virtual bool ShouldRegenerateOriginFromCellBits() const;
 
     // Principales
@@ -89,71 +106,136 @@ public:
     virtual bool Simulate();
 
     virtual void UpdateLookAt();
-    virtual void TakeDamage( const CTakeDamageInfo &info );
+    virtual void TakeDamage(const CTakeDamageInfo &info);
 
     // Daño
-    virtual bool ShouldBleed( const CTakeDamageInfo &info, int hitgroup = HITGROUP_GENERIC );
-    virtual void TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr );
+    virtual bool ShouldBleed(const CTakeDamageInfo &info, int hitgroup = HITGROUP_GENERIC);
+    virtual void TraceAttack(const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr);
 
     // Velocidad
     virtual float GetSpeed();
-    virtual void SpeedModifier( float &speed );
+    virtual void SpeedModifier(float &speed);
     virtual void UpdateSpeed();
 
     // Aguante
-    virtual float GetStamina() { return 0.0f; }
+    virtual float GetStamina()
+    {
+        return 0.0f;
+    }
 
     // Estres
-    virtual float GetStress() { return 0.0f; }
+    virtual float GetStress()
+    {
+        return 0.0f;
+    }
 
-    virtual float GetLocalStress() { return m_flLocalStress; }
-    virtual void SetLocalStress( float level );
-    virtual void AddLocalStress( float level );
+    virtual float GetLocalStress()
+    {
+        return m_flLocalStress;
+    }
+    virtual void SetLocalStress(float level);
+    virtual void AddLocalStress(float level);
     virtual void UpdateLocalStress();
 
     // Correr y Caminar
     virtual void UpdateMovementType();
 
     virtual bool CanSprint();
-    virtual void StartSprint() { m_bSprinting = true; }
-    virtual void StopSprint() { m_bSprinting = false; }
-    virtual bool IsSprinting() { return m_bSprinting; }
+    virtual void StartSprint()
+    {
+        m_bSprinting = true;
+    }
+    virtual void StopSprint()
+    {
+        m_bSprinting = false;
+    }
+    virtual bool IsSprinting()
+    {
+        return m_bSprinting;
+    }
 
     virtual bool CanSneak();
-    virtual void StartSneaking() {
-		m_bSneaking = true; }
-    virtual void StopSneaking() {
-		m_bSneaking = false; }
-    virtual bool IsSneaking() { return m_bSneaking; }
+    virtual void StartSneaking()
+    {
+        m_bSneaking = true;
+    }
+    virtual void StopSneaking()
+    {
+        m_bSneaking = false;
+    }
+    virtual bool IsSneaking()
+    {
+        return m_bSneaking;
+    }
 
     // Condición
-    virtual int GetDejectedTimes() { return m_iDejectedTimes; }
-    virtual float GetHelpProgress() { return m_flHelpProgress; }
-    virtual float GetClimbingHold() { return m_flClimbingHold; }
+    virtual int GetDejectedTimes()
+    {
+        return m_iDejectedTimes;
+    }
+    virtual float GetHelpProgress()
+    {
+        return m_flHelpProgress;
+    }
+    virtual float GetClimbingHold()
+    {
+        return m_flClimbingHold;
+    }
 
-    virtual bool IsDejected() { return (m_iPlayerStatus == PLAYER_STATUS_DEJECTED || m_iPlayerStatus == PLAYER_STATUS_CLIMBING); }
-    virtual int GetPlayerStatus() { return m_iPlayerStatus; }
-    virtual int GetPlayerStatus() const { return m_iPlayerStatus; }
+    virtual bool IsDejected()
+    {
+        return (m_iPlayerStatus == PLAYER_STATUS_DEJECTED || m_iPlayerStatus == PLAYER_STATUS_CLIMBING);
+    }
+    virtual int GetPlayerStatus()
+    {
+        return m_iPlayerStatus;
+    }
+    virtual int GetPlayerStatus() const
+    {
+        return m_iPlayerStatus;
+    }
 
     // Estado
-    virtual int GetPlayerState() { return m_iPlayerState; }
-    virtual int GetPlayerState() const { return m_iPlayerState; }
-    virtual bool IsActive() { return (m_iPlayerState == PLAYER_STATE_ACTIVE); }
+    virtual int GetPlayerState()
+    {
+        return m_iPlayerState;
+    }
+    virtual int GetPlayerState() const
+    {
+        return m_iPlayerState;
+    }
+    virtual bool IsActive()
+    {
+        return (m_iPlayerState == PLAYER_STATE_ACTIVE);
+    }
 
     // Clase
-    virtual int GetPlayerClass() { return m_iPlayerClass; }
-    virtual int GetPlayerClass() const { return m_iPlayerClass; }
+    virtual int GetPlayerClass()
+    {
+        return m_iPlayerClass;
+    }
+    virtual int GetPlayerClass() const
+    {
+        return m_iPlayerClass;
+    }
 
     // Sonidos/Música
-    virtual float SoundDesire( const char *soundName, int channel ) { return 0.0f; }
-    virtual void OnSoundPlay( const char *soundName ) { }
-    virtual void OnSoundStop( const char *soundName ) { }
+    virtual float SoundDesire(const char *soundName, int channel)
+    {
+        return 0.0f;
+    }
+    virtual void OnSoundPlay(const char *soundName)
+    {
+    }
+    virtual void OnSoundStop(const char *soundName)
+    {
+    }
 
     // Posición y Render
-    virtual C_Player *GetActivePlayer( int mode = OBS_MODE_IN_EYE );
+    virtual C_Player *GetActivePlayer(int mode = OBS_MODE_IN_EYE);
     virtual C_BaseAnimating *GetRagdoll();
 
-    virtual bool IsLocalPlayerWatchingMe( int mode = OBS_MODE_IN_EYE );
+    virtual bool IsLocalPlayerWatchingMe(int mode = OBS_MODE_IN_EYE);
     //virtual bool IsSplitScreenPartnerWatchingMe( int mode = OBS_MODE_IN_EYE );
 
     virtual const QAngle &EyeAngles();
@@ -167,95 +249,112 @@ public:
     virtual bool ShouldDraw();
     virtual bool ShouldForceDrawInFirstPersonForShadows();
 
-    virtual int	DrawModel( int flags, const RenderableInstance_t &instance );
+    virtual int	DrawModel(int flags, const RenderableInstance_t &instance);
 
     virtual ShadowType_t ShadowCastType();
-    virtual bool ShouldReceiveProjectedTextures( int flags );
+    virtual bool ShouldReceiveProjectedTextures(int flags);
 
     // Armas
     C_BaseWeapon *GetBaseWeapon();
 
     // Animaciones
-    virtual CPlayerAnimationSystem *GetAnimationSystem() { return m_pAnimationSystem; }
+    virtual CPlayerAnimationSystem *GetAnimationSystem()
+    {
+        return m_pAnimationSystem;
+    }
     virtual void CreateAnimationSystem();
 
-    virtual void SetAnimation( PLAYER_ANIM );
-    virtual void DoAnimationEvent( PlayerAnimEvent_t nEvent, int nData = 0, bool bPredicted = false );
+    virtual void SetAnimation(PLAYER_ANIM);
+    virtual void DoAnimationEvent(PlayerAnimEvent_t nEvent, int nData = 0, bool bPredicted = false);
 
     virtual void UpdateClientSideAnimation();
-    virtual void UpdatePoseParams() { }
+    virtual void UpdatePoseParams()
+    {
+    }
 
-    virtual void PostDataUpdate( DataUpdateType_t );
-    virtual void OnDataChanged( DataUpdateType_t );
+    virtual void PostDataUpdate(DataUpdateType_t);
+    virtual void OnDataChanged(DataUpdateType_t);
 
     virtual CStudioHdr *OnNewModel();
     virtual void InitializePoseParams();
 
     // Linterna
-    virtual int FlashlightIsOn() { return IsEffectActive(EF_DIMLIGHT); }
+    virtual int FlashlightIsOn()
+    {
+        return IsEffectActive(EF_DIMLIGHT);
+    }
 
     virtual const char *GetFlashlightTextureName() const;
     virtual const char *GetFlashlightWeaponAttachment();
     virtual float GetFlashlightFOV() const;
     virtual float GetFlashlightFarZ();
     virtual float GetFlashlightLinearAtten();
-    virtual void GetFlashlightOffset( const Vector &vecForward, const Vector &vecRight, const Vector &vecUp, Vector *pVecOffset ) const;
+    virtual void GetFlashlightOffset(const Vector &vecForward, const Vector &vecRight, const Vector &vecUp, Vector *pVecOffset) const;
 
     virtual bool CreateFlashlight();
     virtual void DestroyFlashlight();
     virtual void UpdateFlashlight();
 
-    virtual bool CreateBeam( Vector vecStart, Vector vecEnd );
+    virtual bool CreateBeam(Vector vecStart, Vector vecEnd);
     virtual void DestroyBeam();
     virtual void UpdateBeam();
 
     virtual void ShowMuzzleFlashlight();
 
-    virtual void GetFlashlightPosition( C_Player *pPlayer, Vector &vecPosition, Vector &vecForward, Vector &vecRight, Vector &vecUp, bool bFromWeapon = true, const char *pAttachment = NULL );
+    virtual void GetFlashlightPosition(C_Player *pPlayer, Vector &vecPosition, Vector &vecForward, Vector &vecRight, Vector &vecUp, bool bFromWeapon = true, const char *pAttachment = NULL);
 
     // Camara
-	virtual void DecayPunchAngle();
-	
+    virtual void DecayPunchAngle();
+
     virtual bool ShouldUseViewModel();
 
     virtual bool IsThirdPerson();
     virtual bool IsFirstPerson();
     virtual bool IsActiveSplitScreenPlayer();
 
-    virtual Vector GetChaseCamViewOffset( CBaseEntity *target );
+    virtual Vector GetChaseCamViewOffset(CBaseEntity *target);
 
-    virtual bool GetEyesView( C_BaseAnimating *pEntity, Vector& eyeOrigin, QAngle& eyeAngles, int secureDistance );
-    virtual void CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
+    virtual bool GetEyesView(C_BaseAnimating *pEntity, Vector& eyeOrigin, QAngle& eyeAngles, int secureDistance);
+    virtual void CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
 
-    virtual void CalcInEyeCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
+    virtual void CalcInEyeCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
+
+    // AlienFX
+    virtual void UpdateAlienFX();
 
     // Efectos
-    virtual bool IsMovementDisabled() { return m_bMovementDisabled; }
-    virtual bool IsAimingDisabled() { return m_bAimingDisabled; }
+    virtual bool IsMovementDisabled()
+    {
+        return m_bMovementDisabled;
+    }
+    virtual bool IsAimingDisabled()
+    {
+        return m_bAimingDisabled;
+    }
 
     virtual void ProcessMuzzleFlashEvent();
 
-    virtual void DoPostProcessingEffects( PostProcessParameters_t &params );
-	virtual void DoStressContrastEffect( PostProcessParameters_t &params );
+    virtual void DoPostProcessingEffects(PostProcessParameters_t &params);
+    virtual void DoStressContrastEffect(PostProcessParameters_t &params);
 
-    virtual bool TestMove( const Vector &pos, float fVertDist, float radius, const Vector &objPos, const Vector &objDir );
-    virtual void PerformClientSideObstacleAvoidance( float flFrameTime, CUserCmd *pCmd );
-    virtual bool CreateMove( float flInputSampleTime, CUserCmd *pCmd );
+    virtual bool TestMove(const Vector &pos, float fVertDist, float radius, const Vector &objPos, const Vector &objDir);
+    virtual void PerformClientSideObstacleAvoidance(float flFrameTime, CUserCmd *pCmd);
+    virtual bool CreateMove(float flInputSampleTime, CUserCmd *pCmd);
 
     // Collision Bounds
-    virtual const Vector GetPlayerMins( void ) const;
-    virtual const Vector GetPlayerMaxs( void ) const;
-    virtual void UpdateCollisionBounds( void );
+    virtual const Vector GetPlayerMins(void) const;
+    virtual const Vector GetPlayerMaxs(void) const;
+    virtual void UpdateCollisionBounds(void);
 
 public:
     // Compartido
-    virtual Activity TranslateActivity( Activity actBase );
+    virtual Activity TranslateActivity(Activity actBase);
 
     virtual Vector Weapon_ShootPosition();
     virtual Vector Weapon_ShootDirection();
 
-	virtual void FireBullets( const FireBulletsInfo_t &info );
-	virtual void OnFireBullets( const FireBulletsInfo_t &info );
+    virtual void FireBullets(const FireBulletsInfo_t &info);
+    virtual void OnFireBullets(const FireBulletsInfo_t &info);
     virtual bool ShouldDrawUnderwaterBulletBubbles();
 
 public:
@@ -275,7 +374,7 @@ public:
     bool m_bFlashlightEnabled;
     bool m_bSprinting;
     bool m_bSneaking;
-	float m_flLocalStress;
+    float m_flLocalStress;
 
     bool m_bOnCombat;
     bool m_bUnderAttack;
@@ -300,7 +399,7 @@ protected:
     CPlayerAnimationSystem *m_pAnimationSystem;
 
 private:
-    C_Player( const C_Player & );
+    C_Player(const C_Player &);
 };
 
 inline C_Player *ToInPlayer( CBaseEntity *pPlayer )

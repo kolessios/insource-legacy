@@ -6,7 +6,7 @@
 #include "director.h"
 #include "director_manager.h"
 
-#include "in_shareddefs.h"
+
 #include "in_gamerules.h"
 #include "in_player.h"
 #include "players_system.h"
@@ -24,16 +24,24 @@ Director g_Director;
 Director *TheDirector = &g_Director;
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_DIRECTOR, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_DIRECTOR, __VA_ARGS__)
+
+//================================================================================
 // Comandos
 //================================================================================
 
-DECLARE_DEBUG_COMMAND( director_debug, "0", "" )
+DECLARE_DEBUG_CMD(director_debug, "0", "")
 
-DECLARE_NOTIFY_COMMAND( director_adaptative_skill, "0", "" )
-DECLARE_NOTIFY_COMMAND( director_max_childs, "30", "" )
-DECLARE_NOTIFY_COMMAND( director_max_distance, "3000", "" )
-DECLARE_NOTIFY_COMMAND( director_min_distance, "600", "" )
-DECLARE_CHEAT_COMMAND( director_disable_music, "0", "" )
+DECLARE_NOTIFY_CMD(director_adaptative_skill, "0", "")
+DECLARE_NOTIFY_CMD(director_max_childs, "30", "")
+DECLARE_NOTIFY_CMD(director_max_distance, "3000", "")
+DECLARE_NOTIFY_CMD(director_min_distance, "600", "")
+DECLARE_CHEAT_CMD(director_disable_music, "0", "")
 
 #define IS_ANGRY GetAngry() >= ANGRY_HIGH
 #define IS_CRAZY GetAngry() >= ANGRY_CRAZY
@@ -42,43 +50,43 @@ DECLARE_CHEAT_COMMAND( director_disable_music, "0", "" )
 // Información para la maquina virtual
 //================================================================================
 
-BEGIN_ENT_SCRIPTDESC_ROOT( Director, SCRIPT_SINGLETON "TheDirector" )
-	DEFINE_SCRIPTFUNC( SetPopulation, "" )
-	//DEFINE_SCRIPTFUNC_NAMED( ScriptGetChildClass, "GetChildClass", "" )
+BEGIN_ENT_SCRIPTDESC_ROOT(Director, SCRIPT_SINGLETON "TheDirector")
+DEFINE_SCRIPTFUNC(SetPopulation, "")
+//DEFINE_SCRIPTFUNC_NAMED( ScriptGetChildClass, "GetChildClass", "" )
 
-	DEFINE_SCRIPTFUNC( Resume, "" )
-	DEFINE_SCRIPTFUNC( Stop, "" )
+DEFINE_SCRIPTFUNC(Resume, "")
+DEFINE_SCRIPTFUNC(Stop, "")
 
-	DEFINE_SCRIPTFUNC( GetPanicEventDelay, "" )
-	DEFINE_SCRIPTFUNC( GetPanicEventHordes, "" )
-	DEFINE_SCRIPTFUNC( StartPanic, "" )
+DEFINE_SCRIPTFUNC(GetPanicEventDelay, "")
+DEFINE_SCRIPTFUNC(GetPanicEventHordes, "")
+DEFINE_SCRIPTFUNC(StartPanic, "")
 
-	DEFINE_SCRIPTFUNC( SoundDesire, "" )
+DEFINE_SCRIPTFUNC(SoundDesire, "")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptCanSpawnMinions, "CanSpawnMinions", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptCanSpawnMinionsByType, "CanSpawnMinionsByType", "" )
+DEFINE_SCRIPTFUNC_NAMED(ScriptCanSpawnMinions, "CanSpawnMinions", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptCanSpawnMinionsByType, "CanSpawnMinionsByType", "")
 
-	DEFINE_SCRIPTFUNC( GetMaxDistance, "" )
-	DEFINE_SCRIPTFUNC( GetMinDistance, "" )
+DEFINE_SCRIPTFUNC(GetMaxDistance, "")
+DEFINE_SCRIPTFUNC(GetMinDistance, "")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMaxUnits, "GetMaxUnits", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetMaxUnitsByType, "GetMaxUnitsByType", "" )
+DEFINE_SCRIPTFUNC_NAMED(ScriptGetMaxUnits, "GetMaxUnits", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptGetMaxUnitsByType, "GetMaxUnitsByType", "")
 
-	DEFINE_SCRIPTFUNC( Disclose, "" )
-	DEFINE_SCRIPTFUNC( KillAll, "" )
+DEFINE_SCRIPTFUNC(Disclose, "")
+DEFINE_SCRIPTFUNC(KillAll, "")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSet, "Set", "" )
+DEFINE_SCRIPTFUNC_NAMED(ScriptSet, "Set", "")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetStatus, "GetStatus", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptIsStatus, "IsStatus", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetStatus, "SetStatus", "" )
+DEFINE_SCRIPTFUNC_NAMED(ScriptGetStatus, "GetStatus", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptIsStatus, "IsStatus", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptSetStatus, "SetStatus", "")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetPhase, "GetPhase", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptIsPhase, "IsPhase", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetPhase, "SetPhase", "" )
+DEFINE_SCRIPTFUNC_NAMED(ScriptGetPhase, "GetPhase", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptIsPhase, "IsPhase", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptSetPhase, "SetPhase", "")
 
-	DEFINE_SCRIPTFUNC_NAMED( ScriptGetAngry, "GetAngry", "" )
-	DEFINE_SCRIPTFUNC_NAMED( ScriptSetAngry, "SetAngry", "" )
+DEFINE_SCRIPTFUNC_NAMED(ScriptGetAngry, "GetAngry", "")
+DEFINE_SCRIPTFUNC_NAMED(ScriptSetAngry, "SetAngry", "")
 END_SCRIPTDESC();
 
 #undef VSCRIPT_CALL
@@ -122,7 +130,7 @@ END_SCRIPTDESC();
 
 //================================================================================
 //================================================================================
-Director::Director() : CAutoGameSystemPerFrame( "Director" )
+Director::Director() : CAutoGameSystemPerFrame("Director")
 {
 
 }
@@ -196,9 +204,9 @@ void Director::FrameUpdatePostEntityThink()
 
 //================================================================================
 //================================================================================
-void Director::SetPopulation( const char *type )
+void Director::SetPopulation(const char *type)
 {
-    TheDirectorManager->SetPopulation( type );
+    TheDirectorManager->SetPopulation(type);
 }
 
 //================================================================================
@@ -207,7 +215,7 @@ void Director::SetPopulation( const char *type )
 void Director::Resume()
 {
     m_bDisabled = false;
-    VSCRIPT_CALL( Resume );
+    VSCRIPT_CALL(Resume);
 }
 
 //================================================================================
@@ -215,7 +223,7 @@ void Director::Resume()
 //================================================================================
 void Director::Stop()
 {
-    KillAll( false );
+    KillAll(false);
     m_bDisabled = true;
     //VSCRIPT_CALL( Stop );
 }
@@ -232,47 +240,47 @@ void Director::StartVirtualMachine()
     //g_pScriptVM->RegisterInstance( TheDirector, "TheDirector" );
 
     // Configuración predeterminada del Director
-    KeyValues *config = new KeyValues( "DirectorConfig" );
-    config->LoadFromFile( filesystem, "scripts/director_config.txt", NULL );
+    KeyValues *config = new KeyValues("DirectorConfig");
+    config->LoadFromFile(filesystem, "scripts/director_config.txt", NULL);
 
     // Registramos el arreglo para que los scripts puedan cambiar la configuración
-    CScriptKeyValues *pConfig = new CScriptKeyValues( config );
-    g_pScriptVM->RegisterInstance( pConfig, "DirectorConfig" );
+    CScriptKeyValues *pConfig = new CScriptKeyValues(config);
+    g_pScriptVM->RegisterInstance(pConfig, "DirectorConfig");
 
     //if ( m_ScriptScope.IsInitialized() )
     //return;
 
     // Creamos la identificación
     if ( m_szScriptID == NULL_STRING ) {
-        char *szName = (char *)stackalloc( 1024 );
-        g_pScriptVM->GenerateUniqueKey( "TheDirector", szName, 1024 );
-        m_szScriptID = AllocPooledString( szName );
+        char *szName = (char *)stackalloc(1024);
+        g_pScriptVM->GenerateUniqueKey("TheDirector", szName, 1024);
+        m_szScriptID = AllocPooledString(szName);
     }
 
     // Registramos al Director y le establecemos la identificación
-    m_hScriptInstance = g_pScriptVM->RegisterInstance( GetScriptDesc(), this );
-    g_pScriptVM->SetInstanceUniqeId( m_hScriptInstance, STRING( m_szScriptID ) );
+    m_hScriptInstance = g_pScriptVM->RegisterInstance(GetScriptDesc(), this);
+    g_pScriptVM->SetInstanceUniqeId(m_hScriptInstance, STRING(m_szScriptID));
 
     // Creamos el scope
-    m_ScriptScope.Init( STRING( m_szScriptID ) );
-    g_pScriptVM->SetValue( m_ScriptScope, "self", m_hScriptInstance );
+    m_ScriptScope.Init(STRING(m_szScriptID));
+    g_pScriptVM->SetValue(m_ScriptScope, "self", m_hScriptInstance);
 
-    VScriptRunScript( "director_base.nut", m_ScriptScope, true );
-    VScriptRunScript( UTIL_VarArgs( "director/%s.nut", gpGlobals->mapname ), m_ScriptScope );
+    VScriptRunScript("director_base.nut", m_ScriptScope, true);
+    VScriptRunScript(UTIL_VarArgs("director/%s.nut", gpGlobals->mapname), m_ScriptScope);
 }
 
 //================================================================================
 //================================================================================
-bool Director::CallScriptFunction( const char * pFunctionName, ScriptVariant_t *pFunctionReturn )
+bool Director::CallScriptFunction(const char * pFunctionName, ScriptVariant_t *pFunctionReturn)
 {
     if ( !m_ScriptScope.IsInitialized() )
         return false;
 
-    HSCRIPT hFunc = m_ScriptScope.LookupFunction( pFunctionName );
+    HSCRIPT hFunc = m_ScriptScope.LookupFunction(pFunctionName);
 
     if ( hFunc ) {
-        m_ScriptScope.Call( hFunc, pFunctionReturn );
-        m_ScriptScope.ReleaseFunction( hFunc );
+        m_ScriptScope.Call(hFunc, pFunctionReturn);
+        m_ScriptScope.ReleaseFunction(hFunc);
 
         return true;
     }
@@ -316,22 +324,22 @@ void Director::StartMap()
     FindDirectorEntity();
     StartVirtualMachine();
 
-    Set( STATUS_NORMAL, PHASE_RELAX, 5.0f );
+    Set(STATUS_NORMAL, PHASE_RELAX, 5.0f);
 
-    m_ThinkTimer.Start( 3.0f );
+    m_ThinkTimer.Start(3.0f);
     m_SustainTimer.Invalidate();
-    m_PanicTimer.Start( GetPanicEventDelay() );
+    m_PanicTimer.Start(GetPanicEventDelay());
 
     m_MapTimer.Start();
     m_iPanicEventHordesLeft = 0;
 
-    TheDirectorManager->ResetMap();    
-    VSCRIPT_CALL( StartMap );
+    TheDirectorManager->ResetMap();
+    VSCRIPT_CALL(StartMap);
 
     // TODO
-    m_BackgroundMusicTimer.Start( RandomInt( 10, 20 ) );
-    m_ChoirTimer.Start( 10 );
-    m_HordeMusic = m_HordeMusicList[RandomInt( HORDE_DEVIDDLE, LAST_HORDE_MUSIC - 1 )];
+    m_BackgroundMusicTimer.Start(RandomInt(10, 20));
+    m_ChoirTimer.Start(10);
+    m_HordeMusic = m_HordeMusicList[RandomInt(HORDE_DEVIDDLE, LAST_HORDE_MUSIC - 1)];
 }
 
 //================================================================================
@@ -339,7 +347,7 @@ void Director::StartMap()
 //================================================================================
 void Director::StartCampaign()
 {
-    SetAngry( ANGRY_LOW );
+    SetAngry(ANGRY_LOW);
     m_GameTimer.Start();
 }
 
@@ -351,17 +359,17 @@ void Director::FindDirectorEntity()
     if ( m_pEntity )
         return;
 
-    m_pEntity = (CInfoDirector *)gEntList.FindEntityByClassname( NULL, "info_director" );
+    m_pEntity = (CInfoDirector *)gEntList.FindEntityByClassname(NULL, "info_director");
 
     // No hay ningún info_director
     if ( !m_pEntity ) {
-        m_pEntity = (CInfoDirector *)CBaseEntity::CreateNoSpawn( "info_director", vec3_origin, vec3_angle );
-        m_pEntity->SetName( MAKE_STRING( "@director" ) );
-        DispatchSpawn( m_pEntity );
+        m_pEntity = (CInfoDirector *)CBaseEntity::CreateNoSpawn("info_director", vec3_origin, vec3_angle);
+        m_pEntity->SetName(MAKE_STRING("@director"));
+        DispatchSpawn(m_pEntity);
         m_pEntity->Activate();
     }
 
-    Assert( m_pEntity );
+    Assert(m_pEntity);
 }
 
 //================================================================================
@@ -382,14 +390,14 @@ void Director::Think()
     Update();
     PostUpdate();
 
-    m_ThinkTimer.Start( 0.3f );
+    m_ThinkTimer.Start(0.3f);
 }
 
 //================================================================================
 //================================================================================
 void Director::PreUpdate()
 {
-    VSCRIPT_CALL( PreUpdate );
+    VSCRIPT_CALL(PreUpdate);
 
     TheDirectorManager->Scan();
     TheGameRules->Director_PreUpdate();
@@ -400,7 +408,7 @@ void Director::PreUpdate()
 //================================================================================
 void Director::Update()
 {
-    VSCRIPT_CALL( Update );
+    VSCRIPT_CALL(Update);
 
     UpdateAngry();
     UpdatePhase();
@@ -418,7 +426,7 @@ void Director::Update()
 //================================================================================
 void Director::PostUpdate()
 {
-    VSCRIPT_CALL( PostUpdate );
+    VSCRIPT_CALL(PostUpdate);
 
     // Attack!
     if ( IsOnPanicEvent() ) {
@@ -431,13 +439,13 @@ void Director::PostUpdate()
 //================================================================================
 void Director::UpdatePhase()
 {
-    HANDLED_BY_VSCRIPT( UpdatePhase );
+    HANDLED_BY_VSCRIPT(UpdatePhase);
 
     DirectorPhase phase = GetPhase();
 
     // Esta fase debería terminar
-    if ( ShouldPhaseEnd( phase ) ) {
-        OnPhaseEnd( phase );
+    if ( ShouldPhaseEnd(phase) ) {
+        OnPhaseEnd(phase);
     }
 }
 
@@ -447,7 +455,7 @@ void Director::UpdatePhase()
 //================================================================================
 void Director::UpdateAngry()
 {
-    HANDLED_BY_VSCRIPT( UpdateAngry );
+    HANDLED_BY_VSCRIPT(UpdateAngry);
 
     // ANGRY_LOW = 1
     int angry = ANGRY_LOW;
@@ -470,8 +478,8 @@ void Director::UpdateAngry()
     }
 
     // Establecemos
-    angry = clamp( angry, ANGRY_LOW, ANGRY_CRAZY );
-    SetAngry( (DirectorAngry)angry );
+    angry = clamp(angry, ANGRY_LOW, ANGRY_CRAZY);
+    SetAngry((DirectorAngry)angry);
 }
 
 //================================================================================
@@ -480,21 +488,21 @@ void Director::UpdateAngry()
 //================================================================================
 void Director::UpdatePanicEvent()
 {
-    HANDLED_BY_VSCRIPT( UpdatePanicEvent );
+    HANDLED_BY_VSCRIPT(UpdatePanicEvent);
 
     if ( !ShouldStartPanicEvent() )
         return;
 
-    StartPanic( GetPanicEventHordes() );
-    m_PanicTimer.Start( GetPanicEventDelay() );
+    StartPanic(GetPanicEventHordes());
+    m_PanicTimer.Start(GetPanicEventDelay());
 }
 
 //================================================================================
 // Devuelve si la fase indicada debería terminar
 //================================================================================
-bool Director::ShouldPhaseEnd( DirectorPhase phase )
+bool Director::ShouldPhaseEnd(DirectorPhase phase)
 {
-    HANDLED_BY_VSCRIPT_RETURN_ARG1( bool, ShouldPhaseEnd, int, phase );
+    HANDLED_BY_VSCRIPT_RETURN_ARG1(bool, ShouldPhaseEnd, int, phase);
 
     switch ( phase ) {
         // Give players a break
@@ -552,12 +560,12 @@ bool Director::ShouldPhaseEnd( DirectorPhase phase )
 
 //================================================================================
 //================================================================================
-void Director::OnPhaseStart( DirectorPhase phase )
+void Director::OnPhaseStart(DirectorPhase phase)
 {
     switch ( phase ) {
         case PHASE_RELAX:
         {
-            if ( IsStatus( STATUS_PANIC ) ) {
+            if ( IsStatus(STATUS_PANIC) ) {
                 EndPanicHorde();
             }
 
@@ -566,7 +574,7 @@ void Director::OnPhaseStart( DirectorPhase phase )
 
         case PHASE_SUSTAIN:
         {
-            m_SustainTimer.Start( (3.0f * 60.0f) );
+            m_SustainTimer.Start((3.0f * 60.0f));
             break;
         }
     }
@@ -575,7 +583,7 @@ void Director::OnPhaseStart( DirectorPhase phase )
 //================================================================================
 // Una fase ha terminado
 //================================================================================
-void Director::OnPhaseEnd( DirectorPhase phase )
+void Director::OnPhaseEnd(DirectorPhase phase)
 {
     m_PhaseTimer.Invalidate();
 
@@ -583,7 +591,7 @@ void Director::OnPhaseEnd( DirectorPhase phase )
         // The break is over, time to fight.
         case PHASE_RELAX:
         {
-            SetPhase( PHASE_BUILD_UP );
+            SetPhase(PHASE_BUILD_UP);
             break;
         }
 
@@ -591,31 +599,31 @@ void Director::OnPhaseEnd( DirectorPhase phase )
         case PHASE_BUILD_UP:
         {
             if ( IsOnPanicEvent() ) {
-                SetPhase( PHASE_SUSTAIN );
+                SetPhase(PHASE_SUSTAIN);
             }
             else {
                 if ( GetDifficulty() >= SKILL_HARD ) {
-                    SetPhase( PHASE_RELAX, 10.0f );
+                    SetPhase(PHASE_RELAX, 10.0f);
                 }
                 else {
-                    SetPhase( PHASE_FADE );
+                    SetPhase(PHASE_FADE);
                 }
             }
-            
+
             break;
         }
 
         // It's been a while since players are highly stressed or have reached an extreme stress level.
         case PHASE_SUSTAIN:
         {
-            SetPhase( PHASE_FADE );
+            SetPhase(PHASE_FADE);
             break;
         }
 
         // The enemies have been eliminated and the level of stress is low, let us rest for a while.
         case PHASE_FADE:
         {
-            SetPhase( PHASE_RELAX, 10.0f );
+            SetPhase(PHASE_RELAX, 10.0f);
             break;
         }
     }
@@ -626,10 +634,10 @@ void Director::OnPhaseEnd( DirectorPhase phase )
 //================================================================================
 float Director::GetPanicEventDelay()
 {
-    HANDLED_BY_VSCRIPT_VALUE( float, GetPanicEventDelay, >, 0.0f );
+    HANDLED_BY_VSCRIPT_VALUE(float, GetPanicEventDelay, >, 0.0f);
 
     // De 5 a 7 minutos
-    float delay = (60.0f * RandomFloat( 5.0f, 7.0f ));
+    float delay = (60.0f * RandomFloat(5.0f, 7.0f));
 
     // Medio o dificil: -1 minuto
     if ( GetDifficulty() == SKILL_MEDIUM ) {
@@ -649,7 +657,7 @@ float Director::GetPanicEventDelay()
 //================================================================================
 int Director::GetPanicEventHordes()
 {
-    HANDLED_BY_VSCRIPT_VALUE( int, GetPanicEventHordes, >, 0 );
+    HANDLED_BY_VSCRIPT_VALUE(int, GetPanicEventHordes, >, 0);
 
     // Número de hordas
     int hordes = 1;
@@ -671,9 +679,9 @@ int Director::GetPanicEventHordes()
 //================================================================================
 bool Director::ShouldStartPanicEvent()
 {
-    HANDLED_BY_VSCRIPT_RETURN( bool, ShouldStartPanicEvent );
+    HANDLED_BY_VSCRIPT_RETURN(bool, ShouldStartPanicEvent);
 
-    if ( !IsStatus( STATUS_NORMAL ) )
+    if ( !IsStatus(STATUS_NORMAL) )
         return false;
 
     if ( !m_PanicTimer.HasStarted() || !m_PanicTimer.IsElapsed() )
@@ -685,13 +693,13 @@ bool Director::ShouldStartPanicEvent()
 //================================================================================
 // Empieza un evento de pánico con el número de hordas especificadas
 //================================================================================
-void Director::StartPanic( int hordes )
+void Director::StartPanic(int hordes)
 {
     // Hacemos espacio para los nuevos minions
-    KillAll( true );
+    KillAll(true);
 
     // Pánico
-    SetStatus( STATUS_PANIC );
+    SetStatus(STATUS_PANIC);
     m_iPanicEventHordesLeft = hordes;
 
     OnPanicStart();
@@ -701,7 +709,7 @@ void Director::StartPanic( int hordes )
 //================================================================================
 void Director::EndPanicHorde()
 {
-    if ( !IsStatus( STATUS_PANIC ) )
+    if ( !IsStatus(STATUS_PANIC) )
         return;
 
     if ( m_iPanicEventHordesLeft == INFINITE )
@@ -710,7 +718,7 @@ void Director::EndPanicHorde()
     int hordeNumber = m_iPanicEventHordesLeft;
     int hordesLeft = (m_iPanicEventHordesLeft - 1);
 
-    OnPanicHordeEnd( hordeNumber, hordesLeft );
+    OnPanicHordeEnd(hordeNumber, hordesLeft);
 
     --m_iPanicEventHordesLeft;
 
@@ -724,21 +732,21 @@ void Director::EndPanicHorde()
 //================================================================================
 void Director::OnPanicStart()
 {
-    VSCRIPT_CALL( OnPanicStart );
+    VSCRIPT_CALL(OnPanicStart);
 
     if ( director_debug.GetBool() )
-        DevMsg( "[Director] Un evento de panico ha comenzado.\n" );
+        Msg("Un evento de panico ha comenzado.\n");
 }
 
 //================================================================================
 // Una horda de pánico ha terminado
 //================================================================================
-void Director::OnPanicHordeEnd( int hordeNumber, int hordesLeft )
+void Director::OnPanicHordeEnd(int hordeNumber, int hordesLeft)
 {
     // TODO: VSCRIPT_CALL 
 
     if ( director_debug.GetBool() )
-        DevMsg( "[Director] Una horda ha terminado #%i - Faltan: %i.\n", hordeNumber, hordesLeft );
+        Msg("Una horda ha terminado #%i - Faltan: %i.\n", hordeNumber, hordesLeft);
 }
 
 //================================================================================
@@ -746,13 +754,13 @@ void Director::OnPanicHordeEnd( int hordeNumber, int hordesLeft )
 //================================================================================
 void Director::OnPanicEnd()
 {
-    HANDLED_BY_VSCRIPT( OnPanicEnd );
+    HANDLED_BY_VSCRIPT(OnPanicEnd);
 
     // Estado normal
-    SetStatus( STATUS_NORMAL );
+    SetStatus(STATUS_NORMAL);
 
     if ( director_debug.GetBool() )
-        DevMsg( "[Director] Un evento de panico ha terminado.\n" );
+        Msg("Un evento de panico ha terminado.\n");
 }
 
 //================================================================================
@@ -767,71 +775,71 @@ void Director::DebugDisplay()
     float maxStress = GetMaxStress();
     float minStress = GetMinStress();
 
-    DebugScreenText( "TheDirector" );
-    DebugScreenText( "------------------------------------------" );
+    DebugScreenText("TheDirector");
+    DebugScreenText("------------------------------------------");
 
     if ( IsDisabled() ) {
-        DebugScreenText( "DISABLED!" );
+        DebugScreenText("DISABLED!");
     }
 
-    DebugScreenText( "" );
-    DebugScreenText( "Map Time: %.2f", m_MapTimer.GetElapsedTime() );
-    DebugScreenText( "Game Time: %.2f", m_GameTimer.GetElapsedTime() );
-    
+    DebugScreenText("");
+    DebugScreenText("Map Time: %.2f", m_MapTimer.GetElapsedTime());
+    DebugScreenText("Game Time: %.2f", m_GameTimer.GetElapsedTime());
+
     // Estado
-    DebugScreenText( "" );
-    DebugScreenText( "Status: %s", g_DirectorStatus[m_iStatus] );
+    DebugScreenText("");
+    DebugScreenText("Status: %s", g_DirectorStatus[m_iStatus]);
 
     if ( m_PhaseTimer.HasStarted() ) {
-        DebugScreenText( "Phase: %s (%.2f)", g_DirectorPhase[m_iPhase], m_PhaseTimer.GetRemainingTime() );
+        DebugScreenText("Phase: %s (%.2f)", g_DirectorPhase[m_iPhase], m_PhaseTimer.GetRemainingTime());
     }
     else {
-        DebugScreenText( "Phase: %s", g_DirectorPhase[m_iPhase] );
+        DebugScreenText("Phase: %s", g_DirectorPhase[m_iPhase]);
     }
-    
 
-    if ( IsStatus( STATUS_PANIC ) ) {
-        DebugScreenText( "  Hordes: %i", m_iPanicEventHordesLeft );
+
+    if ( IsStatus(STATUS_PANIC) ) {
+        DebugScreenText("  Hordes: %i", m_iPanicEventHordesLeft);
     }
-    
-    if ( IsPhase( PHASE_SUSTAIN ) ) {
-        DebugScreenText( "  Time Left: %.2f", m_SustainTimer.GetRemainingTime() );
-        
+
+    if ( IsPhase(PHASE_SUSTAIN) ) {
+        DebugScreenText("  Time Left: %.2f", m_SustainTimer.GetRemainingTime());
+
         if ( stress <= minStress ) {
-            DebugScreenText( "  Unable to sustain! (%.2f %)", stress );
+            DebugScreenText("  Unable to sustain! (%.2f %)", stress);
         }
         else if ( stress >= maxStress ) {
-            DebugScreenText( "  Maintaining maximum level (%.2f %)", stress );
+            DebugScreenText("  Maintaining maximum level (%.2f %)", stress);
         }
     }
 
-    if ( IsPhase( PHASE_BUILD_UP ) ) {
-        DebugScreenText( "  Stress: %.2f / %.2f", stress, maxStress );
+    if ( IsPhase(PHASE_BUILD_UP) ) {
+        DebugScreenText("  Stress: %.2f / %.2f", stress, maxStress);
     }
 
-    DebugScreenText( "" );
-    DebugScreenText( "Angry: %s", g_DirectorAngry[m_iAngry] );
-    DebugScreenText( "Panic: %.2fs", m_PanicTimer.GetRemainingTime() );
-    DebugScreenText( "Stress: %.2f", GetStress() );
+    DebugScreenText("");
+    DebugScreenText("Angry: %s", g_DirectorAngry[m_iAngry]);
+    DebugScreenText("Panic: %.2fs", m_PanicTimer.GetRemainingTime());
+    DebugScreenText("Stress: %.2f", GetStress());
 
-    DebugScreenText( "" );
-    DebugScreenText( "------------------------------------------" );
-    DebugScreenText( "" );
+    DebugScreenText("");
+    DebugScreenText("------------------------------------------");
+    DebugScreenText("");
 
-    FOR_EACH_MINION_TYPE( it )
+    FOR_EACH_MINION_TYPE(it)
     {
-        int population = TheDirectorManager->GetPopulation( (MinionType)it );
+        int population = TheDirectorManager->GetPopulation((MinionType)it);
 
         if ( population == 0 )
             continue;
 
-        DebugScreenText( "%s", g_MinionTypes[it] );
-        DebugScreenText( "---------------------------" );
-        DebugScreenText( "Minions: %i / %i", TheDirectorManager->m_Minions[it].alive, GetMaxUnits( (MinionType)it ) );
-        DebugScreenText( "Population: %i", population );
-        DebugScreenText( "Too close: %i", TheDirectorManager->m_Minions[it].tooClose );
-        DebugScreenText( "Created: %i", TheDirectorManager->m_Minions[it].created );
-        DebugScreenText( "" );
+        DebugScreenText("%s", g_MinionTypes[it]);
+        DebugScreenText("---------------------------");
+        DebugScreenText("Minions: %i / %i", TheDirectorManager->m_Minions[it].alive, GetMaxUnits((MinionType)it));
+        DebugScreenText("Population: %i", population);
+        DebugScreenText("Too close: %i", TheDirectorManager->m_Minions[it].tooClose);
+        DebugScreenText("Created: %i", TheDirectorManager->m_Minions[it].created);
+        DebugScreenText("");
     }
 
     /*DebugScreenText( "" );
@@ -840,51 +848,51 @@ void Director::DebugDisplay()
 
     FOR_EACH_VEC( TheDirectorManager->m_PopulationList, pt )
     {
-        CMinionInfo *info = TheDirectorManager->m_PopulationList[pt];
-        Assert( info );
+    CMinionInfo *info = TheDirectorManager->m_PopulationList[pt];
+    Assert( info );
 
-        DebugScreenText( "%s", info->unit );
-        DebugScreenText( "---------------------------" );
-        if ( info->maxUnits > 0 )
-            DebugScreenText( "Units: %i / %i", info->alive, info->maxUnits );
-        else
-            DebugScreenText( "Units: %i", info->alive );
-        DebugScreenText( "Spawn Chance: %i %", info->spawnChance );
-        DebugScreenText( "Type: %s", g_MinionTypes[info->type] );
-        DebugScreenText( "Created: %i", info->created );
-        DebugScreenText( "Next Spawn: %.2f", info->nextSpawn.GetRemainingTime() );
-        DebugScreenText( "" );
+    DebugScreenText( "%s", info->unit );
+    DebugScreenText( "---------------------------" );
+    if ( info->maxUnits > 0 )
+    DebugScreenText( "Units: %i / %i", info->alive, info->maxUnits );
+    else
+    DebugScreenText( "Units: %i", info->alive );
+    DebugScreenText( "Spawn Chance: %i %", info->spawnChance );
+    DebugScreenText( "Type: %s", g_MinionTypes[info->type] );
+    DebugScreenText( "Created: %i", info->created );
+    DebugScreenText( "Next Spawn: %.2f", info->nextSpawn.GetRemainingTime() );
+    DebugScreenText( "" );
 
     }*/
 
-    DebugScreenText( "" );
-    DebugScreenText( "------------------------------------------" );
-    DebugScreenText( "" );
+    DebugScreenText("");
+    DebugScreenText("------------------------------------------");
+    DebugScreenText("");
 
-    DebugScreenText( "" );
-    DebugScreenText( "Background Music: %.2f", m_BackgroundMusicTimer.GetRemainingTime() );
-    DebugScreenText( "Choir Sound: %.2f", m_ChoirTimer.GetRemainingTime() );
-
-    //
-    DebugScreenText( "" );
-    DebugScreenText( "Administrator" );
-    DebugScreenText( "------------------------------------------" );
-
-    DebugScreenText( "Areas: %i", TheDirectorManager->m_CandidateAreas.Count() );
-    DebugScreenText( "Nodes: %i", TheDirectorManager->m_CandidateNodes.Count() );
+    DebugScreenText("");
+    DebugScreenText("Background Music: %.2f", m_BackgroundMusicTimer.GetRemainingTime());
+    DebugScreenText("Choir Sound: %.2f", m_ChoirTimer.GetRemainingTime());
 
     //
-    DebugScreenText( "" );
-    DebugScreenText( "Players" );
-    DebugScreenText( "------------------------------------------" );
-    DebugScreenText( "" );
+    DebugScreenText("");
+    DebugScreenText("Administrator");
+    DebugScreenText("------------------------------------------");
 
-    DebugScreenText( "Alive: %i/%i", ThePlayersSystem->GetAlive(), ThePlayersSystem->GetTotal() );
-    DebugScreenText( "Health: %i", ThePlayersSystem->GetHealth() );
-    DebugScreenText( "Stress: %.2f", ThePlayersSystem->GetStress() );
-    DebugScreenText( "Dejected: %i", ThePlayersSystem->GetDejected() );
-    DebugScreenText( "Weapon Stats: %s", g_StatsNames[ThePlayersSystem->m_WeaponsStats] );
-    DebugScreenText( "Stats: %s", g_StatsNames[ThePlayersSystem->m_PlayerStats] );
+    DebugScreenText("Areas: %i", TheDirectorManager->m_CandidateAreas.Count());
+    DebugScreenText("Nodes: %i", TheDirectorManager->m_CandidateNodes.Count());
+
+    //
+    DebugScreenText("");
+    DebugScreenText("Players");
+    DebugScreenText("------------------------------------------");
+    DebugScreenText("");
+
+    DebugScreenText("Alive: %i/%i", ThePlayersSystem->GetAlive(), ThePlayersSystem->GetTotal());
+    DebugScreenText("Health: %i", ThePlayersSystem->GetHealth());
+    DebugScreenText("Stress: %.2f", ThePlayersSystem->GetStress());
+    DebugScreenText("Dejected: %i", ThePlayersSystem->GetDejected());
+    DebugScreenText("Weapon Stats: %s", g_StatsNames[ThePlayersSystem->m_WeaponsStats]);
+    DebugScreenText("Stats: %s", g_StatsNames[ThePlayersSystem->m_PlayerStats]);
 
     // Información
     /*DebugScreenText( "" );
@@ -903,18 +911,18 @@ void Director::DebugDisplay()
 
 //================================================================================
 //================================================================================
-void Director::DebugScreenText( const char *pText, ... )
+void Director::DebugScreenText(const char *pText, ...)
 {
     //if ( line < 0 )
     int line = m_iDebugLine;
 
     char str[4096];
     va_list marker;
-    va_start( marker, pText );
-    Q_vsnprintf( str, sizeof( str ), pText, marker );
-    va_end( marker );
+    va_start(marker, pText);
+    Q_vsnprintf(str, sizeof(str), pText, marker);
+    va_end(marker);
 
-    engine->Con_NPrintf( line, "%s\n", str );
+    engine->Con_NPrintf(line, "%s\n", str);
     ++m_iDebugLine;
 }
 
@@ -927,55 +935,55 @@ void Director::CreateMusic()
     }
 
     m_MusicManager = new CSoundManager();
-    TheGameRules->Director_CreateMusic( m_MusicManager );
+    TheGameRules->Director_CreateMusic(m_MusicManager);
 }
 
 //================================================================================
 //================================================================================
-float Director::SoundDesire( const char *soundname, int channel )
+float Director::SoundDesire(const char *soundname, int channel)
 {
     if ( director_disable_music.GetBool() )
         return 0.0f;
 
     // CHANNEL_1
-    if ( FStrEq( soundname, "Music.Director.Boss" ) ) {
+    if ( FStrEq(soundname, "Music.Director.Boss") ) {
         if ( GetStatus() == STATUS_BOSS )
             return 1.0f;
     }
 
-    if ( FStrEq( soundname, "Music.Director.BigBoss" ) ) {
+    if ( FStrEq(soundname, "Music.Director.BigBoss") ) {
     }
 
     // CHANNEL_2
-    if ( FStrEq( soundname, "Music.Director.MiniFinale" ) ) {
+    if ( FStrEq(soundname, "Music.Director.MiniFinale") ) {
     }
 
-    if ( FStrEq( soundname, "Music.Director.Finale" ) ) {
+    if ( FStrEq(soundname, "Music.Director.Finale") ) {
         if ( GetStatus() == STATUS_FINALE )
             return 1.0f;
     }
 
     // CHANNEL_3
     if ( GetStatus() == STATUS_NORMAL && m_BackgroundMusicTimer.IsElapsed() ) {
-        if ( FStrEq( soundname, "Music.Director.Background.LowAngry" ) ) {
+        if ( FStrEq(soundname, "Music.Director.Background.LowAngry") ) {
             if ( GetAngry() == ANGRY_LOW ) {
                 return 1.0f;
             }
         }
 
-        if ( FStrEq( soundname, "Music.Director.Background.MediumAngry" ) ) {
+        if ( FStrEq(soundname, "Music.Director.Background.MediumAngry") ) {
             if ( GetAngry() == ANGRY_MEDIUM ) {
                 return 1.0f;
             }
         }
 
-        if ( FStrEq( soundname, "Music.Director.Background.HighAngry" ) ) {
+        if ( FStrEq(soundname, "Music.Director.Background.HighAngry") ) {
             if ( GetAngry() == ANGRY_HIGH ) {
                 return 1.0f;
             }
         }
 
-        if ( FStrEq( soundname, "Music.Director.Background.CrazyAngry" ) ) {
+        if ( FStrEq(soundname, "Music.Director.Background.CrazyAngry") ) {
             if ( GetAngry() == ANGRY_CRAZY ) {
                 return 1.0f;
             }
@@ -983,20 +991,20 @@ float Director::SoundDesire( const char *soundname, int channel )
     }
 
     // CHANNEL_ANY
-    if ( FStrEq( soundname, "Music.Director.Horde" ) ) {
+    if ( FStrEq(soundname, "Music.Director.Horde") ) {
         if ( GetStatus() == STATUS_PANIC )
             return 2.0f;
     }
-    if ( FStrEq( soundname, "Music.Director.HordeSlayer" ) ) {
+    if ( FStrEq(soundname, "Music.Director.HordeSlayer") ) {
         if ( GetStatus() == STATUS_PANIC ) {
             int childs = TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].alive;
             float volume = (0.2f * childs);
 
-            return clamp( volume, 0.1f, 1.0f );
+            return clamp(volume, 0.1f, 1.0f);
         }
     }
     if ( m_HordeMusic ) {
-        if ( FStrEq( soundname, m_HordeMusic->GetSoundName() ) ) {
+        if ( FStrEq(soundname, m_HordeMusic->GetSoundName()) ) {
             if ( GetStatus() == STATUS_PANIC ) {
                 if ( m_iPanicEventHordesLeft == INFINITE && TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].alive < 3 )
                     return 0.1f;
@@ -1006,24 +1014,24 @@ float Director::SoundDesire( const char *soundname, int channel )
         }
     }
 
-    if ( FStrEq( soundname, "Music.Director.MobRules" ) ) {
+    if ( FStrEq(soundname, "Music.Director.MobRules") ) {
 
     }
 
-    if ( FStrEq( soundname, "Music.Director.FinalNail" ) ) {
+    if ( FStrEq(soundname, "Music.Director.FinalNail") ) {
 
     }
 
-    if ( FStrEq( soundname, "Music.Director.Preparation" ) ) {
+    if ( FStrEq(soundname, "Music.Director.Preparation") ) {
 
     }
 
-    if ( FStrEq( soundname, "Music.Director.Gameover" ) ) {
+    if ( FStrEq(soundname, "Music.Director.Gameover") ) {
         if ( GetStatus() == STATUS_GAMEOVER )
             return 2.0f;
     }
 
-    if ( FStrEq( soundname, "Music.Director.InfectedChoir" ) ) {
+    if ( FStrEq(soundname, "Music.Director.InfectedChoir") ) {
         if ( GetStatus() == STATUS_NORMAL && m_ChoirTimer.IsElapsed() && TheDirectorManager->m_Minions[CHILD_TYPE_COMMON].tooClose > 6 )
             return 2.0f;
     }
@@ -1033,14 +1041,14 @@ float Director::SoundDesire( const char *soundname, int channel )
 
 //================================================================================
 //================================================================================
-void Director::OnSoundPlay( const char *soundname )
+void Director::OnSoundPlay(const char *soundname)
 {
-    if ( strstr( soundname, "Music.Director.Background" ) != NULL ) {
-        m_BackgroundMusicTimer.Start( RandomInt( 60, 300 ) );
+    if ( strstr(soundname, "Music.Director.Background") != NULL ) {
+        m_BackgroundMusicTimer.Start(RandomInt(60, 300));
     }
 
-    if ( FStrEq( soundname, "Music.Director.InfectedChoir" ) ) {
-        m_ChoirTimer.Start( RandomInt( 30, 60 ) );
+    if ( FStrEq(soundname, "Music.Director.InfectedChoir") ) {
+        m_ChoirTimer.Start(RandomInt(30, 60));
     }
 }
 
@@ -1050,21 +1058,21 @@ void Director::OnSoundPlay( const char *soundname )
 bool Director::CanSpawnMinions()
 {
     // El motor se esta quedando sin espacios
-    if ( Utils::RunOutEntityLimit( DIRECTOR_TOLERANCE_ENTITIES ) ) {
-        AssertOnce( !"RunOutEntityLimit!!" );
-        Warning( "Utils::RunOutEntityLimit! \n" );
+    if ( Utils::RunOutEntityLimit(DIRECTOR_TOLERANCE_ENTITIES) ) {
+        AssertOnce(!"RunOutEntityLimit!!");
+        Warning("Utils::RunOutEntityLimit! \n");
         return false;
     }
 
-    HANDLED_BY_VSCRIPT_RETURN( bool, CanSpawnMinions );
+    HANDLED_BY_VSCRIPT_RETURN(bool, CanSpawnMinions);
 
-    if ( IsPhase( PHASE_RELAX ) || IsPhase( PHASE_FADE ) )
+    if ( IsPhase(PHASE_RELAX) || IsPhase(PHASE_FADE) )
         return false;
 
     if ( TheDirectorManager->m_CandidateAreas.Count() == 0 && TheDirectorManager->m_CandidateNodes.Count() == 0 )
         return false;
 
-    if ( IsPhase( PHASE_SUSTAIN ) ) {
+    if ( IsPhase(PHASE_SUSTAIN) ) {
         if ( GetStress() >= GetMaxStress() )
             return false;
     }
@@ -1075,28 +1083,28 @@ bool Director::CanSpawnMinions()
 //================================================================================
 // Devuelve si se pueden crear minions del tipo especificado
 //================================================================================
-bool Director::CanSpawnMinions( MinionType type )
+bool Director::CanSpawnMinions(MinionType type)
 {
     if ( !CanSpawnMinions() )
         return false;
 
-    if ( TheDirectorManager->GetPopulation( type ) == 0 )
+    if ( TheDirectorManager->GetPopulation(type) == 0 )
         return false;
 
     int alive = TheDirectorManager->m_Minions[type].alive;
-    int max = GetMaxUnits( type );
+    int max = GetMaxUnits(type);
 
     if ( alive >= max )
         return false;
 
-    HANDLED_BY_VSCRIPT_RETURN_ARG1( bool, CanSpawnMinionsByType, int, (int)type );
+    HANDLED_BY_VSCRIPT_RETURN_ARG1(bool, CanSpawnMinionsByType, int, (int)type);
     return true;
 }
 
 //================================================================================
 // Devuelve si se puede crear el minion especificado
 //================================================================================
-bool Director::CanSpawnMinion( CMinionInfo * info )
+bool Director::CanSpawnMinion(CMinionInfo * info)
 {
     if ( info->spawnChance <= 0 )
         return false;
@@ -1144,7 +1152,7 @@ int Director::GetDifficulty()
         }
     }
 
-    difficulty = clamp( difficulty, SKILL_EASIEST, SKILL_HARDEST );
+    difficulty = clamp(difficulty, SKILL_EASIEST, SKILL_HARDEST);
     return difficulty;
 }
 
@@ -1153,7 +1161,7 @@ int Director::GetDifficulty()
 //================================================================================
 float Director::GetMaxDistance()
 {
-    HANDLED_BY_VSCRIPT_VALUE( float, GetMaxDistance, >, 300.0f );
+    HANDLED_BY_VSCRIPT_VALUE(float, GetMaxDistance, >, 300.0f);
 
     float distance = director_max_distance.GetFloat();
 
@@ -1161,7 +1169,7 @@ float Director::GetMaxDistance()
         distance -= 200.0f;
     }
 
-    return MAX( distance, 300.0f );
+    return MAX(distance, 300.0f);
 }
 
 //================================================================================
@@ -1169,10 +1177,10 @@ float Director::GetMaxDistance()
 //================================================================================
 float Director::GetMinDistance()
 {
-    HANDLED_BY_VSCRIPT_VALUE( float, GetMinDistance, >, 0.0f );
+    HANDLED_BY_VSCRIPT_VALUE(float, GetMinDistance, >, 0.0f);
 
     float distance = director_min_distance.GetFloat();
-    return MAX( distance, 0.0f );
+    return MAX(distance, 0.0f);
 }
 
 //================================================================================
@@ -1262,15 +1270,15 @@ float Director::GetStress()
 //================================================================================
 int Director::GetMaxUnits()
 {
-    HANDLED_BY_VSCRIPT_VALUE( int, GetMaxUnits, >= , 0 );
+    HANDLED_BY_VSCRIPT_VALUE(int, GetMaxUnits, >= , 0);
     return director_max_childs.GetInt();
 }
 
 //================================================================================
 //================================================================================
-int Director::GetMaxUnits( MinionType type )
+int Director::GetMaxUnits(MinionType type)
 {
-    HANDLED_BY_VSCRIPT_VALUE_ARG1( int, GetMaxUnitsByType, int, (int)type, >= , 0 );
+    HANDLED_BY_VSCRIPT_VALUE_ARG1(int, GetMaxUnitsByType, int, (int)type, >= , 0);
     return GetMaxUnits();
 }
 
@@ -1282,12 +1290,12 @@ void Director::Disclose()
     CBaseEntity *pMinion = NULL;
 
     do {
-        pMinion = gEntList.FindEntityByName( pMinion, "director_*" );
+        pMinion = gEntList.FindEntityByName(pMinion, "director_*");
 
         if ( !pMinion || !pMinion->IsAlive() )
             continue;
 
-        TheDirectorManager->ReportEnemy( pMinion );
+        TheDirectorManager->ReportEnemy(pMinion);
     }
     while ( pMinion );
 }
@@ -1295,20 +1303,20 @@ void Director::Disclose()
 //================================================================================
 // Mata a todos los hijos
 //================================================================================
-void Director::KillAll( bool onlyNoVisible )
+void Director::KillAll(bool onlyNoVisible)
 {
     CBaseEntity *pMinion = NULL;
 
     do {
-        pMinion = gEntList.FindEntityByName( pMinion, "director_*" );
+        pMinion = gEntList.FindEntityByName(pMinion, "director_*");
 
         if ( !pMinion || !pMinion->IsAlive() )
             continue;
 
-        if ( onlyNoVisible && ThePlayersSystem->IsEyesVisible( pMinion ) )
+        if ( onlyNoVisible && ThePlayersSystem->IsEyesVisible(pMinion) )
             continue;
 
-        TheDirectorManager->Kill( pMinion, "Kill All" );
+        TheDirectorManager->Kill(pMinion, "Kill All");
     }
     while ( pMinion );
 }
@@ -1316,53 +1324,53 @@ void Director::KillAll( bool onlyNoVisible )
 //================================================================================
 // Establece el estado y la fase del Director
 //================================================================================
-void Director::Set( DirectorStatus status, DirectorPhase phase, float duration )
+void Director::Set(DirectorStatus status, DirectorPhase phase, float duration)
 {
-    SetStatus( status );
-    SetPhase( phase, duration );
+    SetStatus(status);
+    SetPhase(phase, duration);
 }
 
 //================================================================================
 // Establece el estado y la fase del Director
 //================================================================================
-void Director::ScriptSet( int status, int phase, float duration )
+void Director::ScriptSet(int status, int phase, float duration)
 {
-    Set( (DirectorStatus)status, (DirectorPhase)phase, duration );
+    Set((DirectorStatus)status, (DirectorPhase)phase, duration);
 }
 
 //================================================================================
 //================================================================================
-void Director::SetStatus( DirectorStatus status )
+void Director::SetStatus(DirectorStatus status)
 {
     m_iStatus = status;
 }
 
 //================================================================================
 //================================================================================
-void Director::SetPhase( DirectorPhase phase, float duration )
+void Director::SetPhase(DirectorPhase phase, float duration)
 {
     m_iPhase = phase;
 
     if ( duration > 0.0f ) {
-        m_PhaseTimer.Start( duration );
+        m_PhaseTimer.Start(duration);
     }
     else {
         m_PhaseTimer.Invalidate();
     }
 
-    OnPhaseStart( phase );
+    OnPhaseStart(phase);
 }
 
 //================================================================================
 //================================================================================
-void Director::SetAngry( DirectorAngry angry )
+void Director::SetAngry(DirectorAngry angry)
 {
     m_iAngry = angry;
 
     // Establecemos la dificultad del juego
     if ( TheGameRules->Director_AdaptativeSkill() ) {
-        ConVarRef sv_difficulty( "sv_difficulty" );
-        sv_difficulty.SetValue( (int)angry );
+        ConVarRef sv_difficulty("sv_difficulty");
+        sv_difficulty.SetValue((int)angry);
     }
 }
 
@@ -1387,7 +1395,7 @@ void CC_ForceNormal()
     if ( !TheDirector )
         return;
 
-    TheDirector->SetStatus( STATUS_NORMAL );
+    TheDirector->SetStatus(STATUS_NORMAL);
 }
 
 void CC_ForceBoss()
@@ -1403,7 +1411,7 @@ void CC_ForcePanic()
     if ( !TheDirector )
         return;
 
-    TheDirector->StartPanic( 5 );
+    TheDirector->StartPanic(5);
 }
 
 void CC_ForcePanicInfinite()
@@ -1411,7 +1419,7 @@ void CC_ForcePanicInfinite()
     if ( !TheDirector )
         return;
 
-    TheDirector->StartPanic( INFINITE );
+    TheDirector->StartPanic(INFINITE);
 }
 
 void CC_ForceFinale()
@@ -1419,7 +1427,7 @@ void CC_ForceFinale()
     if ( !TheDirector )
         return;
 
-    TheDirector->SetStatus( STATUS_FINALE );
+    TheDirector->SetStatus(STATUS_FINALE);
 }
 
 void CC_ForceKill()
@@ -1427,14 +1435,14 @@ void CC_ForceKill()
     if ( !TheDirector )
         return;
 
-    TheDirector->KillAll( false );
+    TheDirector->KillAll(false);
 }
 
-static ConCommand director_stop( "director_stop", CC_Stop );
-static ConCommand director_resume( "director_resume", CC_Resume );
-static ConCommand director_force_normal( "director_force_normal", CC_ForceNormal );
+static ConCommand director_stop("director_stop", CC_Stop);
+static ConCommand director_resume("director_resume", CC_Resume);
+static ConCommand director_force_normal("director_force_normal", CC_ForceNormal);
 //static ConCommand director_force_boss( "director_force_boss", CC_ForceBoss );
-static ConCommand director_force_panic( "director_force_panic", CC_ForcePanic );
-static ConCommand director_force_panic_infinite( "director_force_panic_infinite", CC_ForcePanicInfinite );
-static ConCommand director_force_finale( "director_force_finale", CC_ForceFinale );
-static ConCommand director_kill_minions( "director_kill_minions", CC_ForceKill );
+static ConCommand director_force_panic("director_force_panic", CC_ForcePanic);
+static ConCommand director_force_panic_infinite("director_force_panic_infinite", CC_ForcePanicInfinite);
+static ConCommand director_force_finale("director_force_finale", CC_ForceFinale);
+static ConCommand director_kill_minions("director_kill_minions", CC_ForceKill);

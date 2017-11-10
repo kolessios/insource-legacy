@@ -21,6 +21,14 @@ extern ConVar bot_optimize;
 extern ConVar bot_far_distance;
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_BOTS, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_BOTS, __VA_ARGS__)
+
+//================================================================================
 // It is called when we already have information about Bot vision.
 //================================================================================
 void CBot::OnLooked( int iDistance )

@@ -15,7 +15,7 @@
 #include "ai_senses.h"
 
 #include "in_ragdoll.h"
-#include "in_shareddefs.h"
+
 #include "in_playeranimsystem.h"
 
 #include "weapon_base.h"

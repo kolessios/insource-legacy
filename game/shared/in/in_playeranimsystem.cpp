@@ -9,7 +9,7 @@
 #include "c_in_player.h"
 #endif
 
-#include "in_shareddefs.h"
+
 #include "datacache/imdlcache.h"
 #include "tier0/vprof.h"
 
@@ -20,7 +20,7 @@
 // Comandos
 //================================================================================
 
-DECLARE_REPLICATED_CHEAT_COMMAND( anim_injured_health, "30", "" )
+DECLARE_SERVER_CHEAT_CMD( anim_injured_health, "30", "" )
 
 //================================================================================
 // Crea una nueva instancia [CPlayerAnimationSystem] para procesar

@@ -12,10 +12,10 @@
 // Comandos
 //================================================================================
 
-DECLARE_REPLICATED_COMMAND( sk_max_sniper_ammo, "999", "" );
-DECLARE_REPLICATED_COMMAND( sk_max_rifle_ammo, "999", "" );
-DECLARE_REPLICATED_COMMAND( sk_max_pistol_ammo, "999", "" );
-DECLARE_REPLICATED_COMMAND( sk_max_shotgun_ammo, "999", "" );
+DECLARE_SERVER_CMD( sk_max_sniper_ammo, "999", "" );
+DECLARE_SERVER_CMD( sk_max_rifle_ammo, "999", "" );
+DECLARE_SERVER_CMD( sk_max_pistol_ammo, "999", "" );
+DECLARE_SERVER_CMD( sk_max_shotgun_ammo, "999", "" );
 
 //================================================================================
 //================================================================================

@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #ifndef IN_SHAREDDEFS_H
 #define IN_SHAREDDEFS_H
@@ -8,16 +10,21 @@
 #ifndef CLIENT_DLL
 #include "nav.h"
 #include "recipientfilter.h"
+#else
+#include "gameconsole.h"
 #endif
 
 #ifndef MAX_CONDITIONS
-#define    MAX_CONDITIONS 32*8
+// Maximum number of conditions for the Bots.
+#define MAX_CONDITIONS 32*8
 #endif
 
 typedef CBitVec<MAX_CONDITIONS> CFlagsBits;
 
 //================================================================================
-// Nombre del Juego
+// Game Name
+// For custom game modes in the game browser (ex: "Apocalypse-22: Survival"), 
+// visit CInGameRules::GetGameDescription()
 //================================================================================
 
 #ifdef APOCALYPSE
@@ -29,60 +36,135 @@ typedef CBitVec<MAX_CONDITIONS> CFlagsBits;
 #endif
 
 //================================================================================
-// Preprocesadores
+// Constant information
 //================================================================================
 
-//FCVAR_SERVER_CAN_EXECUTE
-
 // Player avoidance
-#define PUSHAWAY_THINK_INTERVAL        (1.0f / 20.0f)
+#define PUSHAWAY_THINK_INTERVAL (1.0f / 20.0f)
 
+// 
 #define roundup( expression ) (int)ceil(expression)
 
-#define MAX_NAV_AREAS			9999
-#define MAX_NODES_PER_AREA		60
-#define MAX_SOUND_CHANNELS		8
+// Player & Bots
+#define PLAYER_SOUND_RADIUS 832.0f
+#define GET_COVER_RADIUS 1500.0f
+#define DEFAULT_FORGET_TIME 60.0f
 
+// Node Generation
+#define MAX_NAV_AREAS 9999
+#define MAX_NODES_PER_AREA 60
+
+// Sound System
+#define MAX_SOUND_CHANNELS 8
+
+// Alien FX
+#define ALIENFX_SETCOLOR 1
+
+// Utils
+#ifndef INFINITE
 #define INFINITE -1
+#endif
 
 #define AE_PLAYER_FOOTSTEP_LEFT 62
 #define AE_PLAYER_FOOTSTEP_RIGHT 63
 
-#define PLAYER_SOUND_RADIUS 832.0f
-#define GET_COVER_RADIUS 1500.0f
-
-#define DEFAULT_FORGET_TIME 60.0f
-
 //================================================================================
-// Funciones de utlidad
+// Utility Macros
 //================================================================================
 
-#define FCVAR_SERVER            FCVAR_REPLICATED | FCVAR_DEMO				// Obedece solo el valor del servidor
-#define FCVAR_ADMIN_ONLY        FCVAR_SERVER_CAN_EXECUTE | FCVAR_SERVER     // Comando que solo puede cambiarse desde el servidor (srcds console o local server owner)
+#define FCVAR_SERVER     FCVAR_REPLICATED | FCVAR_DEMO			   // Obey only the value set by the server
+#define FCVAR_ADMIN_ONLY FCVAR_SERVER_CAN_EXECUTE | FCVAR_SERVER   // It can only be changed by the server administrator.
 
-#undef DECLARE_COMMAND
-#define DECLARE_COMMAND( name, value, description, flags )				ConVar name( #name, value, flags, description );
-#define DECLARE_ADMIN_COMMAND( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY )
-#define DECLARE_REPLICATED_CHEAT_COMMAND( name, value, description )	DECLARE_COMMAND( name, value, description, FCVAR_REPLICATED | FCVAR_CHEAT )
-#define DECLARE_REPLICATED_COMMAND( name, value, description )			DECLARE_COMMAND( name, value, description, FCVAR_SERVER )
-#define DECLARE_DEBUG_COMMAND( name, value, description )				DECLARE_COMMAND( name, value, description, FCVAR_ADMIN_ONLY | FCVAR_CHEAT | FCVAR_NOTIFY )
+// Declare Command
+#define DECLARE_CMD( name, value, description, flags )			ConVar name( #name, value, flags, description );
+#define DECLARE_SERVER_CHEAT_CMD( name, value, description )	DECLARE_CMD( name, value, description, FCVAR_REPLICATED | FCVAR_CHEAT )
+#define DECLARE_SERVER_CMD( name, value, description )			DECLARE_CMD( name, value, description, FCVAR_SERVER )
+#define DECLARE_DEBUG_CMD( name, value, description )			DECLARE_CMD( name, value, description, FCVAR_ADMIN_ONLY | FCVAR_CHEAT | FCVAR_NOTIFY )
 
 #ifdef CLIENT_DLL
-    #define DECLARE_CHEAT_COMMAND( name, value, description )			DECLARE_COMMAND( name, value, description, FCVAR_CHEAT )
-    #define DECLARE_NOTIFY_COMMAND										DECLARE_REPLICATED_COMMAND
+#define DECLARE_CHEAT_CMD( name, value, description ) DECLARE_CMD( name, value, description, FCVAR_CHEAT )
+#define DECLARE_NOTIFY_CMD DECLARE_SERVER_CMD
 #else
-    #define DECLARE_CHEAT_COMMAND			DECLARE_REPLICATED_CHEAT_COMMAND
-    #define DECLARE_NOTIFY_COMMAND( name, value, description )			DECLARE_COMMAND( name, value, description, FCVAR_SERVER | FCVAR_NOTIFY )
+#define DECLARE_CHEAT_CMD DECLARE_SERVER_CHEAT_CMD
+#define DECLARE_NOTIFY_CMD( name, value, description ) DECLARE_CMD( name, value, description, FCVAR_SERVER | FCVAR_NOTIFY )
 #endif
 
 //================================================================================
-// Alien FX
+// Logging System
 //================================================================================
 
-#define ALIENFX_SETCOLOR 1
+DECLARE_LOGGING_CHANNEL(LOG_ALIENFX);
+DECLARE_LOGGING_CHANNEL(LOG_PLAYER);
+DECLARE_LOGGING_CHANNEL(LOG_BOTS);
+DECLARE_LOGGING_CHANNEL(LOG_DIRECTOR);
+DECLARE_LOGGING_CHANNEL(LOG_UI);
+
+// This system replaces all the logic of logging.
+class CExtendedLoggingListener : public ILoggingListener
+{
+    virtual void Log(const LoggingContext_t *pContext, const tchar *pMessage)
+    {
+        _tprintf(_T("%s"), pMessage);
+
+        // Default colors
+        Color white = {255, 255, 255, 200};
+        Color error = {255, 0, 0, 255};
+        Color warning = {247, 254, 46, 200};
+        Color console = {242, 242, 242, 155};
+        Color developer = {169, 245, 242, 155};
+        Color channelColor = pContext->m_Color;
+
+        // We get channel information
+        const CLoggingSystem::LoggingChannel_t *pChannel = LoggingSystem_GetChannel(pContext->m_ChannelID);
+
+        // Formatted message
+        const char *message = UTIL_VarArgs("[%s] %s", pChannel->m_Name, pMessage);
+
+        // We replace some colors
+        if ( pContext->m_ChannelID == 0 ) {
+            channelColor = white;
+        }
+        else if ( pContext->m_ChannelID == 2 ) {
+            channelColor = console;
+        }
+        else if ( pContext->m_ChannelID == 3 ) {
+            channelColor = developer;
+        }
+
+        // Special states that require mandatory colors
+        if ( pContext->m_Severity == LS_WARNING ) {
+            channelColor = warning;
+        }
+        else if ( pContext->m_Severity == LS_ERROR || pContext->m_Severity == LS_ASSERT ) {
+            channelColor = error;
+        }
+
+        if ( channelColor == UNSPECIFIED_LOGGING_COLOR ) {
+            Assert(!"Logging channel without color.");
+            channelColor = white;
+        }
+
+        if ( channelColor.a() == 0 ) {
+            Assert(!"Logging channel color with 0 alpha (invisible).");
+            channelColor.SetColor(channelColor.r(), channelColor.g(), channelColor.b(), 255);
+        }
+
+#ifdef CLIENT_DLL
+        // Print on the engine console
+        GameConsole().ColorPrint(channelColor, message);
+#endif
+
+#ifdef _WIN32
+        // Print on the platform console
+        if ( Plat_IsInDebugSession() ) {
+            Plat_DebugString(message);
+        }
+#endif
+    }
+};
 
 //================================================================================
-// Canales y capas de sonidos
+// Channels and layers of sounds
 //================================================================================
 
 enum
@@ -111,9 +193,9 @@ enum
 	LAYER_ABSOLUTE = 10
 };
 
-
 //================================================================================
-// Macros de ayuda para música del Jugador
+// Help macros for music
+// TODO: This is ugly!
 //================================================================================
 
 #define TAG_PLAYER_SOUND( name ) SOUND_INFO(name, false, TEAM_ANY, NULL, this, TARGET_EXCEPT)
@@ -131,8 +213,9 @@ enum
 #define PREPARE_SOUND_WITH_TAG( channel, info, tag_info ) PREPARE_SOUND(channel, info); PREPARE_TAG_SOUND(tag_info);
 
 //================================================================================
-// Colisiones
+// Collisions
 //================================================================================
+
 enum
 {
     COLLISION_GROUP_NOT_BETWEEN_THEM = LAST_SHARED_COLLISION_GROUP,
@@ -142,6 +225,7 @@ enum
 //================================================================================
 // Navigation Mesh
 //================================================================================
+
 #ifndef CLIENT_DLL
 enum
 {
@@ -162,8 +246,9 @@ enum
 #endif
 
 //================================================================================
-// Equipos
+// Teams
 //================================================================================
+
 static char *sTeamNames[] =
 {
     "#Team_Unassigned",
@@ -185,7 +270,6 @@ enum
 {
     //TEAM_UNASSIGNED,
     //TEAM_SPECTATOR
-
     TEAM_GENERIC,
 
     #ifdef APOCALYPSE
@@ -202,8 +286,9 @@ enum
 };
 
 //================================================================================
-// Modos de Juego
+// Game Mode
 //================================================================================
+
 enum
 {
     GAME_MODE_NONE = 0,
@@ -228,8 +313,9 @@ enum
 };
 
 //================================================================================
-// Modo de Spawn
+// Spawn Mode
 //================================================================================
+
 enum
 {
     SPAWN_MODE_NONE = 0,
@@ -241,8 +327,9 @@ enum
 };
 
 //================================================================================
-// ID de arma
+// Weapon ID
 //================================================================================
+
 enum WeaponID
 {
     WEAPON_ID_NONE = 0,
@@ -256,8 +343,9 @@ enum WeaponID
 };
 
 //================================================================================
-// Clase de arma
+// Weapon Class
 //================================================================================
+
 enum WeaponClass
 {
     WEAPON_CLASS_NONE = 0,
@@ -270,21 +358,23 @@ enum WeaponClass
 
 
 //================================================================================
-// Condición del jugador
+// Player Status
 //================================================================================
+
 enum
 {
     PLAYER_STATUS_NONE = 0,     // Normal
-    PLAYER_STATUS_CLIMBING,     // Trepando por su vida
-    PLAYER_STATUS_DEJECTED,     // Incapacitado
-    PLAYER_STATUS_FALLING,      // Cayendo
+    PLAYER_STATUS_CLIMBING,     // Climbing for your life
+    PLAYER_STATUS_DEJECTED,     // Dejected on the ground
+    PLAYER_STATUS_FALLING,      // Falling!!
 
     LAST_PLAYER_STATUS
 };
 
 //================================================================================
-// Estado del jugador
+// Player State
 //================================================================================
+
 enum
 {
     PLAYER_STATE_NONE = 0,
@@ -309,8 +399,9 @@ static char *g_PlayerStateNames[LAST_PLAYER_STATE] = {
 };
 
 //================================================================================
-// Clases de jugador
+// Player Class
 //================================================================================
+
 enum
 {
     PLAYER_CLASS_NONE = 0,
@@ -337,8 +428,9 @@ enum
 };
 
 //================================================================================
-// Componentes del jugador
+// Player Components
 //================================================================================
+
 enum
 {
     PLAYER_COMPONENT_INVALID = 0,
@@ -354,8 +446,9 @@ enum
 };
 
 //================================================================================
-// Atributos
+// Attributes
 //================================================================================
+
 enum
 {
 	ATTR_INVALID = 0,
@@ -367,17 +460,20 @@ enum
 };
 
 //================================================================================
-// Mensaje de depuración
+// Debug Message
 //================================================================================
+
 struct DebugMessage
 {
     char m_string[1024];
     IntervalTimer m_age;
+    int frame;
 };
 
 //================================================================================
 // Allows you to save various types of information.
 //================================================================================
+
 class CMultidata
 {
 public:
@@ -506,6 +602,7 @@ public:
 
 //================================================================================
 //================================================================================
+
 #ifndef CLIENT_DLL
 class CBulletsTraceFilter : public CTraceFilterSimpleList
 {
@@ -535,7 +632,7 @@ typedef CTraceFilterSimpleList CBulletsTraceFilter;
 #endif
 
 //================================================================================
-// Filtro para usuarios fuera del limite auditivo de un sonido
+// Filter for users outside the hearing limit of a sound
 //================================================================================
 #ifndef CLIENT_DLL
 class CPASOutAttenuationFilter : public CPASFilter

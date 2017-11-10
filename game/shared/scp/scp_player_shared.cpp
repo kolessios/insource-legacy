@@ -29,7 +29,7 @@ extern ConVar sv_player_speed;
 extern ConVar sv_player_sprint_speed;
 
 // SCP-173 Speed
-DECLARE_NOTIFY_COMMAND( sv_player_scp173_walk_speed, "100.0", "" )
+DECLARE_NOTIFY_CMD( sv_player_scp173_walk_speed, "100.0", "" )
 
 //================================================================================
 //================================================================================

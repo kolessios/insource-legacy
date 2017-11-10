@@ -21,14 +21,14 @@ REGISTER_GAMERULES_CLASS( CAssaultGameRules );
 //================================================================================
 
 #ifndef CLIENT_DLL
-DECLARE_REPLICATED_COMMAND( sk_soldier_head, "2.0", "" )
-DECLARE_REPLICATED_COMMAND( sk_soldier_chest, "1.3", "" )
-DECLARE_REPLICATED_COMMAND( sk_soldier_stomach, "1.0", "" )
-DECLARE_REPLICATED_COMMAND( sk_soldier_arm, "0.8", "" )
-DECLARE_REPLICATED_COMMAND( sk_soldier_leg, "0.6", "" )
+DECLARE_SERVER_CMD( sk_soldier_head, "2.0", "" )
+DECLARE_SERVER_CMD( sk_soldier_chest, "1.3", "" )
+DECLARE_SERVER_CMD( sk_soldier_stomach, "1.0", "" )
+DECLARE_SERVER_CMD( sk_soldier_arm, "0.8", "" )
+DECLARE_SERVER_CMD( sk_soldier_leg, "0.6", "" )
 
 // Escudo
-DECLARE_NOTIFY_COMMAND( sk_soldier_shield_pause, "5.0", "Tiempo en segundos que la regeneracion de escudo es pausada al tomar dano." )
+DECLARE_NOTIFY_CMD( sk_soldier_shield_pause, "5.0", "Tiempo en segundos que la regeneracion de escudo es pausada al tomar dano." )
 #endif
 
 //================================================================================

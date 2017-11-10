@@ -39,7 +39,6 @@ struct studiohdr_t;
 #include "sharedvar.h"
 #include "baseentity_shared.h"
 
-
 // This is a precompiled header.  Include a bunch of common stuff.
 // This is kind of ugly in that it adds a bunch of dependency where it isn't needed.
 // But on balance, the compile time is much lower (even incrementally) once the precompiled
@@ -59,5 +58,7 @@ struct studiohdr_t;
 #include "engine/ivmodelinfo.h"
 #include "npcevent.h"
 #include "debugoverlay_shared.h"
+
+#include "in_shareddefs.h"
 
 #endif // CBASE_H

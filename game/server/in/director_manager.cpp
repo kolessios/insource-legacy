@@ -8,7 +8,7 @@
 
 #include "dbhandler.h"
 
-#include "in_shareddefs.h"
+
 #include "in_gamerules.h"
 #include "in_player.h"
 #include "in_utils.h"
@@ -35,15 +35,23 @@ DirectorManager g_DirectorManager;
 DirectorManager *TheDirectorManager = &g_DirectorManager;
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_DIRECTOR, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_DIRECTOR, __VA_ARGS__)
+
+//================================================================================
 // Comandos
 //================================================================================
 
 extern ConVar director_debug;
 
-DECLARE_REPLICATED_COMMAND( director_spawn_mode, "2", "" )
-DECLARE_CHEAT_COMMAND( director_manager_use_navmesh, "1", "" )
-DECLARE_CHEAT_COMMAND( director_manager_spawn_novisible_spots, "1", "" )
-DECLARE_DEBUG_COMMAND( director_manager_check_unreachable, "1", "" );
+DECLARE_SERVER_CMD( director_spawn_mode, "2", "" )
+DECLARE_CHEAT_CMD( director_manager_use_navmesh, "1", "" )
+DECLARE_CHEAT_CMD( director_manager_spawn_novisible_spots, "1", "" )
+DECLARE_DEBUG_CMD( director_manager_check_unreachable, "1", "" );
 
 //================================================================================
 // Constructor 
@@ -140,7 +148,7 @@ void DirectorManager::LoadPopulation()
         info->lastSpawn = 0;
         info->nextSpawn.Start( 0 );
 
-        DevMsg( "[DirectorManager] Minion: %s (spawnChance: %i) (spawnInterval: %i) (type: %i)  (population: %s) (maxUnits: %i)\n", info->unit, info->spawnChance, info->spawnInterval, info->type, info->population, info->maxUnits );
+        Msg( "Minion: %s (spawnChance: %i) (spawnInterval: %i) (type: %i)  (population: %s) (maxUnits: %i)\n", info->unit, info->spawnChance, info->spawnInterval, info->type, info->population, info->maxUnits );
         m_PopulationList.AddToTail( info );
     }
 
@@ -398,7 +406,7 @@ bool DirectorManager::CreateMinion( MinionType type, Vector *vecPosition )
 
     if ( !minion ) {
         if ( type == CHILD_TYPE_COMMON ) {
-            Warning( "[Director] Sin minions para hacer spawn de %s!\n", g_MinionTypes[type] );
+            //Warning( "Sin minions para hacer spawn de %s!\n", g_MinionTypes[type] );
         }
 
         return false;

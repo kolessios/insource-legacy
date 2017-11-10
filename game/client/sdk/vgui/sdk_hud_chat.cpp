@@ -11,7 +11,7 @@
 #include "vguicenterprint.h"
 #include "hud_basechat.h"
 #include <vgui/ILocalize.h>
-#include "in_shareddefs.h"
+
 #include "c_playerresource.h"
 #include "in_gamerules.h"
 //#include "nb_main_panel.h"

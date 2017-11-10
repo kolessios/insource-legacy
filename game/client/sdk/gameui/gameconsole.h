@@ -14,6 +14,7 @@
 #include "GameUI/IGameConsole.h"
 
 class CGameConsoleDialog;
+class Color;
 
 //-----------------------------------------------------------------------------
 // Purpose: VGui implementation of the game/dev console
@@ -36,6 +37,8 @@ public:
 
 	// returns true if the console is currently in focus
 	virtual bool IsConsoleVisible();
+
+    void ColorPrint(Color clr, const char *msg);
 
 	// activates the console after a delay
 	void ActivateDelayed(float time);

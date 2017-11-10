@@ -14,7 +14,7 @@
 #include "bots\bot_defs.h"
 
 #ifdef INSOURCE_DLL
-#include "in_shareddefs.h"
+
 #include "alienfx\LFXDecl.h"
 #endif
 

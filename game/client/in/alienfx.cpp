@@ -1,4 +1,6 @@
-//==== Woots 2016. http://creativecommons.org/licenses/by/2.5/mx/ ===========//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
 
 #include "cbase.h"
 #include "alienfx.h"
@@ -7,8 +9,6 @@
 
 #include "c_in_player.h"
 #include "weapon_base.h"
-
-#include "in_shareddefs.h"
 #include "usermessages.h"
 
 #define _X86_
@@ -22,29 +22,40 @@ HINSTANCE FXDLL = NULL;
 CAlienFX g_AlienFX;
 CAlienFX *TheAlienFX = &g_AlienFX;
 
-#define DEFAULT_COLOR LFX_WHITE | LFX_FULL_BRIGHTNESS
+//================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_ALIENFX, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_ALIENFX, __VA_ARGS__)
 
 //================================================================================
-// Comandos
+// Configuration
 //================================================================================
 
-DECLARE_COMMAND( cl_alienfx_enabled, "1", "Activa la compatibilidad con AlienFX", FCVAR_ARCHIVE )
+#define ALIENFX_DEFAULT_COLOR LFX_WHITE | LFX_FULL_BRIGHTNESS
+
+//================================================================================
+// Commands
+//================================================================================
+
+DECLARE_CMD(cl_alienfx_enabled, "1", "Enable compatibility with AlienFX", FCVAR_ARCHIVE)
 
 //================================================================================
 //================================================================================
-void __MsgFunc_AlienFX( bf_read &msg )
+void __MsgFunc_AlienFX(bf_read &msg)
 {
-    // No hay AlienFX en el equipo
     if ( !TheAlienFX || !TheAlienFX->IsEnabled() )
         return;
 
-    TheAlienFX->OnMessage( msg );
+    TheAlienFX->OnMessage(msg);
 }
 
 //================================================================================
 // Constructor
 //================================================================================
-CAlienFX::CAlienFX() : CAutoGameSystemPerFrame( "CAlienFX" )
+CAlienFX::CAlienFX() : CAutoGameSystemPerFrame("CAlienFX")
 {
     m_bStarted = false;
     m_PulseState = 0;
@@ -54,250 +65,152 @@ CAlienFX::CAlienFX() : CAutoGameSystemPerFrame( "CAlienFX" )
 }
 
 //================================================================================
-// Carga el archivo LightFX.dll del equipo
+// Try to start AlienFX
 //================================================================================
 bool CAlienFX::Init()
 {
-#ifdef DEBUG
-	//if ( !cl_alienfx_enabled.GetBool() )
-		return true;
-#endif
-
-    FXDLL = LoadLibrary(_T( LFX_DLL_NAME ));
-
-    // No se ha podido cargar la librería
-    if ( !FXDLL )
+    // Disabled
+    if ( !cl_alienfx_enabled.GetBool() )
         return true;
 
-    // Enlazamos cada función del .dll
-    FXInit				= (LFX2INITIALIZE)GetProcAddress( FXDLL, LFX_DLL_INITIALIZE );
-    FXReset				= (LFX2RESET)GetProcAddress( FXDLL, LFX_DLL_RESET );
-    FXLight				= (LFX2LIGHT)GetProcAddress( FXDLL, LFX_DLL_LIGHT );
-    FXUpdate			= (LFX2UPDATE)GetProcAddress( FXDLL, LFX_DLL_UPDATE );
-    FXRelease			= (LFX2RELEASE)GetProcAddress( FXDLL, LFX_DLL_RELEASE );
-    FXLightActionColor  = (LFX2ACTIONCOLOR)GetProcAddress( FXDLL, LFX_DLL_ACTIONCOLOR );
+    // We load the library, it should be installed on all computers with AlienFX.
+    FXDLL = LoadLibrary(_T(LFX_DLL_NAME));
 
-	// Tratamos de iniciar el sistema
+    // This computer does not have AlienFX
+    if ( !FXDLL ) {
+#ifdef DEBUG
+        Warning("This computer does not have AlienFX\n");
+#endif
+        return true;
+    }
+
+    // We link each function of the library
+    FXInit = (LFX2INITIALIZE)GetProcAddress(FXDLL, LFX_DLL_INITIALIZE);
+    FXReset = (LFX2RESET)GetProcAddress(FXDLL, LFX_DLL_RESET);
+    FXLight = (LFX2LIGHT)GetProcAddress(FXDLL, LFX_DLL_LIGHT);
+    FXUpdate = (LFX2UPDATE)GetProcAddress(FXDLL, LFX_DLL_UPDATE);
+    FXRelease = (LFX2RELEASE)GetProcAddress(FXDLL, LFX_DLL_RELEASE);
+    FXLightActionColor = (LFX2ACTIONCOLOR)GetProcAddress(FXDLL, LFX_DLL_ACTIONCOLOR);
+
+    // We ask the library to initialize
     int init = FXInit();
 
     // Se ha encontrado un dispositivo compatible.
-    if ( init == LFX_SUCCESS )
-    {
-        SetColor( LFX_ALL, DEFAULT_COLOR );
-        DevMsg("Alien FX Initialized!\n");
+    if ( init == LFX_SUCCESS ) {
+        SetColor(LFX_ALL, ALIENFX_DEFAULT_COLOR);
+        Msg("Initialized!\n");
 
-        // Escuchamos por los eventos desde servidor
-        HOOK_MESSAGE( AlienFX );
-		
-		// Hemos iniciado :)
         m_bStarted = true;
         return true;
     }
-    else if ( init == LFX_ERROR_NODEVS )
-        DevWarning("Alien FX No Devices Detected\n");
-    else if ( init == LFX_ERROR_NOLIGHTS )
-        DevWarning("Alien FX No Lights Available\n");
-    else
-        DevWarning("Alien FX Generic Failure\n");
+    else if ( init == LFX_ERROR_NODEVS ) {
+        Warning("No valid device found\n");
+    }
+    else if ( init == LFX_ERROR_NOLIGHTS ) {
+        Warning("The lights have not been found.\n");
+    }
+    else {
+        Warning("Failure!\n");
+    }
 
     return true;
 }
 
 //================================================================================
-// Libera el archivo LightFX.dll y restaura la combinación de luces del usuario
+// Unlocks the library and restores the user's color scheme.
 //================================================================================
 void CAlienFX::Shutdown()
 {
-    if ( m_bStarted )
+    if ( m_bStarted ) {
         FXRelease();
+    }
 
-    FreeLibrary( FXDLL );
+    FreeLibrary(FXDLL);
 }
 
 //================================================================================
-// Es llamado cada frame
+// Called in each frame
 //================================================================================
-void CAlienFX::Update( float frametime )
+void CAlienFX::Update(float frametime)
 {
-    // No podemos hacerlo
     if ( !IsEnabled() )
         return;
 
-    // Hay un color ocupando el lugar ahora mismo
-    if ( m_LightTimer.HasStarted() )
-    {
-        // Dejemos que termine....
+    // There is an active color that we want to last, we let it finish.
+    if ( m_LightTimer.HasStarted() ) {
         if ( !m_LightTimer.IsElapsed() )
             return;
 
         m_LightTimer.Invalidate();
     }
 
-    // Actualizamos las luces dependiendo
-    // del estado actual del Jugador
-    UpdateStatus();
+    // Player Lights!
+    UpdatePlayerLights();
 
-    // Actualizamos
+    // Send the updates
     FXUpdate();
 }
 
 //================================================================================
-// Actualizamos las luces dependiendo del entorno
+// Update the colors according to what the player wants
 //================================================================================
-void CAlienFX::UpdateStatus()
+void CAlienFX::UpdatePlayerLights()
 {
-	// Jugador local
     C_Player *pPlayer = C_Player::GetLocalInPlayer();
 
-    // No hay Jugador!
-    if ( !pPlayer )
-    {
-        SetColor( LFX_ALL, DEFAULT_COLOR );
-        return;
-    }
-	
-	// Sin vida, apagamos todas las luces
-    if ( !pPlayer->IsAlive() )
-    {
-        SetColor( LFX_ALL, LFX_BLACK | LFX_FULL_BRIGHTNESS );
+    // There is no player, we are in the menu
+    if ( !pPlayer ) {
+        SetColor(LFX_ALL, ALIENFX_DEFAULT_COLOR);
         return;
     }
 
-	#ifdef APOCALYPSE
-    //
-    // Salud
-    //
-    int health = pPlayer->GetHealth();
-
-    if ( pPlayer->GetPlayerStatus() == PLAYER_STATUS_FALLING )
-    {
-        UpdatePulse( 0.05f );
-        return;
-    }
-    if ( pPlayer->IsDejected() )
-    {
-        UpdatePulse( 0.5f );
-        return;
-    }
-    else if ( health < 5 )
-    {
-        UpdatePulse( 0.7f );
-        return;
-    }
-    else if ( health < 20 )
-        SetColor( LFX_ALL_FRONT, LFX_RED | LFX_FULL_BRIGHTNESS );
-    else if ( health < 50 )
-        SetColor( LFX_ALL_FRONT, LFX_ORANGE | LFX_FULL_BRIGHTNESS );
-    else if ( health < 80 )
-        SetColor( LFX_ALL_FRONT, LFX_YELLOW | LFX_FULL_BRIGHTNESS );
-    else
-        SetColor( LFX_ALL_FRONT, LFX_GREEN | LFX_FULL_BRIGHTNESS );
-
-    //
-    // Munición
-    //
-    CBaseWeapon *pWeapon = pPlayer->GetBaseWeapon();
-
-    if ( !pWeapon || pWeapon->IsMeleeWeapon() )
-        SetColor( LFX_ALL_RIGHT, LFX_WHITE | LFX_HALF_BRIGHTNESS );
-    else
-    {
-        int ammo    = pPlayer->GetAmmoCount( pWeapon->GetPrimaryAmmoType() );
-        int max        = 200;
-
-        if ( ammo < roundup(max*0.4) )
-            SetColor( LFX_ALL_RIGHT, LFX_RED | LFX_FULL_BRIGHTNESS );
-        else if ( ammo < roundup(max*0.6) )
-            SetColor( LFX_ALL_RIGHT, LFX_ORANGE | LFX_FULL_BRIGHTNESS );
-        else if ( ammo < roundup(max*0.8) )
-            SetColor( LFX_ALL_RIGHT, LFX_YELLOW | LFX_FULL_BRIGHTNESS );
-        else
-            SetColor( LFX_ALL_RIGHT, LFX_GREEN | LFX_FULL_BRIGHTNESS );
-    }
-
-    //
-    // Estado
-    //
-    if ( pPlayer->IsUnderAttack() )
-        SetColor( LFX_ALL_LEFT, LFX_RED | LFX_FULL_BRIGHTNESS );
-    else if ( pPlayer->IsOnCombat() )
-        SetColor( LFX_ALL_LEFT, LFX_ORANGE | LFX_FULL_BRIGHTNESS );
-    else
-        SetColor( LFX_ALL_LEFT, LFX_CYAN | LFX_FULL_BRIGHTNESS );
-	#endif
+    pPlayer->UpdateAlienFX();
 }
 
 //================================================================================
+// Utility function to create a fast pulse effect (change between colors)
 //================================================================================
-void CAlienFX::UpdatePulse( float interval )
+void CAlienFX::UpdatePulse(float interval)
 {
     if ( !m_PulseTimer.IsElapsed() )
         return;
 
-    C_Player *pPlayer = C_Player::GetLocalInPlayer();
-
-    if ( pPlayer->GetPlayerStatus() == PLAYER_STATUS_FALLING )
-    {
-        switch( m_PulseState )
-        {
-            case 0:
-            default:
-                SetColor( LFX_ALL, LFX_RED | LFX_FULL_BRIGHTNESS );
-                m_PulseState = 1;
+    switch ( m_PulseState ) {
+        case 0:
+        default:
+            SetColor(LFX_ALL, LFX_RED | LFX_FULL_BRIGHTNESS);
+            m_PulseState = 1;
             break;
 
-            case 1:
-                SetColor( LFX_ALL, LFX_YELLOW | LFX_FULL_BRIGHTNESS );
-                m_PulseState = 2;
+        case 1:
+            SetColor(LFX_ALL, LFX_YELLOW | LFX_FULL_BRIGHTNESS);
+            m_PulseState = 2;
             break;
 
-            case 2:
-                SetColor( LFX_ALL, LFX_RED | LFX_FULL_BRIGHTNESS );
-                m_PulseState = 3;
+        case 2:
+            SetColor(LFX_ALL, LFX_ORANGE | LFX_FULL_BRIGHTNESS);
+            m_PulseState = 3;
             break;
 
-            case 3:
-                SetColor( LFX_ALL, LFX_ORANGE | LFX_HALF_BRIGHTNESS );
-                m_PulseState = 4;
+        case 3:
+            SetColor(LFX_ALL, LFX_RED | LFX_FULL_BRIGHTNESS);
+            m_PulseState = 4;
             break;
 
-            case 4:
-                SetColor( LFX_ALL, LFX_RED | LFX_HALF_BRIGHTNESS );
-                m_PulseState = 5;
+        case 4:
+            SetColor(LFX_ALL, LFX_BLACK | LFX_FULL_BRIGHTNESS);
+            m_PulseState = 0;
             break;
-
-            case 5:
-                SetColor( LFX_ALL, LFX_BLACK | LFX_FULL_BRIGHTNESS );
-                m_PulseState = 0;
-            break;
-        }
-    }
-    else
-    {
-        switch( m_PulseState )
-        {
-            case 0:
-            default:
-                SetColor( LFX_ALL, LFX_RED | LFX_FULL_BRIGHTNESS );
-                m_PulseState = 1;
-            break;
-
-            case 1:
-                SetColor( LFX_ALL, LFX_BLACK | LFX_FULL_BRIGHTNESS );
-                m_PulseState = 0;
-            break;
-        }
     }
 
-    m_PulseTimer.Start( interval );
+    m_PulseTimer.Start(interval);
 }
 
 //================================================================================
-// Devuelve si la funcionalidad de AlienFX esta activada
+// Returns if AlienFX is activated.
 //================================================================================
 bool CAlienFX::IsEnabled()
 {
-    // No se pudo iniciar la DLL
     if ( !m_bStarted )
         return false;
 
@@ -305,61 +218,65 @@ bool CAlienFX::IsEnabled()
 }
 
 //================================================================================
-// Hemos recibido un mensaje desde el servidor
+// We received a message from the server
 //================================================================================
-void CAlienFX::OnMessage( bf_read &msg )
+void CAlienFX::OnMessage(bf_read &msg)
 {
     if ( !IsEnabled() )
         return;
 
     int command = msg.ReadShort();
 
-    // Comando
-    switch( command )
-    {
-        // Establecer un nuevo color
+    switch ( command ) {
+        // Set a new color!
         case ALIENFX_SETCOLOR:
-            int light        = msg.ReadLong();
-            int color        = msg.ReadLong();
-            float duration    = msg.ReadFloat();
+        {
+            int light = msg.ReadLong();
+            int color = msg.ReadLong();
+            float duration = msg.ReadFloat();
 
-            // Establecemos el color y la duración
-            TheAlienFX->SetActiveColor( light, color, duration );
-        break;
+            TheAlienFX->SetActiveColor(light, color, duration);
+            Msg("The server tells us to change the color.\n");
+            break;
+        }
     }
 }
 
 //================================================================================
+// Sets a color, but does not activate it until the frame ends.
 //================================================================================
-void CAlienFX::SetColor( int device, int color, float duration )
+void CAlienFX::SetColor(int device, int color, float duration)
 {
     if ( !IsEnabled() )
         return;
 
-    FXLight( device, color );
+    FXLight(device, color);
 
-    if ( duration > 0 )
-        m_LightTimer.Start( duration );
+    if ( duration > 0 ) {
+        m_LightTimer.Start(duration);
+    }
 }
 
 //================================================================================
+// Set a color and activate it instantly.
+// It should only be used outside the "Update()" cycle and carefully.
 //================================================================================
-void CAlienFX::SetActiveColor( int device, int color, float duration )
+void CAlienFX::SetActiveColor(int device, int color, float duration)
 {
     if ( !IsEnabled() )
         return;
 
-    //FXReset();
-    SetColor( device, color, duration );
+    SetColor(device, color, duration);
     FXUpdate();
 }
 
 //================================================================================
+// ???
 //================================================================================
-void CAlienFX::SetActionColor( int device, int color, int action )
+void CAlienFX::SetActionColor(int device, int color, int action)
 {
     if ( !IsEnabled() )
         return;
 
-    FXLightActionColor( device, color, action );
+    FXLightActionColor(device, color, action);
 }

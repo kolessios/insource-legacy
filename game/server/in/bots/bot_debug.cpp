@@ -35,6 +35,14 @@ extern ConVar bot_debug_data_memory;
 extern ConVar think_limit;
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_BOTS, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_BOTS, __VA_ARGS__)
+
+//================================================================================
 // Returns whether to display debugging information for this bot.
 //================================================================================
 bool CBot::ShouldShowDebug()
@@ -75,14 +83,11 @@ void CBot::DebugDisplay()
 
     // General
     if ( thinkTime >= think_limit.GetFloat() ) {
-        DebugScreenText( msg.sprintf( "%s (%.3f ms)", GetName(), thinkTime ), red );
         DebugAddMessage( "RunAI: %.3f ms !!", thinkTime );
     }
-    else {
-        DebugScreenText( msg.sprintf( "%s (%.3f ms)", GetName(), thinkTime ) );
-    }
 
-    DebugScreenText( msg.sprintf( "%s - %s", GetProfile()->GeSkillName(), g_TacticalModes[GetTacticalMode()] ) );
+    DebugScreenText(msg.sprintf("%s (%.3f ms)", GetName(), thinkTime));
+    DebugScreenText( msg.sprintf( "Profile: %s - Tactical Mode: %s", GetProfile()->GeSkillName(), g_TacticalModes[GetTacticalMode()] ) );
     DebugScreenText( msg.sprintf( "Health: %i", GetHealth() ) );
     DebugScreenText( "" );
 
@@ -116,10 +121,6 @@ void CBot::DebugDisplay()
         IBotSchedule *pSchedule = GetActiveSchedule();
         DebugScreenText( msg.sprintf( "    Schedule: %s (%.3f ms)", g_BotSchedules[pSchedule->GetID()], scheduleTime ) );
         DebugScreenText( msg.sprintf( "    Task: %s", pSchedule->GetActiveTaskName() ) );
-
-        /*if ( scheduleTime >= 0.5f ) {
-            DebugAddMessage( "%s:%s %.3f ms !!", g_BotSchedules[pSchedule->GetID()], pSchedule->GetActiveTaskName(), scheduleTime );
-        }*/
     }
     else {
         DebugScreenText( msg.sprintf( "    Schedule: -" ) );
@@ -164,6 +165,10 @@ void CBot::DebugDisplay()
 
     // Memory
     if ( GetMemory() ) {
+        if ( GetMemory()->GetUpdateCost() >= 1.0f ) {
+            DebugAddMessage("   Memory: %.3f ms !!", GetMemory()->GetUpdateCost());
+        }
+
         DebugScreenText( "" );
         DebugScreenText( msg.sprintf("Memory (Ents: %i) (%.3f ms):", GetMemory()->GetTotalKnownCount(), GetMemory()->GetUpdateCost() ), red );
 
@@ -238,6 +243,10 @@ void CBot::DebugDisplay()
 
     // Vision
     if ( GetVision() ) {
+        if ( GetVision()->GetUpdateCost() >= 1.0f ) {
+            DebugAddMessage("   Vision: %.3f ms !!", GetVision()->GetUpdateCost());
+        }
+
         DebugScreenText( "" );
         DebugScreenText( msg.sprintf("Vision (%.3f ms):", GetVision()->GetUpdateCost()), yellow );
 
@@ -267,6 +276,10 @@ void CBot::DebugDisplay()
 
     // Locomotion
     if ( GetLocomotion() ) {
+        if ( GetLocomotion()->GetUpdateCost() >= 1.0f ) {
+            DebugAddMessage("   Locomotion: %.3f ms !!", GetLocomotion()->GetUpdateCost());
+        }
+
         DebugScreenText( "" );
         DebugScreenText( msg.sprintf( "Locomotion (%.3f ms):", GetLocomotion()->GetUpdateCost() ), blue );
 
@@ -409,7 +422,7 @@ void CBot::DebugDisplay()
             if ( message->m_age.GetElapsedTime() > fadeAge )
                 alpha *= (1.0f - (message->m_age.GetElapsedTime() - fadeAge) / (maxAge - fadeAge));
 
-            DebugScreenText( UTIL_VarArgs( "%2.f - %s", message->m_age.GetStartTime(), message->m_string ), Color( 255, 255, 255, alpha ) );
+            DebugScreenText( UTIL_VarArgs( "%i - %s", message->frame, message->m_string ), Color( 255, 255, 255, alpha ) );
         }
     }
 
@@ -481,6 +494,7 @@ void CBot::DebugAddMessage( char *format, ... )
     DebugMessage message;
     message.m_age.Start();
     Q_strncpy( message.m_string, buffer, 1024 );
+    message.frame = gpGlobals->framecount;
 
     m_debugMessages.AddToHead( message );
 
@@ -532,10 +546,10 @@ CON_COMMAND_F( bot_debug_process_navigation, "", FCVAR_SERVER )
 	g_DebugPath.Draw();
 
     if ( result ) {
-        DevMsg( "Path Computed Correctly\n" );
+        Msg( "Path Computed Correctly\n" );
     }
     else {
-        DevWarning( "Path Computed FAIL!\n" );
+        Warning( "Path Computed FAIL!\n" );
     }
 
     delete pBot;

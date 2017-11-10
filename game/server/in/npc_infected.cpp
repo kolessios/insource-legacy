@@ -3,7 +3,7 @@
 #include "cbase.h"
 #include "npc_infected.h"
 
-#include "in_shareddefs.h"
+
 
 #include "physics_prop_ragdoll.h"
 
@@ -65,9 +65,9 @@ DECLARE_NPC_HEALTH( CNPC_Infected, sk_infected_health, "10" )
 DECLARE_NPC_MELEE_DAMAGE( CNPC_Infected, sk_infected_damage, "2" )
 DECLARE_NPC_MELEE_DISTANCE( CNPC_Infected, sk_infected_melee_distance, "70" )
 
-DECLARE_REPLICATED_COMMAND( sk_infected_vision_distance, "912", "Max Vision" )
-DECLARE_REPLICATED_COMMAND( sk_infected_sleep_chance, "0.5", "Chance of Spawn sleeping" )
-DECLARE_REPLICATED_COMMAND( sk_infected_investigate_sounds, "0", "Investigate rare sounds" )
+DECLARE_SERVER_CMD( sk_infected_vision_distance, "912", "Max Vision" )
+DECLARE_SERVER_CMD( sk_infected_sleep_chance, "0.5", "Chance of Spawn sleeping" )
+DECLARE_SERVER_CMD( sk_infected_investigate_sounds, "0", "Investigate rare sounds" )
 
 #define	INFECTED_GIB_MODEL "models/infected/gibs/gibs.mdl"
 

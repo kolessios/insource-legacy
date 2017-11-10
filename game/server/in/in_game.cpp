@@ -64,7 +64,7 @@ const char *GetGameDescription()
     if ( TheGameRules )
         return TheGameRules->GetGameDescription();
     else
-        return "InSource";
+        return GAME_NAME;
 }
 
 //================================================================================

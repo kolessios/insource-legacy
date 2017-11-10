@@ -14,13 +14,13 @@
 // Macros
 //================================================================================
 
-#define DECLARE_NPC_HEALTH( classname, name, value ) DECLARE_REPLICATED_COMMAND( name, value, "##classname Health" ); \
+#define DECLARE_NPC_HEALTH( classname, name, value ) DECLARE_SERVER_CMD( name, value, "##classname Health" ); \
     int classname::GetNPCHealth() { return name.GetInt(); }
 
-#define DECLARE_NPC_MELEE_DAMAGE( classname, name, value ) DECLARE_REPLICATED_COMMAND( name, value, "##classname Damage per Attack" ); \
+#define DECLARE_NPC_MELEE_DAMAGE( classname, name, value ) DECLARE_SERVER_CMD( name, value, "##classname Damage per Attack" ); \
     float classname::GetMeleeDamage() { return name.GetFloat(); }
 
-#define DECLARE_NPC_MELEE_DISTANCE( classname, name, value ) DECLARE_REPLICATED_COMMAND( name, value, "##classname Melee Attack Distance" ); \
+#define DECLARE_NPC_MELEE_DISTANCE( classname, name, value ) DECLARE_SERVER_CMD( name, value, "##classname Melee Attack Distance" ); \
     float classname::GetMeleeDistance() { return name.GetFloat(); }
 
 //================================================================================

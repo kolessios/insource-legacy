@@ -4,7 +4,7 @@
 #include "nodes_generation.h"
 
 #include "in_player.h"
-#include "in_shareddefs.h"
+
 
 #include "nav.h"
 #include "nav_mesh.h"
@@ -29,12 +29,11 @@ CNodesGeneration *TheNodeGenerator = &g_NodesGeneration;
 // Comandos
 //================================================================================
 
-DECLARE_REPLICATED_COMMAND( ai_generate_nodes_underwater, "0", "" )
-DECLARE_REPLICATED_COMMAND( ai_generate_nodes_walkable, "1", "" )
-DECLARE_REPLICATED_COMMAND( ai_generate_nodes_walkable_distance, "300", "" )
-DECLARE_REPLICATED_COMMAND( ai_generate_nodes_climb, "1", "" )
-DECLARE_REPLICATED_COMMAND( ai_generate_nodes_hints, "0", "" )
-
+DECLARE_SERVER_CMD( ai_generate_nodes_underwater, "0", "" )
+DECLARE_SERVER_CMD( ai_generate_nodes_walkable, "1", "" )
+DECLARE_SERVER_CMD( ai_generate_nodes_walkable_distance, "300", "" )
+DECLARE_SERVER_CMD( ai_generate_nodes_climb, "1", "" )
+DECLARE_SERVER_CMD( ai_generate_nodes_hints, "0", "" )
 
 //================================================================================
 //================================================================================

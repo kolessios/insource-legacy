@@ -10,7 +10,7 @@
 #endif
 
 #ifdef INSOURCE_DLL
-#include "in_shareddefs.h"
+
 #endif
 
 #include "bots\bot_defs.h"

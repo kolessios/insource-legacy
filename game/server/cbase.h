@@ -159,4 +159,6 @@ class CSound;
 #include "npcevent.h"
 #include "vprof.h"
 
+#include "in_shareddefs.h"
+
 #endif // CBASE_H

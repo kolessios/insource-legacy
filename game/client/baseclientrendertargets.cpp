@@ -29,7 +29,8 @@ void CBaseClientRenderTargets::CreateGlassReflectionTextures( IMaterialSystem* p
     {
         // _rt_GlassReflection_0
         // _rt_GlassReflection_1
-        DevMsg( "_rt_GlassReflection_%i \n", it );
+        //DevMsg( "_rt_GlassReflection_%i \n", it );
+
         m_GlassReflectionTexture[it].Init( pMaterialSystem->CreateNamedRenderTargetTextureEx2(
             UTIL_VarArgs( "_rt_GlassReflection_%i", it ),
             iSize, iSize, RT_SIZE_PICMIP,

@@ -1,3 +1,7 @@
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+// Authors: 
+// Iván Bravo Bravo (linkedin.com/in/ivanbravobravo), 2017
+
 #ifndef ALIENFX_H
 #define ALIENFX_H
 
@@ -7,6 +11,7 @@
 
 #undef STDCALL
 #include "alienfx\LFX2.h"
+#undef INVALID_HANDLE_VALUE
 
 enum
 {
@@ -28,7 +33,7 @@ public:
     virtual void Shutdown();
 
     virtual void Update( float frametime );
-    virtual void UpdateStatus();
+    virtual void UpdatePlayerLights();
     virtual void UpdatePulse( float interval );
 
     virtual bool IsEnabled();

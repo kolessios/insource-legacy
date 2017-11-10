@@ -1131,7 +1131,7 @@ static void AddDirectorySearchPath(const char *pDirectory)
 
             // We make sure it is a valid directory
             if ( !FStrEq(ent->d_name, ".") && !FStrEq(ent->d_name, "..") && filesystem->IsDirectory(pFullPath) ) {
-                filesystem->AddSearchPath(pFullPath, "GAME");
+                filesystem->AddSearchPath(pFullPath, "GAME", PATH_ADD_TO_HEAD);
             }
         }
     }
@@ -1172,8 +1172,21 @@ static void MountAdditionalContent()
     pMainFile->deleteThis();
 }
 
+static CExtendedLoggingListener *g_LoggingListener = NULL;
+
+static void ResetLoggingSystem()
+{
+    if ( !g_LoggingListener ) {
+        g_LoggingListener = new CExtendedLoggingListener();
+    }
+
+    LoggingSystem_ResetCurrentLoggingState();
+    LoggingSystem_RegisterLoggingListener(g_LoggingListener);
+}
+
 int CHLClient::Init( CreateInterfaceFn appSystemFactory, CGlobalVarsBase *pGlobals )
 {
+    ResetLoggingSystem();
 
 	COM_TimestampedLog( "ClientDLL factories - Start" );
 	// We aren't happy unless we get all of our interfaces.

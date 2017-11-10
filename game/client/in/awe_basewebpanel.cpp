@@ -3,7 +3,7 @@
 #include "cbase.h"
 #include "awe_basewebpanel.h"
 
-#include "in_shareddefs.h"
+
 #include "in_gamerules.h"
 
 #include "steam\steam_api.h"
@@ -19,7 +19,7 @@
 
 using namespace Awesomium;
 
-DECLARE_CHEAT_COMMAND( cl_web_ui_updaterate, "0.5", "" )
+DECLARE_CHEAT_CMD( cl_web_ui_updaterate, "0.5", "" )
 
 //================================================================================
 //================================================================================

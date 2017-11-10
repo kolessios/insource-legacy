@@ -3,7 +3,7 @@
 #include "cbase.h"
 #include "sound_instance_manager.h"
 
-#include "in_shareddefs.h"
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

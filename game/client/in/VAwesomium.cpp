@@ -5,7 +5,7 @@
 #include <VAwesomium.h>
 #include <vgui_controls/Controls.h>
 
-#include "in_shareddefs.h"
+
 
 #define DEPTH 4
 
@@ -20,7 +20,7 @@ static Awesomium::WebSession *g_WebSession;
 //================================================================================
 // Comandos
 //================================================================================
-DECLARE_CHEAT_COMMAND( cl_web_ui, "1", "" );
+DECLARE_CHEAT_CMD( cl_web_ui, "1", "" );
 
 //================================================================================
 // Transforma el buffer de WebView a una textura que podemos usar para mostrar

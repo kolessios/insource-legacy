@@ -4,7 +4,7 @@
 #include "ai_behavior_climb.h"
 #include "ai_moveprobe.h"
 
-#include "in_shareddefs.h"
+
 #include "in_utils.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -14,10 +14,10 @@
 // Comandos
 //================================================================================
 
-DECLARE_NOTIFY_COMMAND( ai_climb_behavior_enable, "1", "" )
-DECLARE_CHEAT_COMMAND( ai_climb_behavior_debug, "0", "" )
-DECLARE_NOTIFY_COMMAND( ai_climb_behavior_front_distance, "30", "" )
-DECLARE_NOTIFY_COMMAND( ai_climb_behavior_interval, "1.0", "" )
+DECLARE_NOTIFY_CMD( ai_climb_behavior_enable, "1", "" )
+DECLARE_CHEAT_CMD( ai_climb_behavior_debug, "0", "" )
+DECLARE_NOTIFY_CMD( ai_climb_behavior_front_distance, "30", "" )
+DECLARE_NOTIFY_CMD( ai_climb_behavior_interval, "1.0", "" )
 
 //================================================================================
 // Alturas que podemos escalar

@@ -62,22 +62,22 @@ void DispatchEffect( const char *pName, const CEffectData &data );
 //================================================================================
 
 // Velocidad al caminar
-DECLARE_NOTIFY_COMMAND( sv_player_walk_speed, "80.0", "Velocidad al caminar." )
+DECLARE_NOTIFY_CMD( sv_player_walk_speed, "80.0", "Velocidad al caminar." )
 
 // Velocidad normal
-DECLARE_NOTIFY_COMMAND( sv_player_speed, "200.0", "Velocidad normal." )
+DECLARE_NOTIFY_CMD( sv_player_speed, "200.0", "Velocidad normal." )
 
 // Velocidad al correr
-DECLARE_NOTIFY_COMMAND( sv_player_sprint_speed, "230.0", "Velocidad al correr." )
+DECLARE_NOTIFY_CMD( sv_player_sprint_speed, "230.0", "Velocidad al correr." )
 
-DECLARE_NOTIFY_COMMAND( sv_firstperson_ragdoll, "0", "" );
-DECLARE_NOTIFY_COMMAND( sv_player_view_from_eyes, "0", "" );
+DECLARE_NOTIFY_CMD( sv_firstperson_ragdoll, "0", "" );
+DECLARE_NOTIFY_CMD( sv_player_view_from_eyes, "0", "" );
 
-DECLARE_REPLICATED_COMMAND( sv_player_tests_hull_mins_x, "0", "" );
-DECLARE_REPLICATED_COMMAND( sv_player_tests_hull_mins_y, "0", "" );
+DECLARE_SERVER_CMD( sv_player_tests_hull_mins_x, "0", "" );
+DECLARE_SERVER_CMD( sv_player_tests_hull_mins_y, "0", "" );
 
-DECLARE_REPLICATED_COMMAND( sv_player_tests_hull_maxs_x, "0", "" );
-DECLARE_REPLICATED_COMMAND( sv_player_tests_hull_maxs_y, "0", "" );
+DECLARE_SERVER_CMD( sv_player_tests_hull_maxs_x, "0", "" );
+DECLARE_SERVER_CMD( sv_player_tests_hull_maxs_y, "0", "" );
 
 //================================================================================
 //================================================================================

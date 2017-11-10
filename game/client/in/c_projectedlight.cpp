@@ -12,7 +12,7 @@
 #include "tier1/KeyValues.h"
 #include "toolframework_client.h"
 
-#include "in_shareddefs.h"
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -21,18 +21,18 @@
 // Comandos
 //================================================================================
 
-DECLARE_COMMAND( r_projectedtexture_filter, "0.5", "", FCVAR_ARCHIVE )
+DECLARE_CMD( r_projectedtexture_filter, "0.5", "", FCVAR_ARCHIVE )
 
-DECLARE_CHEAT_COMMAND( r_projectedtexture_visualizetrace, "0", "" )
-DECLARE_CHEAT_COMMAND( r_projectedtexture_ladderdist, "40", "" )
-DECLARE_CHEAT_COMMAND( r_projectedtexture_lockposition, "0", "" )
-DECLARE_CHEAT_COMMAND( r_projectedtexture_shadowatten, "0.35", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_visualizetrace, "0", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_ladderdist, "40", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_lockposition, "0", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_shadowatten, "0.35", "" )
 
-DECLARE_CHEAT_COMMAND( r_projectedtexture_muzzleflashfov, "120", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_muzzleflashfov, "120", "" )
 
-DECLARE_CHEAT_COMMAND( r_projectedtexture_nearoffsetscale, "1.0", "" )
-DECLARE_CHEAT_COMMAND( r_projectedtexture_tracedistcutoff, "128", "" )
-DECLARE_CHEAT_COMMAND( r_projectedtexture_backtraceoffset, "0.4", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_nearoffsetscale, "1.0", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_tracedistcutoff, "128", "" )
+DECLARE_CHEAT_CMD( r_projectedtexture_backtraceoffset, "0.4", "" )
 
 //================================================================================
 // Constructor

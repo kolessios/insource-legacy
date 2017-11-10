@@ -8,7 +8,7 @@
 #endif
 
 #include "weapon_info.h"
-#include "in_shareddefs.h"
+
 
 #ifdef CLIENT_DLL
 class C_Player;

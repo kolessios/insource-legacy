@@ -7,7 +7,7 @@
 #include "cbase.h"
 #include "flashlighteffect.h"
 
-#include "in_shareddefs.h"
+
 
 #include "dlight.h"
 #include "iefx.h"
@@ -31,13 +31,13 @@ extern ConVar r_flashlightdepthres;
 // Comandos
 //================================================================================
 
-DECLARE_CHEAT_COMMAND( r_flashlight_offsetx, "5", "" )
-DECLARE_CHEAT_COMMAND( r_flashlight_offsety, "-5", "" )
-DECLARE_CHEAT_COMMAND( r_flashlight_offsetz, "0", "" )
-DECLARE_CHEAT_COMMAND( r_flashlight_near, "2", "" )
-DECLARE_CHEAT_COMMAND( r_flashlight_constant, "0", "" )
-DECLARE_CHEAT_COMMAND( r_flashlight_quadratic, "0", "" )
-DECLARE_CHEAT_COMMAND( r_flashlight_ambient, "1", "" )
+DECLARE_CHEAT_CMD( r_flashlight_offsetx, "5", "" )
+DECLARE_CHEAT_CMD( r_flashlight_offsety, "-5", "" )
+DECLARE_CHEAT_CMD( r_flashlight_offsetz, "0", "" )
+DECLARE_CHEAT_CMD( r_flashlight_near, "2", "" )
+DECLARE_CHEAT_CMD( r_flashlight_constant, "0", "" )
+DECLARE_CHEAT_CMD( r_flashlight_quadratic, "0", "" )
+DECLARE_CHEAT_CMD( r_flashlight_ambient, "1", "" )
 
 extern ConVar r_flashlightdepthtexture;
 

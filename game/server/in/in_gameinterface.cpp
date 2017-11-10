@@ -3,7 +3,7 @@
 #include "cbase.h"
 #include "gameinterface.h"
 #include "mapentities.h"
-#include "in_shareddefs.h"
+
 #include "fmtstr.h"
 
 #include "in_utils.h"

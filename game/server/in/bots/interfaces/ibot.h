@@ -25,7 +25,7 @@ class IBotDecision;
 class CSquad;
 
 #ifdef INSOURCE_DLL
-#include "in_shareddefs.h"
+
 
 class CPlayer;
 #endif

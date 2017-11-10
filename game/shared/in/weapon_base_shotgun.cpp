@@ -4,7 +4,7 @@
 #include "weapon_base.h"
 
 #include "in_buttons.h"
-#include "in_shareddefs.h"
+
 
 #include "datacache/imdlcache.h"
 #include "tier0/vprof.h"

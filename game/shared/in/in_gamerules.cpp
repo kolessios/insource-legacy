@@ -47,32 +47,32 @@ ConVar sv_voice_proximity("sv_voice_proximity", "-1", FCVAR_SERVER, "", SetVoice
 #endif
 
 // Modo de Juego
-DECLARE_COMMAND( sv_gamemode, "0", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER );
+DECLARE_CMD( sv_gamemode, "0", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER );
 
 // Seed para eventos al azar
-DECLARE_COMMAND( sv_gameseed, "", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER );
+DECLARE_CMD( sv_gameseed, "", "", FCVAR_NOT_CONNECTED | FCVAR_SERVER );
 
 // Dificultad del Juego
-DECLARE_COMMAND( sv_difficulty, "2", "", FCVAR_SERVER | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+DECLARE_CMD( sv_difficulty, "2", "", FCVAR_SERVER | FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
 
 // Define si el chat por voz de los jugadores muertos solo podrán escucharlo los muertos
-DECLARE_REPLICATED_COMMAND( sv_voice_death_to_death, "1", "" );
+DECLARE_SERVER_CMD( sv_voice_death_to_death, "1", "" );
 
 // Define si los bots estan permitidos a dañar a un aliado humano
-DECLARE_NOTIFY_COMMAND( sv_bot_friendlyfire, "0", "" );
+DECLARE_NOTIFY_CMD( sv_bot_friendlyfire, "0", "" );
 
 // Define si los Jugadores deben respawnear de inmediato
-DECLARE_NOTIFY_COMMAND( sv_respawn_immediately, "0", "" );
+DECLARE_NOTIFY_CMD( sv_respawn_immediately, "0", "" );
 
 // Cantidad de segundos para hacer respawn
-DECLARE_NOTIFY_COMMAND( sv_respawn_wait, "10", "" );
+DECLARE_NOTIFY_CMD( sv_respawn_wait, "10", "" );
 
 // Escala de daño para personajes importantes
-DECLARE_REPLICATED_COMMAND( sk_ally_scale_damage_taken, "0.8", "" )
-DECLARE_REPLICATED_COMMAND( sk_vital_ally_scale_damage_taken, "0.5", "" )
+DECLARE_SERVER_CMD( sk_ally_scale_damage_taken, "0.8", "" )
+DECLARE_SERVER_CMD( sk_vital_ally_scale_damage_taken, "0.5", "" )
 
 // Escudo
-DECLARE_NOTIFY_COMMAND( sk_player_shield_pause, "5.0", "Tiempo en segundos que la regeneracion de escudo es pausada al tomar dano." )
+DECLARE_NOTIFY_CMD( sk_player_shield_pause, "5.0", "Tiempo en segundos que la regeneracion de escudo es pausada al tomar dano." )
 
 extern ConVar servercfgfile;
 extern ConVar lservercfgfile;
@@ -861,9 +861,9 @@ void CInGameRules::AdjustPlayerDamageTaken( CPlayer * pVictim, CTakeDamageInfo &
 
         if ( info.GetAttacker() ) {
             if ( info.GetAttacker()->IsPlayer() )
-                pVictim->DebugAddMessage( "Handled %.2f damage (shield) from %s\n", handledByShield, info.GetAttacker()->GetPlayerName() );
+                pVictim->DebugAddMessage( "Handled %.2f damage (shield) from %s", handledByShield, info.GetAttacker()->GetPlayerName() );
             else
-                pVictim->DebugAddMessage( "Handled %.2f damage (shield) from %s\n", handledByShield, info.GetAttacker()->GetClassname() );
+                pVictim->DebugAddMessage( "Handled %.2f damage (shield) from %s", handledByShield, info.GetAttacker()->GetClassname() );
         }
     }
 }

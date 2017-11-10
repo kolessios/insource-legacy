@@ -11,7 +11,7 @@
 #include "director.h"
 #endif
 
-#include "in_shareddefs.h"
+
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -20,7 +20,7 @@
 // Comandos
 //================================================================================
 
-DECLARE_REPLICATED_COMMAND( sv_debug_sound_manager, "0", "" );
+DECLARE_SERVER_CMD( sv_debug_sound_manager, "0", "" );
 
 //================================================================================
 // Constructor

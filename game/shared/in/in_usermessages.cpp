@@ -12,8 +12,23 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+//================================================================================
+// Logging System
+//================================================================================
+
+DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_ALIENFX, "AlienFX", 0, LS_MESSAGE, {100, 255, 0, 255}); // Green
+DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_PLAYER, "Player", 0, LS_MESSAGE, {169, 169, 245, 255}); // Purple
+DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_BOTS, "Bots", 0, LS_MESSAGE, {245, 169, 242, 255}); // Pink
+DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_DIRECTOR, "Director", 0, LS_MESSAGE, {46, 204, 250, 255}); // Light Blue
+DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_UI, "UI", 0, LS_MESSAGE, {255, 0, 128, 255}); // wow, much pink
+
+//================================================================================
+// Custom User Messages through the Network
+//================================================================================
+
 void RegisterUserMessages(void)
 {
+    LoggingChannelFlags_t;
     usermessages->Register("Geiger", 1);
     usermessages->Register("Train", 1);
     usermessages->Register("HudText", -1);

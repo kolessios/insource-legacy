@@ -4,7 +4,7 @@
 #include "bullet.h"
 
 #include "ammodef.h"
-#include "in_shareddefs.h"
+
 
 #include "bullet_manager.h"
 #include "shot_manipulator.h"
@@ -36,9 +36,9 @@
 // Comandos
 //================================================================================
 
-DECLARE_REPLICATED_COMMAND( sv_realistic_bullet, "0", "" )
-DECLARE_REPLICATED_COMMAND( sv_showimpacts, "0", "Shows client (red) and server (blue) bullet impact point" )
-DECLARE_REPLICATED_COMMAND( sv_showimpacts_penetration, "0", "Shows client (red) and server (blue) bullet impact point" )
+DECLARE_SERVER_CMD( sv_realistic_bullet, "0", "" )
+DECLARE_SERVER_CMD( sv_showimpacts, "0", "Shows client (red) and server (blue) bullet impact point" )
+DECLARE_SERVER_CMD( sv_showimpacts_penetration, "0", "Shows client (red) and server (blue) bullet impact point" )
 
 float g_DebugDuration = 4.0f; 
 

@@ -8,7 +8,7 @@
 #endif
 
 #include "in_player.h"
-#include "in_shareddefs.h"
+
 
 #undef DECLARE_COMPONENT
 #define DECLARE_PLAYER_COMPONENT( id ) virtual int GetID() const { return id; }

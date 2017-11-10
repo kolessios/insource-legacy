@@ -23,9 +23,9 @@
 ConVar default_fov( "default_fov", "90", FCVAR_CHEAT );
 ConVar fov_desired( "fov_desired", "90", FCVAR_USERINFO, "Sets the base field-of-view.", true, 1.0, true, 75.0 );
 
-DECLARE_COMMAND( mat_fxaa_enable, "0", "", FCVAR_ARCHIVE );
-DECLARE_COMMAND( mat_sunrays_enable, "0", "", FCVAR_ARCHIVE );
-DECLARE_COMMAND( mat_desaturation_enable, "0", "", FCVAR_ARCHIVE );
+DECLARE_CMD( mat_fxaa_enable, "0", "", FCVAR_ARCHIVE );
+DECLARE_CMD( mat_sunrays_enable, "0", "", FCVAR_ARCHIVE );
+DECLARE_CMD( mat_desaturation_enable, "0", "", FCVAR_ARCHIVE );
 
 //================================================================================
 //================================================================================

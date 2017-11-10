@@ -127,6 +127,11 @@ bool CGameConsole::IsConsoleVisible()
 #endif
 }
 
+void CGameConsole::ColorPrint(Color clr, const char * msg)
+{
+    m_pConsole->ColorPrint(clr, msg);
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: activates the console after a delay
 //-----------------------------------------------------------------------------

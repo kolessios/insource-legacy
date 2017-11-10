@@ -18,20 +18,20 @@
 //================================================================================
 
 // Regeneración de salud
-DECLARE_NOTIFY_COMMAND( sv_player_health_regeneration, "0", "" )
-DECLARE_NOTIFY_COMMAND( sv_player_health_regeneration_rate, "1", "" )
-DECLARE_NOTIFY_COMMAND( sv_player_health_regeneration_amount, "0", "" )
+DECLARE_NOTIFY_CMD( sv_player_health_regeneration, "0", "" )
+DECLARE_NOTIFY_CMD( sv_player_health_regeneration_rate, "1", "" )
+DECLARE_NOTIFY_CMD( sv_player_health_regeneration_amount, "0", "" )
 
 // Aguante
-DECLARE_NOTIFY_COMMAND( sv_player_stamina_drain, "10", "" )
-DECLARE_CHEAT_COMMAND( sv_player_stamina_infinite, "0", "" )
+DECLARE_NOTIFY_CMD( sv_player_stamina_drain, "10", "" )
+DECLARE_CHEAT_CMD( sv_player_stamina_infinite, "0", "" )
 
 // Estres
-DECLARE_REPLICATED_COMMAND( sv_player_stress_drain, "2", "" )
+DECLARE_SERVER_CMD( sv_player_stress_drain, "2", "" )
 
 // Caida
-DECLARE_REPLICATED_COMMAND( sv_player_check_fall, "1", "" )
-DECLARE_REPLICATED_COMMAND( sv_player_check_fall_tolerance, "500", "" )
+DECLARE_SERVER_CMD( sv_player_check_fall, "1", "" )
+DECLARE_SERVER_CMD( sv_player_check_fall_tolerance, "500", "" )
 
 
 //================================================================================

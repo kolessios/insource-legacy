@@ -45,6 +45,14 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_PLAYER, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_PLAYER, __VA_ARGS__)
+
+//================================================================================
 //================================================================================
 
 extern ISoundEmitterSystemBase *soundemitterbase;
@@ -54,22 +62,20 @@ extern float DamageForce(const Vector &size, float damage);
 #define PUSHAWAY_THINK_CONTEXT	"PlayerPushawayThink"
 
 //================================================================================
-// Comandos
+// Commands
 //================================================================================
 
-// Modelo del Jugador
-DECLARE_REPLICATED_COMMAND(sv_player_model, "models/player.mdl", "")
+DECLARE_SERVER_CMD(sv_player_model, "models/player.mdl", "Default Player Model")
+DECLARE_CHEAT_CMD(sv_player_debug, "0", "Shows information of the specified player")
 
-// Debug
-DECLARE_CHEAT_COMMAND(sv_player_debug, "0", "Muestra informacion de un Jugador")
-
-// Linterna
-DECLARE_NOTIFY_COMMAND(sv_muzzleflashlight_realistic, "1", "Muestra el Muzzleflash como una luz dinamica.")
-DECLARE_NOTIFY_COMMAND(sv_flashlight_realistic, "1", "Muestra la linterna como una luz dinamica.")
-DECLARE_NOTIFY_COMMAND(sv_flashlight_weapon, "1", "La linterna debe provenir del arma.")
+// Lights
+// This is found on the server since it indicates whether dynamic lights should be used (which are visible to all players)
+DECLARE_NOTIFY_CMD(sv_muzzleflashlight_realistic, "1", "The muzzleflash is a dynamic light")
+DECLARE_NOTIFY_CMD(sv_flashlight_realistic, "1", "The flashlight is a dynamic light")
+DECLARE_NOTIFY_CMD(sv_flashlight_weapon, "1", "The flashlight must come from the weapon")
 
 //================================================================================
-// Información y Red
+// Data and Network
 //================================================================================
 
 extern void SendProxy_Origin(const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID);
@@ -143,7 +149,7 @@ END_DATADESC()
 //================================================================================
 CPlayer::CPlayer()
 {
-    // Las animaciones son procesadas en el cliente
+    // Animations are processed on the client side
     UseClientSideAnimation();
 
     m_angEyeAngles.Init();
@@ -167,7 +173,7 @@ CPlayer::~CPlayer()
 }
 
 //================================================================================
-// Devuelve si el jugador esta calmado
+// Returns if the player is idle
 //================================================================================
 bool CPlayer::IsIdle() const
 {
@@ -175,12 +181,11 @@ bool CPlayer::IsIdle() const
         return GetBotController()->IsIdle();
     }
 
-    // Si no nos estan atacando ni estamos en combate
     return (!IsUnderAttack() && !IsOnCombat());
 }
 
 //================================================================================
-// Devuelve si el jugador esta en alerta
+// Returns if the player is alerted
 //================================================================================
 bool CPlayer::IsAlerted() const
 {
@@ -188,12 +193,11 @@ bool CPlayer::IsAlerted() const
         return GetBotController()->IsAlerted();
     }
 
-    // Nos estan atacando o estamos en combate!
     return (IsUnderAttack() || IsOnCombat());
 }
 
 //================================================================================
-// Establece la I.A. que controlara al Jugador
+// Set the AI that will control the player
 //================================================================================
 void CPlayer::SetBotController(IBot *pBot)
 {
@@ -205,7 +209,8 @@ void CPlayer::SetBotController(IBot *pBot)
 }
 
 //================================================================================
-// Prepara el jugador para ser controlado por la I.A.
+// It is called when this player is required to be controlled by the AI
+// That is: when it is a bot or the player wants to rest and give the control to the CPU
 //================================================================================
 void CPlayer::SetUpBot()
 {
@@ -220,7 +225,7 @@ int CPlayer::UpdateTransmitState()
 }
 
 //================================================================================
-// Creación inicial, cuando el jugador se conecta
+// Initial Spawn, is called once when accessing the server.
 //================================================================================
 void CPlayer::InitialSpawn()
 {
@@ -238,11 +243,11 @@ void CPlayer::InitialSpawn()
 }
 
 //================================================================================
-// Creación en el mundo
+// Spawn
 //================================================================================
-// NOTA: Se llama como minimo 2 veces al entrar al servidor:
-// 1. Cuando se conecta, su estado debe ser PLAYER_STATE_WELCOME
-// 2. Después de seleccionar equipo/clase, su estado debe ser PLAYER_STATE_ACTIVE
+// Note: It is called 2 times in players who have just entered:
+// 1. When connecting, state should be PLAYER_STATE_NONE
+// 2. After selecting team/class
 //================================================================================
 void CPlayer::Spawn()
 {
@@ -306,23 +311,24 @@ void CPlayer::PostConstructor(const char *szClassname)
 }
 
 //================================================================================
-// Guarda objetos necesarios en la caché
+// Precache important assets
 //================================================================================
 void CPlayer::Precache()
 {
     BaseClass::Precache();
 
+    // Model
     PrecacheModel("models/player.mdl");
     PrecacheModel(GetPlayerModel());
 
-    // Luces
+    // Lights
     PrecacheModel("sprites/light_glow01.vmt");
     PrecacheModel("sprites/spotlight01_proxyfade.vmt");
     PrecacheModel("sprites/glow_test02.vmt");
     PrecacheModel("sprites/light_glow03.vmt");
     PrecacheModel("sprites/glow01.vmt");
 
-    // Sonidos
+    // Default sounds
     PrecacheScriptSound("Player.FlashlightOn");
     PrecacheScriptSound("Player.FlashlightOff");
     PrecacheScriptSound("Player.Death");
@@ -330,12 +336,11 @@ void CPlayer::Precache()
 }
 
 //================================================================================
-// Pre-pensamiento
-// Se llama antes de procesar el movimiento y el pensamiento normal
+// It is called before processing the movement and normal thinking
 //================================================================================
 void CPlayer::PreThink()
 {
-    // Estamos en un vehiculo.
+    // In a Vehicle
     if ( IsInAVehicle() ) {
         UpdateClientData();
         CheckTimeBasedDamage();
@@ -346,7 +351,6 @@ void CPlayer::PreThink()
         return;
     }
 
-    // Arreglamos un detalle con los angulos
     QAngle vOldAngles = GetLocalAngles();
     QAngle vTempAngles = GetLocalAngles();
     vTempAngles = EyeAngles();
@@ -357,7 +361,6 @@ void CPlayer::PreThink()
 
     SetLocalAngles(vTempAngles);
 
-    // Seguimos vivos
     if ( IsAlive() && IsActive() ) {
         PreUpdateAttributes();
         UpdateMovementType();
@@ -369,15 +372,14 @@ void CPlayer::PreThink()
 }
 
 //================================================================================
-// Post-pensamiento
-// Se llama después de procesar el movimiento y el pensamiento normal
+// It is called after processing the movement and normal thinking
 //================================================================================
 void CPlayer::PostThink()
 {
     BaseClass::PostThink();
 
-    // ¿Estamos siendo controlados por la I.A.?
-    // Esto servirá al cliente para no permitir los inputs del jugador
+    // Are we being controlled by the AI?
+    // This will serve the client not to allow player inputs
     m_bIsBot = (GetBotController()) ? true : false;
 
     if ( IsAlive() && IsActive() ) {
@@ -395,6 +397,7 @@ void CPlayer::PostThink()
         DoBodyLean();
     }
 
+    // We update the animations
     if ( GetAnimationSystem() ) {
         GetAnimationSystem()->Update();
     }
@@ -439,7 +442,7 @@ CBaseEntity *CPlayer::GetEnemy() const
 }
 
 //================================================================================
-// Devuelve el modelo que debe tener el jugador
+// Returns the model the player will use
 //================================================================================
 const char *CPlayer::GetPlayerModel()
 {
@@ -447,7 +450,7 @@ const char *CPlayer::GetPlayerModel()
 }
 
 //================================================================================
-// Devuelve el tipo de jugador (para los sonidos)
+// TODO: Remove
 //================================================================================
 const char *CPlayer::GetPlayerType()
 {
@@ -455,7 +458,7 @@ const char *CPlayer::GetPlayerType()
 }
 
 //================================================================================
-// Devuelve el género del Jugador
+// TODO: Remove
 //================================================================================
 gender_t CPlayer::GetPlayerGender()
 {
@@ -463,6 +466,7 @@ gender_t CPlayer::GetPlayerGender()
 }
 
 //================================================================================
+// TODO
 //================================================================================
 CInRagdoll *CPlayer::GetRagdoll()
 {
@@ -470,7 +474,7 @@ CInRagdoll *CPlayer::GetRagdoll()
 }
 
 //================================================================================
-// Transforma el jugador en un cadaver
+// Transforms the player into a corpse (On client side)
 //================================================================================
 bool CPlayer::BecomeRagdollOnClient(const Vector &force)
 {
@@ -497,6 +501,7 @@ bool CPlayer::BecomeRagdollOnClient(const Vector &force)
 }
 
 //================================================================================
+// Transforms the player into a corpse
 //================================================================================
 void CPlayer::CreateRagdollEntity()
 {
@@ -508,7 +513,7 @@ void CPlayer::CreateRagdollEntity()
     BecomeRagdollOnClient(GetLastDamage().GetDamageForce());
     return;
 
-    CInRagdoll *pRagdoll = GetRagdoll();
+    /*CInRagdoll *pRagdoll = GetRagdoll();
 
     // Nuestro cadaver existe
     if ( pRagdoll ) {
@@ -524,7 +529,7 @@ void CPlayer::CreateRagdollEntity()
     if ( pRagdoll ) {
         pRagdoll->Init(this);
         m_nRagdoll = pRagdoll;
-    }
+    }*/
 }
 
 //================================================================================
@@ -533,7 +538,6 @@ void CPlayer::DestroyRagdoll()
 {
     CInRagdoll *pRagdoll = GetRagdoll();
 
-    // Nuestro cadaver existe
     if ( !pRagdoll )
         return;
 
@@ -541,7 +545,7 @@ void CPlayer::DestroyRagdoll()
 }
 
 //================================================================================
-// Devuelve el objeto del componente por ID
+// Returns the component by its ID
 //================================================================================
 CPlayerComponent * CPlayer::GetComponent(int id)
 {
@@ -560,7 +564,7 @@ CPlayerComponent * CPlayer::GetComponent(int id)
 }
 
 //================================================================================
-// Agrega un componente a partir de su ID
+// Add a component for your ID
 //================================================================================
 void CPlayer::AddComponent(int id)
 {
@@ -590,7 +594,7 @@ void CPlayer::AddComponent(int id)
 }
 
 //================================================================================
-// Agrega una característica al Jugador
+// Add a component
 //================================================================================
 void CPlayer::AddComponent(CPlayerComponent *pComponent)
 {
@@ -604,21 +608,22 @@ void CPlayer::AddComponent(CPlayerComponent *pComponent)
 }
 
 //================================================================================
-// Crea las características predeterminadas de este jugador
+// Player components
 //================================================================================
 void CPlayer::CreateComponents()
 {
-    // Cada juego decide que componentes agregar
     //AddComponent( PLAYER_COMPONENT_HEALTH );
     //AddComponent( PLAYER_COMPONENT_EFFECTS );
     //AddComponent( PLAYER_COMPONENT_DEJECTED );
 }
 
 //================================================================================
-// Corre el pensamiento de las características
+// Update the components
 //================================================================================
 void CPlayer::UpdateComponents()
 {
+    VPROF_BUDGET("CPlayer::UpdateComponents", VPROF_BUDGETGROUP_PLAYER);
+
     FOR_EACH_VEC(m_nComponents, key)
     {
         CPlayerComponent *pFeature = m_nComponents.Element(key);
@@ -631,7 +636,6 @@ void CPlayer::UpdateComponents()
 //================================================================================
 void CPlayer::AddAttribute(const char *name)
 {
-    // Ya lo tenemos
     if ( GetAttribute(name) )
         return;
 
@@ -972,7 +976,7 @@ CSound* CPlayer::GetBestSound(int validTypes)
     CSound *pResult = GetSenses()->GetClosestSound(false, validTypes);
 
     if ( pResult == NULL ) {
-        DevMsg("NULL Return from GetBestSound\n");
+        Msg("NULL Return from GetBestSound\n");
     }
 
     return pResult;
@@ -986,7 +990,7 @@ CSound* CPlayer::GetBestScent()
     CSound *pResult = GetSenses()->GetClosestSound(true);
 
     if ( pResult == NULL ) {
-        DevMsg("NULL Return from GetBestScent\n");
+        Msg("NULL Return from GetBestScent\n");
     }
 
     return pResult;
@@ -1946,7 +1950,7 @@ void CPlayer::EnterPlayerState(int status)
 //================================================================================
 void CPlayer::SetPlayerState(int status)
 {
-    DebugAddMessage("%s -> %s\n", g_PlayerStateNames[m_iPlayerState], g_PlayerStateNames[status]);
+    DebugAddMessage("%s -> %s", g_PlayerStateNames[m_iPlayerState], g_PlayerStateNames[status]);
 
     LeavePlayerState(m_iPlayerState);
     m_iPlayerState = status;
@@ -2249,7 +2253,7 @@ void CPlayer::Kick()
 
     //engine->ServerCommand( UTIL_VarArgs( "kick %s\n", GetPlayerName() ) );
     engine->ServerCommand(UTIL_VarArgs("kickid %i\n", GetPlayerInfo()->GetUserID()));
-    Msg("Kicking Player (%i) %s (%s)\n", GetPlayerInfo()->GetUserID(), GetPlayerName(), GetPlayerInfo()->GetNetworkIDString());
+    Msg("Kicking (%i) %s (%s)\n", GetPlayerInfo()->GetUserID(), GetPlayerName(), GetPlayerInfo()->GetNetworkIDString());
 }
 
 //================================================================================
@@ -2820,7 +2824,7 @@ void CPlayer::DebugAddMessage(char *format, ...)
     Q_strncpy(message.m_string, buffer, 1024);
 
     m_debugMessages.AddToHead(message);
-    DevMsg("[%s] %s \n", GetPlayerName(), message.m_string);
+    Msg("[%s] %s \n", GetPlayerName(), message.m_string);
 
     if ( m_debugMessages.Count() >= 10 )
         m_debugMessages.RemoveMultipleFromTail(1);

@@ -84,7 +84,7 @@ DECLARE_HUD_MESSAGE( CHudDamageIndicator, Damage );
 // Purpose: 
 //-----------------------------------------------------------------------------
 CHudDamageIndicator::CHudDamageIndicator( const char *pElementName ) :
-    CHudElement( pElementName ), BaseClass( NULL, "DamageIndicator" )
+    CHudElement( pElementName ), BaseClass( NULL, "HudDamageIndicator" )
 {
     vgui::Panel *pParent = GetClientMode()->GetViewport();
     SetParent( pParent );

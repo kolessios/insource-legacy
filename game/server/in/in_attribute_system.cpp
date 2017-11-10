@@ -78,14 +78,14 @@ void CAttributeSystem::LoadAttributes()
         info.min = COLUMN( results, 5 ).floating;
 
         // Lo agregamos a la lista
-        DevMsg( "[CAttributeSystem] Atributo: %s. (%.2f) (%.2f) (%.2f)\n", info.name, info.value, info.rate, info.amount );
+        DevMsg( 2, "[CAttributeSystem] Atributo: %s. (%.2f) (%.2f) (%.2f)\n", info.name, info.value, info.rate, info.amount );
         m_AttributesList.AddToTail( info );
     }
 
     FOR_EACH_VEC( m_AttributesList, it )
     {
         const char *lol = m_AttributesList.Element( it ).name;
-        DevMsg( "[CAttributeSystem] -- Atributo: %s.\n", lol );
+        DevMsg( 2, "[CAttributeSystem] -- Atributo: %s.\n", lol );
     }
 
     // Liberamos la memoria usada
@@ -93,7 +93,7 @@ void CAttributeSystem::LoadAttributes()
     delete results;
 
     // Hemos terminado
-    DevMsg( "[CAttributeSystem] Se han cargado %i atributos.\n", m_AttributesList.Count() );
+    DevMsg( 2, "[CAttributeSystem] Se han cargado %i atributos.\n", m_AttributesList.Count() );
 }
 
 //================================================================================
@@ -126,7 +126,7 @@ void CAttributeSystem::LoadModifiers()
 
         // Lo agregamos a la lista
         m_ModifiersList.AddToTail( info );
-		DevMsg("[CAttributeSystem] Modificador: %s. (%.2f) (%.2f) (%.2f)\n", info.name, info.value, info.rate, info.amount);
+		DevMsg(2, "[CAttributeSystem] Modificador: %s. (%.2f) (%.2f) (%.2f)\n", info.name, info.value, info.rate, info.amount);
     }
 
     // Liberamos la memoria usada
@@ -134,94 +134,7 @@ void CAttributeSystem::LoadModifiers()
     delete results;
 
     // Hemos terminado
-    DevMsg("[CAttributeSystem] Se han cargado %i modificadores.\n", m_ModifiersList.Count());
-
-    /*
-	m_ModifiersList.Purge();
-
-	KeyValues *pFile = new KeyValues("AttributesModifiers");
-    KeyValues::AutoDelete autoDelete( pFile );
-
-	// Leemos el archivo
-    pFile->LoadFromFile( filesystem, MODIFIERS_FILE, NULL );
-    
-	KeyValues *kAttribute;
-
-	// Attributo
-    for ( kAttribute = pFile->GetFirstTrueSubKey(); kAttribute; kAttribute = kAttribute->GetNextTrueSubKey() )
-    {
-		KeyValues *kData;
-		AttributeInfo info;
-
-		// Predeterminado
-		info.name			= kAttribute->GetName();
-		info.value			= 0.0f;
-		info.rate			= 0.0f;
-		info.amount			= 0.0f;
-		info.max			= 0.0f;
-		info.min			= 0.0f;
-		info.duration		= 0.0f;
-		info.amount_absolute = false;
-		info.rate_absolute	= false;
-
-		Q_strncpy( info.affects, "", 100 );
-		        
-		// Configuración
-        for ( kData = kAttribute->GetFirstSubKey(); kData; kData = kData->GetNextKey() )
-        {
-			if ( FStrEq(kData->GetName(), "value") )
-			{
-				info.value = kData->GetFloat( (const char *)NULL, 0.0f );
-			}
-
-			if ( FStrEq(kData->GetName(), "rate") )
-			{
-				info.rate = kData->GetFloat( (const char *)NULL, 0.0f );
-			}
-
-			if ( FStrEq(kData->GetName(), "amount") )
-			{
-				info.amount = kData->GetFloat( (const char *)NULL, 0.0f );
-			}
-
-			if ( FStrEq(kData->GetName(), "max") )
-			{
-				info.max = kData->GetFloat( (const char *)NULL, 0.0f );
-			}
-
-			if ( FStrEq(kData->GetName(), "min") )
-			{
-				info.min = kData->GetFloat( (const char *)NULL, 0.0f );
-			}
-
-			if ( FStrEq(kData->GetName(), "amount_absolute") )
-			{
-				info.amount_absolute = kData->GetBool( (const char *)NULL, false );
-			}
-
-			if ( FStrEq(kData->GetName(), "rate_absolute") )
-			{
-				info.rate_absolute = kData->GetBool( (const char *)NULL, false );
-			}
-
-			if ( FStrEq(kData->GetName(), "duration") )
-			{
-				info.duration = kData->GetFloat( (const char *)NULL, 0.0f );
-			}
-
-			if ( FStrEq(kData->GetName(), "affects") )
-			{
-				Q_strncpy( info.affects, kData->GetString((const char *)NULL, ""), 100 );
-			}
-		}
-
-		// Lo agregamos a la lista
-		m_ModifiersList.InsertOrReplace( kAttribute->GetName(), info );
-		DevMsg(2, "[CAttributeSystem] Modificador: %s -> %s.\n", info.name, info.affects);
-	}
-
-	DevMsg("[CAttributeSystem] Se han cargado %i modificadores.\n", m_ModifiersList.Count());
-    */
+    DevMsg(2, "[CAttributeSystem] Se han cargado %i modificadores.\n", m_ModifiersList.Count());
 }
 
 //================================================================================

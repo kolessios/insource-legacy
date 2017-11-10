@@ -3,7 +3,7 @@
 #include "cbase.h"
 #include "env_daynight_cycle.h"
 
-#include "in_shareddefs.h"
+
 #include "sun.h"
 //#include "deferred/deferred_shared_common.h"
 //#include "deferred/CDefLightGlobal.h"
@@ -17,8 +17,8 @@
 
 LINK_ENTITY_TO_CLASS( env_daynight_cycle, CEnvDayNightCycle );
 
-DECLARE_REPLICATED_COMMAND( sv_daycycle_rate, "0.1", "" );
-DECLARE_REPLICATED_COMMAND( sv_daycycle_seconds_rate, "30", "" );
+DECLARE_SERVER_CMD( sv_daycycle_rate, "0.1", "" );
+DECLARE_SERVER_CMD( sv_daycycle_seconds_rate, "30", "" );
 
 //================================================================================
 // Constructor

@@ -21,7 +21,7 @@
 #include "functorutils.h"
 #include "team.h"
 
-#include "in_shareddefs.h"
+
 
 
 // NOTE: This has to be the last file included!

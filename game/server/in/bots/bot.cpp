@@ -7,7 +7,7 @@
 
 #ifdef INSOURCE_DLL
 #include "in_player.h"
-#include "in_shareddefs.h"
+
 #include "in_gamerules.h"
 #include "players_system.h"
 #include "in_utils.h"
@@ -35,37 +35,45 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_BOTS, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_BOTS, __VA_ARGS__)
+
+//================================================================================
 // Commands
 //================================================================================
 
-DECLARE_DEBUG_COMMAND( bot_frozen, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_crouch, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_flashlight, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_mimic, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_aim_player, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_primary_attack, "0", "" )
+DECLARE_DEBUG_CMD( bot_frozen, "0", "" )
+DECLARE_DEBUG_CMD( bot_crouch, "0", "" )
+DECLARE_DEBUG_CMD( bot_flashlight, "0", "" )
+DECLARE_DEBUG_CMD( bot_mimic, "0", "" )
+DECLARE_DEBUG_CMD( bot_aim_player, "0", "" )
+DECLARE_DEBUG_CMD( bot_primary_attack, "0", "" )
 
-DECLARE_DEBUG_COMMAND( bot_sendcmd, "", "Forces bots to send the specified command." );
-DECLARE_DEBUG_COMMAND( bot_team, "0", "Force all bots created with bot_add to change to the specified team" )
+DECLARE_DEBUG_CMD( bot_sendcmd, "", "Forces bots to send the specified command." );
+DECLARE_DEBUG_CMD( bot_team, "0", "Force all bots created with bot_add to change to the specified team" )
 
-DECLARE_DEBUG_COMMAND( bot_notarget, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_god, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_buddha, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_dont_attack, "0", "" )
+DECLARE_DEBUG_CMD( bot_notarget, "0", "" )
+DECLARE_DEBUG_CMD( bot_god, "0", "" )
+DECLARE_DEBUG_CMD( bot_buddha, "0", "" )
+DECLARE_DEBUG_CMD( bot_dont_attack, "0", "" )
 
-DECLARE_DEBUG_COMMAND( bot_debug, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_debug_locomotion, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_debug_jump, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_debug_memory, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug_locomotion, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug_jump, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug_memory, "0", "" )
 
-DECLARE_DEBUG_COMMAND( bot_debug_cmd, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_debug_conditions, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_debug_desires, "0", "" )
-DECLARE_DEBUG_COMMAND( bot_debug_max_msgs, "10", "" )
-DECLARE_DEBUG_COMMAND(bot_debug_data_memory, "0", "")
+DECLARE_DEBUG_CMD( bot_debug_cmd, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug_conditions, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug_desires, "0", "" )
+DECLARE_DEBUG_CMD( bot_debug_max_msgs, "10", "" )
+DECLARE_DEBUG_CMD(bot_debug_data_memory, "0", "")
 
-DECLARE_DEBUG_COMMAND( bot_optimize, "0", "" );
-DECLARE_REPLICATED_COMMAND( bot_far_distance, "2500", "" )
+DECLARE_DEBUG_CMD( bot_optimize, "0", "" );
+DECLARE_SERVER_CMD( bot_far_distance, "2500", "" )
 
 //================================================================================
 // Macros
@@ -199,7 +207,7 @@ void CBot::Update()
 //================================================================================
 void CBot::PlayerMove( CUserCmd *cmd )
 {
-    VPROF_BUDGET( "PlayerMove", VPROF_BUDGETGROUP_BOTS );
+    VPROF_BUDGET( "CBot::PlayerMove", VPROF_BUDGETGROUP_BOTS );
 
 	m_lastCmd = m_cmd;
 
@@ -310,6 +318,8 @@ void CBot::RunAI()
 //================================================================================
 void CBot::RunCustomAI()
 {
+    VPROF_BUDGET("CBot::RunCustomAI", VPROF_BUDGETGROUP_BOTS);
+
     // Update the list of safe places to cover
     if ( GetDecision()->ShouldUpdateCoverSpots() ) {
         GetDecision()->UpdateCoverSpots();
@@ -328,17 +338,19 @@ void CBot::UpdateComponents( bool important )
 
     FOR_EACH_COMPONENT
     {
-        if ( important && !m_nComponents[it]->ItsImportant() ) {
+        IBotComponent *pComponent = m_nComponents[it];
+
+        if ( important && !pComponent->ItsImportant() ) {
             continue;
         }
-        else if ( !important && m_nComponents[it]->ItsImportant() ) {
+        else if ( !important && pComponent->ItsImportant() ) {
             continue;
         }
         
         timer.Start();
-        m_nComponents[it]->Update();
+        pComponent->Update();
         timer.End();
-        m_nComponents[it]->SetUpdateCost( timer.GetDuration().GetMillisecondsF() );
+        pComponent->SetUpdateCost( timer.GetDuration().GetMillisecondsF() );
     }
 }
 

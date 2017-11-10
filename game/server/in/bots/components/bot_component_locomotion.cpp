@@ -23,13 +23,21 @@
 #include "tier0/memdbgon.h"
 
 //================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
+
+#define Msg(...) Log_Msg(LOG_BOTS, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_BOTS, __VA_ARGS__)
+
+//================================================================================
 // Commands
 //================================================================================
 
-DECLARE_REPLICATED_COMMAND( bot_locomotion_allow_teleport, "1", "Indica si los Bots pueden teletransportarse al quedar atascados." )
-DECLARE_REPLICATED_COMMAND( bot_locomotion_hiddden_teleport, "1", "Indica si los Bots pueden teletransportarse solo si ningun Jugador los esta mirando" )
-DECLARE_REPLICATED_COMMAND( bot_locomotion_tolerance, "60", "" )
-DECLARE_REPLICATED_COMMAND( bot_locomotion_allow_wiggle, "1", "" )
+DECLARE_SERVER_CMD( bot_locomotion_allow_teleport, "1", "Indica si los Bots pueden teletransportarse al quedar atascados." )
+DECLARE_SERVER_CMD( bot_locomotion_hiddden_teleport, "1", "Indica si los Bots pueden teletransportarse solo si ningun Jugador los esta mirando" )
+DECLARE_SERVER_CMD( bot_locomotion_tolerance, "60", "" )
+DECLARE_SERVER_CMD( bot_locomotion_allow_wiggle, "1", "" )
 
 extern ConVar bot_debug;
 extern ConVar bot_debug_locomotion;

@@ -18,7 +18,7 @@ extern ISoundEmitterSystemBase *soundemitterbase;
 // Comandos
 //================================================================================
 
-DECLARE_DEBUG_COMMAND( sv_debug_sounds, "0", "" )
+DECLARE_DEBUG_CMD( sv_debug_sounds, "0", "" )
 
 //================================================================================
 // Constructor

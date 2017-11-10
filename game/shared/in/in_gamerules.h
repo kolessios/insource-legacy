@@ -9,7 +9,7 @@
 #include "voice_gamemgr.h"
 
 #include "in_view_vectors.h"
-#include "in_shareddefs.h"
+
 
 #ifdef CLIENT_DLL
     class C_Player;
