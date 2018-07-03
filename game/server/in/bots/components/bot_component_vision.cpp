@@ -34,18 +34,27 @@
 #define LOOK_INTERESTING_INTERVAL ( IsAlerted() ) ? RandomInt( 2, 5 )  : RandomInt( 6, 15 )
 
 //================================================================================
+// Run the expensive Update
 //================================================================================
 void CBotVision::Update()
 {
-    VPROF_BUDGET("CBotVision::Update", VPROF_BUDGETGROUP_BOTS);
+	VPROF_BUDGET("CBotVision::Update", VPROF_BUDGETGROUP_BOTS);
 
-    LookNavigation(); // PRIORITY_LOW
+	LookNavigation(); // PRIORITY_LOW
 
-    LookAround();
+	LookAround();
 
-    LookAtThreat(); // PRIORITY_HIGH
+	LookAtThreat(); // PRIORITY_HIGH
+}
 
-    Process();
+//================================================================================
+// Cheap Upkeep
+//================================================================================
+void CBotVision::Upkeep()
+{
+	VPROF_BUDGET("CBotVision::Upkeep", VPROF_BUDGETGROUP_BOTS);
+
+	Process();
 }
 
 //================================================================================
@@ -54,166 +63,173 @@ void CBotVision::Update()
 //================================================================================
 void CBotVision::Process()
 {
-    VPROF_BUDGET( "CBotVision::Process", VPROF_BUDGETGROUP_BOTS );
+	VPROF_BUDGET("CBotVision::Process", VPROF_BUDGETGROUP_BOTS);
 
-    if ( !HasAimGoal() )
-        return;
+	if (!HasAimGoal())
+		return;
 
-    // We have finished aiming our target
-    if ( IsVisionTimeExpired() ) {
-        Reset();
-        return;
-    }
+	// We have finished aiming our target
+	if (IsVisionTimeExpired()) {
+		Reset();
+		return;
+	}
 
-    float deltaT = m_flTickInterval;
+	float deltaT = m_flTickInterval;
 
-    // TODO: Find better values?
-    int speed = GetAimSpeed();
-    float maxAccel = 3000.0f;
-    float stiffness = GetStiffness();
-    float damping = 25.0f;
+	// TODO: Find better values?
+	int speed = GetAimSpeed();
+	float maxAccel = 3000.0f;
+	float stiffness = GetStiffness();
+	float damping = 25.0f;
 
-    if ( !IsIdle() ) {
-        damping = 30.0f;
-    }
+	if (!IsIdle()) {
+		damping = 30.0f;
+	}
 
-    QAngle viewAngles = GetHost()->EyeAngles();
-    Vector lookPosition = m_vecLookGoal - GetHost()->EyePosition();
+	QAngle viewAngles = GetHost()->EyeAngles();
+	Vector lookPosition = m_vecLookGoal - GetHost()->EyePosition();
 
-    QAngle lookAngle;
-    VectorAngles( lookPosition, lookAngle );
+	QAngle lookAngle;
+	VectorAngles(lookPosition, lookAngle);
 
-    float lookYaw = lookAngle.y;
-    float lookPitch = lookAngle.x;
+	float lookYaw = lookAngle.y;
+	float lookPitch = lookAngle.x;
 
-    // If we are to this tolerance of being able to aim at our target we do it in an instant way.
-    const float onTargetTolerance = 1.0f;
+	// If we are to this tolerance of being able to aim at our target we do it in an instant way.
+	const float onTargetTolerance = 1.0f;
 
-    //
-    // Yaw
-    //
-    float angleDiffYaw = AngleNormalize( lookYaw - viewAngles.y );
+	//
+	// Yaw
+	//
+	float angleDiffYaw = AngleNormalize(lookYaw - viewAngles.y);
 
-    if ( speed == AIM_SPEED_INSTANT || angleDiffYaw < onTargetTolerance && angleDiffYaw > -onTargetTolerance ) {
-        m_flLookYawVel = 0.0f;
-        viewAngles.y = lookYaw;
-    }
-    else {
-        // simple angular spring/damper
-        float accel = stiffness * angleDiffYaw - damping * m_flLookYawVel;
+	if (speed == AIM_SPEED_INSTANT || angleDiffYaw < onTargetTolerance && angleDiffYaw > -onTargetTolerance) {
+		m_flLookYawVel = 0.0f;
+		viewAngles.y = lookYaw;
+	}
+	else {
+		// simple angular spring/damper
+		float accel = stiffness * angleDiffYaw - damping * m_flLookYawVel;
 
-        // limit rate
-        if ( accel > maxAccel )
-            accel = maxAccel;
-        else if ( accel < -maxAccel )
-            accel = -maxAccel;
+		// limit rate
+		if (accel > maxAccel)
+			accel = maxAccel;
+		else if (accel < -maxAccel)
+			accel = -maxAccel;
 
-        m_flLookYawVel += deltaT * accel;
-        viewAngles.y += deltaT * m_flLookYawVel;
-    }
+		m_flLookYawVel += deltaT * accel;
+		viewAngles.y += deltaT * m_flLookYawVel;
+	}
 
-    //
-    // Pitch
-    //
-    float angleDiffPitch = lookPitch - viewAngles.x;
-    angleDiffPitch = AngleNormalize( angleDiffPitch );
+	//
+	// Pitch
+	//
+	float angleDiffPitch = lookPitch - viewAngles.x;
+	angleDiffPitch = AngleNormalize(angleDiffPitch);
 
-    /*if ( angleDiffPitch < onTargetTolerance && angleDiffPitch > -onTargetTolerance || speed == AIM_SPEED_INSTANT ) {
-        m_flLookPitchVel = 0.0f;
-        viewAngles.x = lookPitch;
-    }
-    else {*/
-        // simple angular spring/damper
-        // double the stiffness since pitch is only +/- 90 and yaw is +/- 180
-        float accel = 2.0f * stiffness * angleDiffPitch - damping * m_flLookPitchVel;
+	/*if ( angleDiffPitch < onTargetTolerance && angleDiffPitch > -onTargetTolerance || speed == AIM_SPEED_INSTANT ) {
+		m_flLookPitchVel = 0.0f;
+		viewAngles.x = lookPitch;
+	}
+	else {*/
+	// simple angular spring/damper
+	// double the stiffness since pitch is only +/- 90 and yaw is +/- 180
+	float accel = 2.0f * stiffness * angleDiffPitch - damping * m_flLookPitchVel;
 
-        // limit rate
-        if ( accel > maxAccel )
-            accel = maxAccel;
-        else if ( accel < -maxAccel )
-            accel = -maxAccel;
+	// limit rate
+	if (accel > maxAccel)
+		accel = maxAccel;
+	else if (accel < -maxAccel)
+		accel = -maxAccel;
 
-        m_flLookPitchVel += deltaT * accel;
-        viewAngles.x += deltaT * m_flLookPitchVel;
-    //}
+	m_flLookPitchVel += deltaT * accel;
+	viewAngles.x += deltaT * m_flLookPitchVel;
+	//}
 
-    // We are in tolerance
-    if ( (angleDiffYaw < m_flCosTolerance && angleDiffYaw > -m_flCosTolerance) && (angleDiffPitch < m_flCosTolerance && angleDiffPitch > -m_flCosTolerance) ) {
-        m_bAimReady = true;
+	// We are in tolerance
+	if ((angleDiffYaw < m_flCosTolerance && angleDiffYaw > -m_flCosTolerance) && (angleDiffPitch < m_flCosTolerance && angleDiffPitch > -m_flCosTolerance)) {
+		m_bAimReady = true;
 
-        // We start the timer
-        if ( !m_VisionTimer.HasStarted() ) {
-            m_VisionTimer.Start( m_flDuration );
-        }
-    }
-    else {
-        m_bAimReady = false;
-    }
+		// We start the timer
+		if (!m_VisionTimer.HasStarted()) {
+			m_VisionTimer.Start(m_flDuration);
+		}
+	}
+	else {
+		m_bAimReady = false;
+	}
 
-    // limit range - avoid gimbal lock
-    if ( viewAngles.x < -89.0f ) {
-        viewAngles.x = -89.0f;
-    }
-    else if ( viewAngles.x > 89.0f ) {
-        viewAngles.x = 89.0f;
-    }
+	// limit range - avoid gimbal lock
+	if (viewAngles.x < -89.0f) {
+		viewAngles.x = -89.0f;
+	}
+	else if (viewAngles.x > 89.0f) {
+		viewAngles.x = 89.0f;
+	}
 
-    GetHost()->SnapEyeAngles( viewAngles );
+	GetHost()->SnapEyeAngles(viewAngles);
 }
 
 //================================================================================
 // Sets [vecLookAt] as the ideal position to look at the specified entity
 //================================================================================
-void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLookAt )
+void CBotVision::GetEntityBestAimPosition(CBaseEntity *pEntity, Vector &vecLookAt)
 {
-    vecLookAt.Invalidate();
+	vecLookAt.Invalidate();
 
-    if ( pEntity == NULL )
-        return;
+	if (pEntity == NULL)
+		return;
 
-    CEntityMemory *memory = NULL;
+	CEntityMemory *memory = NULL;
 
-    if ( GetMemory() ) {
-        memory = GetMemory()->GetEntityMemory( pEntity );
-    }
+	if (GetMemory()) {
+		memory = GetMemory()->GetEntityMemory(pEntity);
+	}
 
-    if ( memory ) {
-        // We have information about this entity in our memory!
-        vecLookAt = memory->GetIdealPosition();
-    }
-    else if ( pEntity->MyCombatCharacterPointer() ) {
-        // If it is a character, we try to aim to a hitbox
-        Utils::GetHitboxPosition( pEntity, vecLookAt, GetProfile()->GetFavoriteHitbox() );
-    }
-    else {
-        vecLookAt = pEntity->WorldSpaceCenter();
-    }
+	if (memory) {
+		// We have information about this entity in our memory!
+		vecLookAt = memory->GetIdealPosition();
+	}
+	else if (pEntity->MyCombatCharacterPointer()) {
+		// If it is a character, we try to aim to a hitbox
+		Utils::GetHitboxPosition(pEntity, vecLookAt, GetProfile()->GetFavoriteHitbox());
+	}
+	else {
+		vecLookAt = pEntity->WorldSpaceCenter();
+	}
 
-    // No margin of error is required when shooting inanimate objects
-    if ( pEntity->MyCombatCharacterPointer() == NULL )
-        return;
+	float distance = vecLookAt.DistTo(GetHost()->GetAbsOrigin());
 
-    // We added a margin of error when aiming.
-    if ( GetDecision()->IsEnemy(pEntity) && GetProfile()->GetSkill() < SKILL_HARDEST ) {
-        float errorRange = 0.0f;
+	// It is an enemy!
+	if (GetDecision()->IsEnemy(pEntity) && distance > 100.0f) {
+		// 
+		if (GetProfile()->GetSkill() > SKILL_MEDIUM) {
+			const float k = 3.0f;
+			vecLookAt += k * m_flTickInterval * (pEntity->GetAbsVelocity() - GetHost()->GetAbsVelocity());
+		}
 
-        if ( GetProfile()->GetSkill() >= SKILL_VERY_HARD ) {
-            errorRange = RandomFloat(0.0f, 10.0f);
-        }
-        else if ( GetProfile()->GetSkill() >= SKILL_HARD ) {
-            errorRange = RandomFloat( 0.0f, 15.0f );
-        }
-        else if ( GetProfile()->IsMedium() ) {
-            errorRange = RandomFloat( 10.0f, 20.0f );
-        }
-        else {
-            errorRange = RandomFloat( 20.0f, 30.0f );
-        }
+		// We added a margin of error when aiming.
+		if (GetProfile()->GetSkill() < SKILL_HARDEST) {
+			float errorRange = 0.0f;
 
-        vecLookAt.x += RandomFloat( -errorRange, errorRange );
-        vecLookAt.y += RandomFloat( -errorRange, errorRange );
-        vecLookAt.z += RandomFloat( -errorRange, errorRange );
-    }
+			if (GetProfile()->GetSkill() >= SKILL_VERY_HARD) {
+				errorRange = RandomFloat(0.0f, 10.0f);
+			}
+			else if (GetProfile()->GetSkill() >= SKILL_HARD) {
+				errorRange = RandomFloat(0.0f, 15.0f);
+			}
+			else if (GetProfile()->IsMedium()) {
+				errorRange = RandomFloat(10.0f, 20.0f);
+			}
+			else {
+				errorRange = RandomFloat(20.0f, 30.0f);
+			}
+
+			vecLookAt.x += RandomFloat(-errorRange, errorRange);
+			vecLookAt.y += RandomFloat(-errorRange, errorRange);
+			vecLookAt.z += RandomFloat(-errorRange, errorRange);
+		}
+	}
 }
 
 //================================================================================
@@ -221,33 +237,33 @@ void CBotVision::GetEntityBestAimPosition( CBaseEntity *pEntity, Vector &vecLook
 //================================================================================
 int CBotVision::GetAimSpeed()
 {
-    int speed = GetProfile()->GetMinAimSpeed();
+	int speed = GetProfile()->GetMinAimSpeed();
 
-    if ( speed == AIM_SPEED_INSTANT ) {
-        return AIM_SPEED_INSTANT;
-    }
+	if (speed == AIM_SPEED_INSTANT) {
+		return AIM_SPEED_INSTANT;
+	}
 
-    // TODO: This should not be necessary.
-    // (We need to predict where our target will be)
-    if ( GetHost()->IsMoving() ) {
-        ++speed;
-    }
+	// TODO: This should not be necessary.
+	// (We need to predict where our target will be)
+	if (GetHost()->IsMoving()) {
+		++speed;
+	}
 
-    // Adrenaline?
-    if ( !GetProfile()->IsEasy() ) {
-        if ( IsCombating() ) {
-            ++speed;
-        }
+	// Adrenaline?
+	if (!GetProfile()->IsEasy()) {
+		if (IsCombating()) {
+			++speed;
+		}
 
 #ifdef INSOURCE_DLL
-        if ( GetHost()->IsUnderAttack() ) {
-            ++speed;
-        }
+		if (GetHost()->IsUnderAttack()) {
+			++speed;
+		}
 #endif
-    }
+	}
 
-    speed = clamp( speed, GetProfile()->GetMinAimSpeed(), GetProfile()->GetMaxAimSpeed() );
-    return speed;
+	speed = clamp(speed, GetProfile()->GetMinAimSpeed(), GetProfile()->GetMaxAimSpeed());
+	return speed;
 }
 
 //================================================================================
@@ -255,115 +271,115 @@ int CBotVision::GetAimSpeed()
 //================================================================================
 float CBotVision::GetStiffness()
 {
-    int speed = GetAimSpeed();
+	int speed = GetAimSpeed();
 
-    switch ( speed ) {
-        case AIM_SPEED_VERYLOW:
-            return 120.0f;
-            break;
+	switch (speed) {
+		case AIM_SPEED_VERYLOW:
+			return 120.0f;
+			break;
 
-        case AIM_SPEED_LOW:
-            return 170.0f;
-            break;
+		case AIM_SPEED_LOW:
+			return 170.0f;
+			break;
 
-        case AIM_SPEED_NORMAL:
-        default:
-            return 220.0f;
-            break;
+		case AIM_SPEED_NORMAL:
+		default:
+			return 220.0f;
+			break;
 
-        case AIM_SPEED_FAST:
-            return 270.0f;
-            break;
+		case AIM_SPEED_FAST:
+			return 270.0f;
+			break;
 
-        case AIM_SPEED_VERYFAST:
-            return 330.0f;
-            break;
+		case AIM_SPEED_VERYFAST:
+			return 330.0f;
+			break;
 
-        case AIM_SPEED_INSTANT:
-            return 999.0f;
-            break;
-    }
+		case AIM_SPEED_INSTANT:
+			return 999.0f;
+			break;
+	}
 }
 
 //================================================================================
 // Look at the specified entity
 //================================================================================
-bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, int priority, float duration, float cosTolerance )
+bool CBotVision::LookAt(const char *pDesc, CBaseEntity *pTarget, int priority, float duration, float cosTolerance)
 {
-    if ( pTarget == NULL )
-        return false;
+	if (pTarget == NULL)
+		return false;
 
-    Vector vecLookAt;
-    GetEntityBestAimPosition( pTarget, vecLookAt );
+	Vector vecLookAt;
+	GetEntityBestAimPosition(pTarget, vecLookAt);
 
-    return LookAt( pDesc, pTarget, vecLookAt, priority, duration, cosTolerance );
+	return LookAt(pDesc, pTarget, vecLookAt, priority, duration, cosTolerance);
 }
 
 //================================================================================
 // Look at the specified location stating that it is an entity
 //================================================================================
-bool CBotVision::LookAt( const char *pDesc, CBaseEntity *pTarget, const Vector &goal, int priority, float duration, float cosTolerance )
+bool CBotVision::LookAt(const char *pDesc, CBaseEntity *pTarget, const Vector &goal, int priority, float duration, float cosTolerance)
 {
-    if ( pTarget == NULL )
-        return false;
+	if (pTarget == NULL)
+		return false;
 
-    bool success = LookAt( pDesc, goal, priority, duration, cosTolerance );
+	bool success = LookAt(pDesc, goal, priority, duration, cosTolerance);
 
-    if ( success ) {
-        m_pLookingAt = pTarget;
-    }
+	if (success) {
+		m_pLookingAt = pTarget;
+	}
 
-    return success;
+	return success;
 }
 
 //================================================================================
 // Look at the specified location
 //================================================================================
-bool CBotVision::LookAt( const char *pDesc, const Vector &vecGoal, int priority, float duration, float cosTolerance )
+bool CBotVision::LookAt(const char *pDesc, const Vector &vecGoal, int priority, float duration, float cosTolerance)
 {
-    if ( !vecGoal.IsValid() )
-        return false;
+	if (!vecGoal.IsValid())
+		return false;
 
-    if ( m_vecLookGoal == vecGoal )
-        return false;
+	if (m_vecLookGoal == vecGoal)
+		return false;
 
-    if ( GetPriority() > priority )
-        return false;
+	if (GetPriority() > priority)
+		return false;
 
-    duration = MAX( duration, 0.1f );
-    cosTolerance = MAX( cosTolerance, 0.5f );
+	duration = MAX(duration, 0.1f);
+	cosTolerance = MAX(cosTolerance, 0.5f);
 
-    m_vecLookGoal = vecGoal;
-    m_pLookingAt = NULL;
-    m_pDescription = pDesc;
-    m_bAimReady = false;
-    m_flDuration = duration;
-    m_flCosTolerance = cosTolerance;
-    m_VisionTimer.Invalidate();
+	m_vecLookGoal = vecGoal;
+	m_pLookingAt = NULL;
+	m_pDescription = pDesc;
+	m_bAimReady = false;
+	m_flDuration = duration;
+	m_flCosTolerance = cosTolerance;
+	m_VisionTimer.Invalidate();
 
-    SetPriority( priority );
-    return true;
+	SetPriority(priority);
+	return true;
 }
 
 //================================================================================
 //================================================================================
 void CBotVision::LookAtThreat()
 {
-    if ( !GetMemory() )
-        return;
+	if (!GetMemory())
+		return;
 
-    CEntityMemory *memory = GetMemory()->GetPrimaryThreat();
+	CEntityMemory *memory = GetMemory()->GetPrimaryThreat();
 
-    if ( memory == NULL )
-        return;
+	if (memory == NULL)
+		return;
 
-    if ( memory->IsLost() )
-        return;
+	if (memory->IsLost())
+		return;
 
-    if ( !GetDecision()->ShouldLookThreat() )
-        return;   
+	if (!GetDecision()->ShouldLookThreat())
+		return;
 
-    LookAt( "Threat", memory->GetEntity(), PRIORITY_HIGH, 0.2f );
+	LookAt("Threat", memory->GetEntity(), PRIORITY_HIGH, 0.2f);
 }
 
 //================================================================================
@@ -371,22 +387,22 @@ void CBotVision::LookAtThreat()
 //================================================================================
 void CBotVision::LookNavigation()
 {
-    if ( !GetLocomotion() )
-        return;
+	if (!GetLocomotion())
+		return;
 
-    if ( !GetLocomotion()->HasDestination() )
-        return;
+	if (!GetLocomotion()->HasDestination())
+		return;
 
-    Vector lookAt = GetLocomotion()->GetNextSpot();
-    lookAt.z = GetHost()->EyePosition().z;
+	Vector lookAt = GetLocomotion()->GetNextSpot();
+	lookAt.z = GetHost()->EyePosition().z;
 
-    int priority = PRIORITY_LOW;
+	int priority = PRIORITY_LOW;
 
-    if ( GetFollow() && GetFollow()->IsFollowingActive() ) {
-        priority = PRIORITY_NORMAL;
-    }
+	if (GetFollow() && GetFollow()->IsFollowingActive()) {
+		priority = PRIORITY_NORMAL;
+	}
 
-    LookAt( "Looking Forward", lookAt, priority, 0.5f );
+	LookAt("Looking Forward", lookAt, priority, 0.5f);
 }
 
 //================================================================================
@@ -394,42 +410,42 @@ void CBotVision::LookNavigation()
 //================================================================================
 void CBotVision::LookAround()
 {
-    if ( GetMemory() ) {
-        int blocked = GetDataMemoryInt( "BlockLookAround" );
+	if (GetMemory()) {
+		int blocked = GetDataMemoryInt("BlockLookAround");
 
-        if ( blocked == 1 )
-            return;
-    }
+		if (blocked == 1)
+			return;
+	}
 
-    // We heard a sound that represents danger
-    if ( HasCondition( BCOND_HEAR_COMBAT ) || HasCondition( BCOND_HEAR_DANGER ) || HasCondition( BCOND_HEAR_ENEMY ) ) {
-        if ( GetDecision()->ShouldLookDangerSpot() ) {
-            LookDanger(); // PRIORITY_HIGH
-            return;
-        }
-    }
+	// We heard a sound that represents danger
+	if (HasCondition(BCOND_HEAR_COMBAT) || HasCondition(BCOND_HEAR_DANGER) || HasCondition(BCOND_HEAR_ENEMY)) {
+		if (GetDecision()->ShouldLookDangerSpot()) {
+			LookDanger(); // PRIORITY_HIGH
+			return;
+		}
+	}
 
-    if ( GetPriority() > PRIORITY_NORMAL )
-        return;
+	if (GetPriority() > PRIORITY_NORMAL)
+		return;
 
-    // An interesting place:
-    // Places where enemies can be covered or revealed.
-    if ( GetDecision()->ShouldLookInterestingSpot() ) {
-        LookInterestingSpot(); // PRIORITY_NORMAL
-        return;
-    }
+	// An interesting place:
+	// Places where enemies can be covered or revealed.
+	if (GetDecision()->ShouldLookInterestingSpot()) {
+		LookInterestingSpot(); // PRIORITY_NORMAL
+		return;
+	}
 
-    // Random place
-    if ( GetDecision()->ShouldLookRandomSpot() ) {
-        LookRandomSpot(); // PRIORITY_VERY_LOW
-        return;
-    }
+	// Random place
+	if (GetDecision()->ShouldLookRandomSpot()) {
+		LookRandomSpot(); // PRIORITY_VERY_LOW
+		return;
+	}
 
-    // We are in a squadron, look at a friend :)
-    if ( GetDecision()->ShouldLookSquadMember() ) {
-        LookSquadMember(); // PRIORITY_VERY_LOW
-        return;
-    }
+	// We are in a squadron, look at a friend :)
+	if (GetDecision()->ShouldLookSquadMember()) {
+		LookSquadMember(); // PRIORITY_VERY_LOW
+		return;
+	}
 }
 
 
@@ -438,34 +454,34 @@ void CBotVision::LookAround()
 //================================================================================
 void CBotVision::LookInterestingSpot()
 {
-    CBotDecision *pDecision = dynamic_cast<CBotDecision *>(GetBot()->GetDecision());
-    Assert( pDecision );
+	CBotDecision *pDecision = dynamic_cast<CBotDecision *>(GetBot()->GetDecision());
+	Assert(pDecision);
 
-    pDecision->m_IntestingAimTimer.Start( LOOK_INTERESTING_INTERVAL );
+	pDecision->m_IntestingAimTimer.Start(LOOK_INTERESTING_INTERVAL);
 
-    CSpotCriteria criteria;
-    criteria.SetMaxRange( 1000.0f );
-    criteria.SetPlayer(GetHost());
-    criteria.SetTacticalMode( GetBot()->GetTacticalMode() );
-    criteria.SetFlags(FLAG_IGNORE_RESERVED | FLAG_INTERESTING_SPOT);
+	CSpotCriteria criteria;
+	criteria.SetMaxRange(1000.0f);
+	criteria.SetPlayer(GetHost());
+	criteria.SetTacticalMode(GetBot()->GetTacticalMode());
+	criteria.SetFlags(FLAG_IGNORE_RESERVED | FLAG_INTERESTING_SPOT);
 
-    if ( !GetDecision()->CanLookNoVisibleSpots() ) {
-        criteria.SetFlags(FLAG_ONLY_VISIBLE);
-    }
+	if (!GetDecision()->CanLookNoVisibleSpots()) {
+		criteria.SetFlags(FLAG_ONLY_VISIBLE);
+	}
 
-    Vector vecSpot;
+	Vector vecSpot;
 
-    if ( !Utils::GetSpotCriteria( &vecSpot, criteria ) )
-        return;
+	if (!Utils::GetSpotCriteria(&vecSpot, criteria))
+		return;
 
-    float duration = 2.0f;
+	float duration = 2.0f;
 
-    // We are moving, we look fast
-    if ( GetLocomotion() && GetLocomotion()->HasDestination() ) {
-        duration = 0.2f;
-    }
+	// We are moving, we look fast
+	if (GetLocomotion() && GetLocomotion()->HasDestination()) {
+		duration = 0.2f;
+	}
 
-    LookAt( "Intesting Spot", vecSpot, PRIORITY_NORMAL, duration, 3.0f );
+	LookAt("Intesting Spot", vecSpot, PRIORITY_NORMAL, duration, 3.0f);
 }
 
 //================================================================================
@@ -473,20 +489,20 @@ void CBotVision::LookInterestingSpot()
 //================================================================================
 void CBotVision::LookRandomSpot()
 {
-    CBotDecision *pDecision = dynamic_cast<CBotDecision *>( GetBot()->GetDecision() );
-    Assert( pDecision );
+	CBotDecision *pDecision = dynamic_cast<CBotDecision *>(GetBot()->GetDecision());
+	Assert(pDecision);
 
-    pDecision->m_RandomAimTimer.Start( LOOK_RANDOM_INTERVAL );
+	pDecision->m_RandomAimTimer.Start(LOOK_RANDOM_INTERVAL);
 
-    QAngle viewAngles = GetBot()->GetUserCommand()->viewangles;
-    viewAngles.x += RandomInt( -10, 10 );
-    viewAngles.y += RandomInt( -40, 40 );
+	QAngle viewAngles = GetBot()->GetUserCommand()->viewangles;
+	viewAngles.x += RandomInt(-10, 10);
+	viewAngles.y += RandomInt(-40, 40);
 
-    Vector vecForward;
-    AngleVectors( viewAngles, &vecForward );
+	Vector vecForward;
+	AngleVectors(viewAngles, &vecForward);
 
-    Vector vecPosition = GetHost()->EyePosition();
-    LookAt( "Random Spot", vecPosition + 30 * vecForward, PRIORITY_VERY_LOW, 3.0f );
+	Vector vecPosition = GetHost()->EyePosition();
+	LookAt("Random Spot", vecPosition + 30 * vecForward, PRIORITY_VERY_LOW, 3.0f);
 }
 
 //================================================================================
@@ -494,13 +510,13 @@ void CBotVision::LookRandomSpot()
 //================================================================================
 void CBotVision::LookSquadMember()
 {
-    CPlayer *pMember = GetHost()->GetSquad()->GetRandomMember();
+	CPlayer *pMember = GetHost()->GetSquad()->GetRandomMember();
 
-    if ( !pMember || pMember == GetHost() ) {
-        return;
-    }
+	if (!pMember || pMember == GetHost()) {
+		return;
+	}
 
-    LookAt( "Squad Member", pMember, PRIORITY_VERY_LOW, RandomFloat(1.0f, 3.5f), 3.0f );
+	LookAt("Squad Member", pMember, PRIORITY_VERY_LOW, RandomFloat(1.0f, 3.5f), 3.0f);
 }
 
 //================================================================================
@@ -508,13 +524,13 @@ void CBotVision::LookSquadMember()
 //================================================================================
 void CBotVision::LookDanger()
 {
-    CSound *pSound = GetHost()->GetBestSound( SOUND_COMBAT | SOUND_PLAYER | SOUND_DANGER );
+	CSound *pSound = GetHost()->GetBestSound(SOUND_COMBAT | SOUND_PLAYER | SOUND_DANGER);
 
-    if ( !pSound )
-        return;
+	if (!pSound)
+		return;
 
-    Vector vecLookAt = pSound->GetSoundReactOrigin();
-    vecLookAt.z = GetHost()->EyePosition().z;
+	Vector vecLookAt = pSound->GetSoundReactOrigin();
+	vecLookAt.z = GetHost()->EyePosition().z;
 
-    LookAt( "Danger Sound", vecLookAt, PRIORITY_HIGH, RandomFloat( 1.0f, 3.5f ), 3.0f );
+	LookAt("Danger Sound", vecLookAt, PRIORITY_HIGH, RandomFloat(1.0f, 3.5f), 3.0f);
 }

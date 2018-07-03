@@ -19,7 +19,6 @@ $Configuration
         $PreprocessorDefinitions		"$BASE;INSOURCE_DLL"
         $PreprocessorDefinitions 		"$BASE;USE_OPENAL" [$USE_OPENAL]
         $PreprocessorDefinitions 		"$BASE;USE_FMOD" [$USE_FMOD]
-        $PreprocessorDefinitions 		"$BASE;USE_STEAMAUDIO" [$USE_STEAMAUDIO]
     }
 
     $Linker

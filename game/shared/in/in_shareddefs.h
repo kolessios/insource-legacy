@@ -98,6 +98,7 @@ DECLARE_LOGGING_CHANNEL(LOG_PLAYER);
 DECLARE_LOGGING_CHANNEL(LOG_BOTS);
 DECLARE_LOGGING_CHANNEL(LOG_DIRECTOR);
 DECLARE_LOGGING_CHANNEL(LOG_UI);
+DECLARE_LOGGING_CHANNEL(LOG_FMOD);
 
 // This system replaces all the logic of logging.
 class CExtendedLoggingListener : public ILoggingListener
@@ -132,19 +133,19 @@ class CExtendedLoggingListener : public ILoggingListener
         }
 
         // Special states that require mandatory colors
-        if ( pContext->m_Severity == LS_WARNING ) {
+        if( pContext->m_Severity == LS_WARNING ) {
             channelColor = warning;
         }
-        else if ( pContext->m_Severity == LS_ERROR || pContext->m_Severity == LS_ASSERT ) {
+        else if( pContext->m_Severity == LS_ERROR || pContext->m_Severity == LS_ASSERT ) {
             channelColor = error;
         }
 
-        if ( channelColor == UNSPECIFIED_LOGGING_COLOR ) {
+        if( channelColor == UNSPECIFIED_LOGGING_COLOR ) {
             Assert(!"Logging channel without color.");
             channelColor = white;
         }
 
-        if ( channelColor.a() == 0 ) {
+        if( channelColor.a() == 0 ) {
             Assert(!"Logging channel color with 0 alpha (invisible).");
             channelColor.SetColor(channelColor.r(), channelColor.g(), channelColor.b(), 255);
         }
@@ -156,7 +157,7 @@ class CExtendedLoggingListener : public ILoggingListener
 
 #ifdef _WIN32
         // Print on the platform console
-        if ( Plat_IsInDebugSession() ) {
+        if( Plat_IsInDebugSession() ) {
             Plat_DebugString(message);
         }
 #endif

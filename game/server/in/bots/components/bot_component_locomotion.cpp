@@ -34,10 +34,10 @@
 // Commands
 //================================================================================
 
-DECLARE_SERVER_CMD( bot_locomotion_allow_teleport, "1", "Indica si los Bots pueden teletransportarse al quedar atascados." )
-DECLARE_SERVER_CMD( bot_locomotion_hiddden_teleport, "1", "Indica si los Bots pueden teletransportarse solo si ningun Jugador los esta mirando" )
-DECLARE_SERVER_CMD( bot_locomotion_tolerance, "60", "" )
-DECLARE_SERVER_CMD( bot_locomotion_allow_wiggle, "1", "" )
+DECLARE_SERVER_CMD(bot_locomotion_allow_teleport, "1", "Indica si los Bots pueden teletransportarse al quedar atascados.")
+DECLARE_SERVER_CMD(bot_locomotion_hiddden_teleport, "1", "Indica si los Bots pueden teletransportarse solo si ningun Jugador los esta mirando")
+DECLARE_SERVER_CMD(bot_locomotion_tolerance, "60", "")
+DECLARE_SERVER_CMD(bot_locomotion_allow_wiggle, "1", "")
 
 extern ConVar bot_debug;
 extern ConVar bot_debug_locomotion;
@@ -46,436 +46,436 @@ extern ConVar bot_debug_locomotion;
 //================================================================================
 void CBotLocomotion::Reset()
 {
-    BaseClass::Reset();
+	BaseClass::Reset();
 
-    m_bCrouching = false;
-    m_bJumping = false;
-    m_bSneaking = false;
-    m_bRunning = false;
-    m_bUsingLadder = false;
+	m_bCrouching = false;
+	m_bJumping = false;
+	m_bSneaking = false;
+	m_bRunning = false;
+	m_bUsingLadder = false;
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::Update()
 {
-    VPROF_BUDGET( "CBotLocomotion::Update", VPROF_BUDGETGROUP_BOTS );
+	VPROF_BUDGET("CBotLocomotion::Update", VPROF_BUDGETGROUP_BOTS);
 
-    // We were jumping but we have already touched the ground.
-    if ( IsJumping() && IsOnGround() ) {
-        m_bJumping = false;
-    }
+	// We were jumping but we have already touched the ground.
+	if (IsJumping() && IsOnGround()) {
+		m_bJumping = false;
+	}
 
-    UpdateCommands();
+	UpdateCommands();
 
-    // We have nowhere to go
-    if ( !HasDestination() )
-        return;
+	// We have nowhere to go
+	if (!HasDestination())
+		return;
 
-    // Our decisions tell us that we should not move
-    if ( !GetDecision()->ShouldUpdateNavigation() )
-        return;
+	// Our decisions tell us that we should not move
+	if (!GetDecision()->ShouldUpdateNavigation())
+		return;
 
-    // We check if we have a valid path to reach our destination
-    CheckPath();
+	// We check if we have a valid path to reach our destination
+	CheckPath();
 
-    if ( !HasValidPath() )
-        return;
+	if (!HasValidPath())
+		return;
 
-    if ( GetBot()->ShouldShowDebug() ) {
-        GetPathFollower()->Debug( bot_debug_locomotion.GetBool() );
-    }
-    else {
-        GetPathFollower()->Debug( false );
-    }
+	if (GetBot()->ShouldShowDebug()) {
+		GetPathFollower()->Debug(bot_debug_locomotion.GetBool());
+	}
+	else {
+		GetPathFollower()->Debug(false);
+	}
 
-    if ( !IsUnreachable() ) {
-        GetPathFollower()->Update( m_flTickInterval );
+	if (!IsUnreachable()) {
+		GetPathFollower()->Update(m_flTickInterval);
 
-        // We got stuck, we started to move randomly
-        if ( GetDecision()->ShouldWiggle() ) {
-            Wiggle();
-        }
-    }
+		// We got stuck, we started to move randomly
+		if (GetDecision()->ShouldWiggle()) {
+			Wiggle();
+		}
+	}
 
-    // TODO: This should be done in the Path Follower
-    if ( GetDistanceToDestination() <= GetTolerance() ) {
-        StopDrive();
-    }
+	// TODO: This should be done in the Path Follower
+	if (GetDistanceToDestination() <= GetTolerance()) {
+		StopDrive();
+	}
 }
 
 void CBotLocomotion::UpdateCommands()
 {
-    if ( GetDecision()->ShouldSneak() ) {
-        InjectButton( IN_WALK );
-    }
-    else if ( GetDecision()->ShouldRun() ) {
-        InjectButton( IN_SPEED );
-    }
+	if (GetDecision()->ShouldSneak()) {
+		InjectButton(IN_WALK);
+	}
+	else if (GetDecision()->ShouldRun()) {
+		InjectButton(IN_SPEED);
+	}
 
-    if ( GetDecision()->ShouldCrouch() ) {
-        InjectButton( IN_DUCK );
-    }
+	if (GetDecision()->ShouldCrouch()) {
+		InjectButton(IN_DUCK);
+	}
 
-    if ( GetDecision()->ShouldJump() ) {
-        Jump();
-    }
+	if (GetDecision()->ShouldJump()) {
+		Jump();
+	}
 }
 
-bool CBotLocomotion::DriveTo( const char * pDesc, const Vector & vecGoal, int priority, float tolerance )
+bool CBotLocomotion::DriveTo(const char * pDesc, const Vector & vecGoal, int priority, float tolerance)
 {
-    if ( IsDisabled() )
-        return false;
+	if (IsDisabled())
+		return false;
 
-    if ( !vecGoal.IsValid() )
-        return false;
+	if (!vecGoal.IsValid())
+		return false;
 
-    if ( HasDestination() ) {
-        if ( GetPriority() > priority )
-            return false;
+	if (HasDestination()) {
+		if (GetPriority() > priority)
+			return false;
 
-        if ( GetDestination().DistTo( vecGoal ) <= 30.0f )
-            return false;
-    }
+		if (GetDestination().DistTo(vecGoal) <= 30.0f)
+			return false;
+	}
 
-    float flDistance = GetAbsOrigin().DistTo( vecGoal );
-    float flTolerance =  (tolerance > 0.0f) ? tolerance : GetTolerance();
+	float flDistance = GetAbsOrigin().DistTo(vecGoal);
+	float flTolerance = (tolerance > 0.0f) ? tolerance : GetTolerance();
 
-    if ( flDistance <= flTolerance )
-        return false;
+	if (flDistance <= flTolerance)
+		return false;
 
-    m_vecDestination = vecGoal;
-    m_vecNextSpot.Invalidate();
-    m_pDescription = pDesc;
+	m_vecDestination = vecGoal;
+	m_vecNextSpot.Invalidate();
+	m_pDescription = pDesc;
 
-    SetPriority( priority );
-    SetTolerance( tolerance );
-    CheckPath();
+	SetPriority(priority);
+	SetTolerance(tolerance);
+	CheckPath();
 
-    return true;
+	return true;
 }
 
-bool CBotLocomotion::DriveTo( const char * pDesc, CBaseEntity * pTarget, int priority, float tolerance )
+bool CBotLocomotion::DriveTo(const char * pDesc, CBaseEntity * pTarget, int priority, float tolerance)
 {
-    if ( !pTarget )
-        return false;
+	if (!pTarget)
+		return false;
 
-    Vector vecGoal( pTarget->GetAbsOrigin() );
+	Vector vecGoal(pTarget->GetAbsOrigin());
 
-    if ( GetMemory() ) {
-        CEntityMemory *memory = GetMemory()->GetEntityMemory( pTarget );
+	if (GetMemory()) {
+		CEntityMemory *memory = GetMemory()->GetEntityMemory(pTarget);
 
-        // We have information about this entity in our memory!
-        if ( memory ) {
-            vecGoal = memory->GetLastKnownPosition();
-        }
-    }
+		// We have information about this entity in our memory!
+		if (memory) {
+			vecGoal = memory->GetLastKnownPosition();
+		}
+	}
 
-    return DriveTo( pDesc, vecGoal, priority, tolerance );
+	return DriveTo(pDesc, vecGoal, priority, tolerance);
 }
 
-bool CBotLocomotion::DriveTo( const char * pDesc, CNavArea * pTargetArea, int priority, float tolerance )
+bool CBotLocomotion::DriveTo(const char * pDesc, CNavArea * pTargetArea, int priority, float tolerance)
 {
-    if ( !pTargetArea )
-        return false;
+	if (!pTargetArea)
+		return false;
 
-    // TODO: Something better?
-    return DriveTo( pDesc, pTargetArea->GetRandomPoint(), priority, tolerance );
+	// TODO: Something better?
+	return DriveTo(pDesc, pTargetArea->GetRandomPoint(), priority, tolerance);
 }
 
-bool CBotLocomotion::Approach( const Vector & vecGoal, float tolerance, int priority )
+bool CBotLocomotion::Approach(const Vector & vecGoal, float tolerance, int priority)
 {
-    return DriveTo( "Approach", vecGoal, priority, tolerance );
+	return DriveTo("Approach", vecGoal, priority, tolerance);
 }
 
-bool CBotLocomotion::Approach( CBaseEntity * pTarget, float tolerance, int priority )
+bool CBotLocomotion::Approach(CBaseEntity * pTarget, float tolerance, int priority)
 {
-    return DriveTo( "Approach", pTarget, priority, tolerance );
+	return DriveTo("Approach", pTarget, priority, tolerance);
 }
 
 void CBotLocomotion::StopDrive()
 {
-    // TODO: Maybe here we can do more.
-    Reset();
-    //GetBot()->DebugAddMessage( "Navigation Stopped" );
+	// TODO: Maybe here we can do more.
+	Reset();
+	//GetBot()->DebugAddMessage( "Navigation Stopped" );
 }
 
 void CBotLocomotion::Wiggle()
 {
-    if ( !m_WiggleTimer.HasStarted() || m_WiggleTimer.IsElapsed() ) {
-        m_WiggleDirection = (NavRelativeDirType)RandomInt( 0, 3 );
-        m_WiggleTimer.Start( RandomFloat( 0.5f, 2.0f ) );
-    }
+	if (!m_WiggleTimer.HasStarted() || m_WiggleTimer.IsElapsed()) {
+		m_WiggleDirection = (NavRelativeDirType)RandomInt(0, 3);
+		m_WiggleTimer.Start(RandomFloat(0.5f, 2.0f));
+	}
 
-    Vector vecForward, vecRight;
-    GetHost()->EyeVectors( &vecForward, &vecRight );
+	Vector vecForward, vecRight;
+	GetHost()->EyeVectors(&vecForward, &vecRight);
 
-    const float lookRange = 15.0f;
+	const float lookRange = 15.0f;
 
-    Vector vecPos;
-    float flGround;
+	Vector vecPos;
+	float flGround;
 
-    switch ( m_WiggleDirection ) {
-        case LEFT:
-            vecPos = GetAbsOrigin() - (lookRange * vecRight);
-            break;
+	switch (m_WiggleDirection) {
+		case LEFT:
+			vecPos = GetAbsOrigin() - (lookRange * vecRight);
+			break;
 
-        case RIGHT:
-            vecPos = GetAbsOrigin() + (lookRange * vecRight);
-            break;
+		case RIGHT:
+			vecPos = GetAbsOrigin() + (lookRange * vecRight);
+			break;
 
-        case FORWARD:
-        default:
-            vecPos = GetAbsOrigin() + (lookRange * vecForward);
-            break;
+		case FORWARD:
+		default:
+			vecPos = GetAbsOrigin() + (lookRange * vecForward);
+			break;
 
-        case BACKWARD:
-            vecPos = GetAbsOrigin() - (lookRange * vecForward);
-            break;
-    }
+		case BACKWARD:
+			vecPos = GetAbsOrigin() - (lookRange * vecForward);
+			break;
+	}
 
-    if ( GetSimpleGroundHeightWithFloor( vecPos, &flGround ) ) {
-        GetBot()->InjectMovement( m_WiggleDirection );
-    }
-    
-    if ( GetStuckDuration() >= 2.5f ) {
-        GetBot()->InjectButton( IN_DUCK );
+	if (GetSimpleGroundHeightWithFloor(vecPos, &flGround)) {
+		GetBot()->InjectMovement(m_WiggleDirection);
+	}
 
-        // Sometimes we jump
-        if ( RandomInt( 0, 100 ) > 80 ) {
-            Jump();
-        }
-    }
+	if (GetStuckDuration() >= 2.5f) {
+		GetBot()->InjectButton(IN_DUCK);
+
+		// Sometimes we jump
+		if (RandomInt(0, 100) > 80) {
+			Jump();
+		}
+	}
 }
 
 bool CBotLocomotion::ShouldComputePath()
 {
-    if ( !HasValidPath() )
-        return true;
+	if (!HasValidPath())
+		return true;
 
-    // Building a path is very expensive for the engine, we limit this to once every 3s.
-    if ( GetPath()->GetElapsedTimeSinceBuild() < 3.0f )
-        return false;
+	// Building a path is very expensive for the engine, we limit this to once every 3s.
+	if (GetPath()->GetElapsedTimeSinceBuild() < 3.0f)
+		return false;
 
-    if ( IsStuck() && GetStuckDuration() >= 6.0f )
-        return true;
+	if (IsStuck() && GetStuckDuration() >= 6.0f)
+		return true;
 
-    const Vector vecGoal = GetDestination();
-    const float range = 100.0f;
+	const Vector vecGoal = GetDestination();
+	const float range = 100.0f;
 
-    // Our destination has changed enough so that we 
-    // must recompute the route we must take.
-    if ( GetPath()->GetEndpoint().DistTo( vecGoal ) > range ) {
-        return true;
-    }
+	// Our destination has changed enough so that we 
+	// must recompute the route we must take.
+	if (GetPath()->GetEndpoint().DistTo(vecGoal) > range) {
+		return true;
+	}
 
-    // TODO: Take into account other things: Obstacles, elevators, etc.
-    return false;
+	// TODO: Take into account other things: Obstacles, elevators, etc.
+	return false;
 }
 
 void CBotLocomotion::CheckPath()
 {
-    if ( !HasDestination() )
-        return;
+	if (!HasDestination())
+		return;
 
-    // We override the current route to recompute.
-    if ( ShouldComputePath() ) {
-        ComputePath();
-    }
+	// We override the current route to recompute.
+	if (ShouldComputePath()) {
+		ComputePath();
+	}
 }
 
 void CBotLocomotion::ComputePath()
 {
-    VPROF_BUDGET( "CBotLocomotion::ComputePath", VPROF_BUDGETGROUP_BOTS );
+	VPROF_BUDGET("CBotLocomotion::ComputePath", VPROF_BUDGETGROUP_BOTS);
 
-    Assert( HasDestination() );
+	Assert(HasDestination());
 
-    Vector from = GetAbsOrigin();
-    Vector to = GetDestination();
+	Vector from = GetAbsOrigin();
+	Vector to = GetDestination();
 
-    CSimpleBotPathCost cost( GetBot() );
+	CSimpleBotPathCost cost(GetBot());
 
-    GetPathFollower()->Reset();
-    GetPath()->Compute( from, to, cost );
+	GetPathFollower()->Reset();
+	GetPath()->Compute(from, to, cost);
 }
 
 bool CBotLocomotion::IsUnreachable() const
 {
-    return GetPath()->IsUnreachable();
+	return GetPath()->IsUnreachable();
 }
 
 bool CBotLocomotion::IsStuck() const
 {
-    return GetPathFollower()->IsStuck();
+	return GetPathFollower()->IsStuck();
 }
 
 float CBotLocomotion::GetStuckDuration() const
 {
-    return GetPathFollower()->GetStuckDuration();
+	return GetPathFollower()->GetStuckDuration();
 }
 
 void CBotLocomotion::ResetStuck()
 {
-    GetPathFollower()->ResetStuck();
+	GetPathFollower()->ResetStuck();
 }
 
 bool CBotLocomotion::IsOnGround() const
 {
 #ifdef INSOURCE_DLL
-    return GetHost()->IsOnGround();
+	return GetHost()->IsOnGround();
 #else
-    return (GetHost()->GetFlags() & FL_ONGROUND) ? true : false;
+	return (GetHost()->GetFlags() & FL_ONGROUND) ? true : false;
 #endif
 }
 
 CBaseEntity * CBotLocomotion::GetGround() const
 {
-    if ( !IsOnGround() ) {
-        return NULL;
-    }
+	if (!IsOnGround()) {
+		return NULL;
+	}
 
-    Vector vecFloor( GetFeet() );
-    vecFloor.z -= 100.0f;
+	Vector vecFloor(GetFeet());
+	vecFloor.z -= 100.0f;
 
-    trace_t tr;
-    UTIL_TraceLine( GetFeet(), vecFloor, MASK_SOLID, GetHost(), COLLISION_GROUP_NONE, &tr );
+	trace_t tr;
+	UTIL_TraceLine(GetFeet(), vecFloor, MASK_SOLID, GetHost(), COLLISION_GROUP_NONE, &tr);
 
-    // TODO: Something better?
-    return tr.m_pEnt;
+	// TODO: Something better?
+	return tr.m_pEnt;
 }
 
 Vector & CBotLocomotion::GetGroundNormal() const
 {
-    if ( !IsOnGround() ) {
-        return Vector(vec3_invalid);
-    }
+	if (!IsOnGround()) {
+		return Vector(vec3_invalid);
+	}
 
-    Vector vecFloor( GetFeet() );
-    vecFloor.z -= 100.0f;
+	Vector vecFloor(GetFeet());
+	vecFloor.z -= 100.0f;
 
-    trace_t tr;
-    UTIL_TraceLine( GetFeet(), vecFloor, MASK_SOLID, GetHost(), COLLISION_GROUP_NONE, &tr );
+	trace_t tr;
+	UTIL_TraceLine(GetFeet(), vecFloor, MASK_SOLID, GetHost(), COLLISION_GROUP_NONE, &tr);
 
-    // TODO: Something better?
-    return tr.plane.normal;
+	// TODO: Something better?
+	return tr.plane.normal;
 }
 
 float CBotLocomotion::GetTolerance() const
 {
-    if ( m_flTolerance > 0.0f )
-        return m_flTolerance;
+	if (m_flTolerance > 0.0f)
+		return m_flTolerance;
 
-    float flTolerance = bot_locomotion_tolerance.GetFloat();
-    return flTolerance;
+	float flTolerance = bot_locomotion_tolerance.GetFloat();
+	return flTolerance;
 }
 
 Vector & CBotLocomotion::GetVelocity() const
 {
-    return Vector(GetHost()->GetAbsVelocity());
+	return Vector(GetHost()->GetAbsVelocity());
 }
 
 float CBotLocomotion::GetSpeed() const
 {
-    return GetVelocity().Length2D();
+	return GetVelocity().Length2D();
 }
 
 float CBotLocomotion::GetStepHeight() const
 {
-    return StepHeight;
+	return StepHeight;
 }
 
 float CBotLocomotion::GetMaxJumpHeight() const
 {
-    return JumpCrouchHeight;
+	return JumpCrouchHeight;
 }
 
 float CBotLocomotion::GetDeathDropHeight() const
 {
-    return DeathDrop;
+	return DeathDrop;
 }
 
 float CBotLocomotion::GetRunSpeed() const
 {
 #ifdef INSOURCE_DLL
-    ConVarRef sv_player_sprint_speed( "sv_player_sprint_speed" );
-    return sv_player_sprint_speed.GetFloat();
+	ConVarRef sv_player_sprint_speed("sv_player_sprint_speed");
+	return sv_player_sprint_speed.GetFloat();
 #else
-    // This goes according to your mod
-    return 200.0f;
+	// This goes according to your mod
+	return 200.0f;
 #endif
 }
 
 float CBotLocomotion::GetWalkSpeed() const
 {
 #ifdef INSOURCE_DLL
-    ConVarRef sv_player_walk_speed( "sv_player_walk_speed" );
-    return sv_player_walk_speed.GetFloat();
+	ConVarRef sv_player_walk_speed("sv_player_walk_speed");
+	return sv_player_walk_speed.GetFloat();
 #else
-    // This goes according to your mod
-    return 80.0f;
+	// This goes according to your mod
+	return 80.0f;
 #endif
 }
 
 bool CBotLocomotion::IsOnTolerance() const
 {
-    if ( !HasDestination() )
-        return false;
+	if (!HasDestination())
+		return false;
 
-    float flDistance = GetDistanceToDestination();
-    float flTolerance = GetTolerance();
+	float flDistance = GetDistanceToDestination();
+	float flTolerance = GetTolerance();
 
-    return (flDistance <= flTolerance);
+	return (flDistance <= flTolerance);
 }
 
-bool CBotLocomotion::IsAreaTraversable( const CNavArea * area ) const
+bool CBotLocomotion::IsAreaTraversable(const CNavArea * area) const
 {
-    if ( area == NULL )
-        return false;
+	if (area == NULL)
+		return false;
 
-    if ( area->IsBlocked( TEAM_ANY ) || area->IsBlocked( GetHost()->GetTeamNumber() ) )
-        return false;
+	if (area->IsBlocked(TEAM_ANY) || area->IsBlocked(GetHost()->GetTeamNumber()))
+		return false;
 
-    // TODO: More checks!
-    return true;
+	// TODO: More checks!
+	return true;
 }
 
-bool CBotLocomotion::IsAreaTraversable( const CNavArea * from, const CNavArea * to ) const
+bool CBotLocomotion::IsAreaTraversable(const CNavArea * from, const CNavArea * to) const
 {
-    if ( from == NULL || to == NULL )
-        return false;
+	if (from == NULL || to == NULL)
+		return false;
 
-    if ( !IsAreaTraversable( from ) || !IsAreaTraversable( to ) )
-        return false;
+	if (!IsAreaTraversable(from) || !IsAreaTraversable(to))
+		return false;
 
-    if ( !from->IsConnected( to, NUM_DIRECTIONS ) )
-        return false;
+	if (!from->IsConnected(to, NUM_DIRECTIONS))
+		return false;
 
-    // Do not go from one jump area to another
-    if ( (from->GetAttributes() & NAV_MESH_JUMP) && (to->GetAttributes() & NAV_MESH_JUMP) )
-        return false;
+	// Do not go from one jump area to another
+	if ((from->GetAttributes() & NAV_MESH_JUMP) && (to->GetAttributes() & NAV_MESH_JUMP))
+		return false;
 
-    // TODO: More checks!
-    return true;
+	// TODO: More checks!
+	return true;
 }
 
 //================================================================================
 // Returns if we have a valid destination path
 // NOTE: Very heavy duty for the engine, use with care.
 //================================================================================
-bool CBotLocomotion::IsTraversable( const Vector & from, const Vector & to ) const
+bool CBotLocomotion::IsTraversable(const Vector & from, const Vector & to) const
 {
-    CSimpleBotPathCost pathCost( GetBot() );
+	CSimpleBotPathCost pathCost(GetBot());
 
-    CNavPath testPath;
-    return testPath.Compute( from, to, pathCost );
+	CNavPath testPath;
+	return testPath.Compute(from, to, pathCost);
 }
 
 //================================================================================
 //================================================================================
-bool CBotLocomotion::IsEntityTraversable( CBaseEntity * ent ) const
+bool CBotLocomotion::IsEntityTraversable(CBaseEntity * ent) const
 {
-    // TODO
-    return false;
+	// TODO
+	return false;
 }
 
 
@@ -483,358 +483,358 @@ bool CBotLocomotion::IsEntityTraversable( CBaseEntity * ent ) const
 //================================================================================
 const Vector &CBotLocomotion::GetCentroid() const
 {
-    static Vector centroid;
+	static Vector centroid;
 
-    const Vector &mins = GetHost()->WorldAlignMins();
-    const Vector &maxs = GetHost()->WorldAlignMaxs();
+	const Vector &mins = GetHost()->WorldAlignMins();
+	const Vector &maxs = GetHost()->WorldAlignMaxs();
 
-    centroid = GetFeet();
-    centroid.z += (maxs.z - mins.z) / 2.0f;
+	centroid = GetFeet();
+	centroid.z += (maxs.z - mins.z) / 2.0f;
 
-    return centroid;
+	return centroid;
 }
 
 //================================================================================
 //================================================================================
 const Vector &CBotLocomotion::GetFeet() const
 {
-    static Vector feet;
-    feet = GetHost()->GetAbsOrigin();
+	static Vector feet;
+	feet = GetHost()->GetAbsOrigin();
 
-    return feet;
+	return feet;
 }
 
 //================================================================================
 //================================================================================
 const Vector &CBotLocomotion::GetEyes() const
 {
-    static Vector eyes;
-    eyes = GetHost()->EyePosition();
+	static Vector eyes;
+	eyes = GetHost()->EyePosition();
 
-    return eyes;
+	return eyes;
 }
 
 //================================================================================
 //================================================================================
 float CBotLocomotion::GetMoveAngle() const
 {
-    return GetHost()->GetAbsAngles().y;
+	return GetHost()->GetAbsAngles().y;
 }
 
 //================================================================================
 //================================================================================
 CNavArea *CBotLocomotion::GetLastKnownArea() const
 {
-    return GetHost()->GetLastKnownArea();
+	return GetHost()->GetLastKnownArea();
 }
 
 //================================================================================
 //  Find "simple" ground height, treating current nav area as part of the floo
 //================================================================================
-bool CBotLocomotion::GetSimpleGroundHeightWithFloor( const Vector &pos, float *height, Vector *normal )
+bool CBotLocomotion::GetSimpleGroundHeightWithFloor(const Vector &pos, float *height, Vector *normal)
 {
-    if ( TheNavMesh->GetSimpleGroundHeight( pos, height, normal ) ) {
-        // our current nav area also serves as a ground polygon
-        if ( GetLastKnownArea() && GetLastKnownArea()->IsOverlapping( pos ) ) {
-            *height = MAX( (*height), GetLastKnownArea()->GetZ( pos ) );
-        }
+	if (TheNavMesh->GetSimpleGroundHeight(pos, height, normal)) {
+		// our current nav area also serves as a ground polygon
+		if (GetLastKnownArea() && GetLastKnownArea()->IsOverlapping(pos)) {
+			*height = MAX((*height), GetLastKnownArea()->GetZ(pos));
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::Crouch()
 {
-    m_bCrouching = true;
-    //GetBot()->DebugAddMessage( "Crouch" );
+	m_bCrouching = true;
+	//GetBot()->DebugAddMessage( "Crouch" );
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::StandUp()
 {
-    m_bCrouching = false;
-    //GetBot()->DebugAddMessage( "StandUp" );
+	m_bCrouching = false;
+	//GetBot()->DebugAddMessage( "StandUp" );
 }
 
 //================================================================================
 //================================================================================
 bool CBotLocomotion::IsCrouching() const
 {
-    return m_bCrouching;
+	return m_bCrouching;
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::Jump()
 {
-    InjectButton( IN_JUMP );
-    m_bJumping = true;
-    //GetBot()->DebugAddMessage( "Jump" );
+	InjectButton(IN_JUMP);
+	m_bJumping = true;
+	//GetBot()->DebugAddMessage( "Jump" );
 }
 
 //================================================================================
 //================================================================================
 bool CBotLocomotion::IsJumping() const
 {
-    return m_bJumping;
+	return m_bJumping;
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::Run()
 {
-    m_bRunning = true;
-    m_bSneaking = false;
-    //GetBot()->DebugAddMessage( "Run" );
+	m_bRunning = true;
+	m_bSneaking = false;
+	//GetBot()->DebugAddMessage( "Run" );
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::Walk()
 {
-    m_bRunning = false;
-    m_bSneaking = false;
-    //GetBot()->DebugAddMessage( "Walk" );
+	m_bRunning = false;
+	m_bSneaking = false;
+	//GetBot()->DebugAddMessage( "Walk" );
 }
 
 //================================================================================
 //================================================================================
 void CBotLocomotion::Sneak()
 {
-    m_bRunning = false;
-    m_bSneaking = true;
-    //GetBot()->DebugAddMessage( "Sneak" );
+	m_bRunning = false;
+	m_bSneaking = true;
+	//GetBot()->DebugAddMessage( "Sneak" );
 }
 
 //================================================================================
 //================================================================================
 bool CBotLocomotion::IsRunning() const
 {
-    return m_bRunning;
+	return m_bRunning;
 }
 
 //================================================================================
 //================================================================================
 bool CBotLocomotion::IsWalking() const
 {
-    return (!m_bRunning && !m_bSneaking);
+	return (!m_bRunning && !m_bSneaking);
 }
 
 //================================================================================
 //================================================================================
 bool CBotLocomotion::IsSneaking() const
 {
-    return m_bSneaking;
+	return m_bSneaking;
 }
 
 //================================================================================
 //================================================================================
-void CBotLocomotion::StartLadder( const CNavLadder *ladder, NavTraverseType how, const Vector &approachPos, const Vector &departPos )
+void CBotLocomotion::StartLadder(const CNavLadder *ladder, NavTraverseType how, const Vector &approachPos, const Vector &departPos)
 {
-    // TODO: This feels like when you build a piece of furniture and you do not use all the parts/screws...
+	// TODO: This feels like when you build a piece of furniture and you do not use all the parts/screws...
 }
 
 //================================================================================
 // This will be called in each frame while we are moving on a ladder.
 // TODO: Everything about ladder's still has a lot of work to do!
 //================================================================================
-bool CBotLocomotion::TraverseLadder( const CNavLadder *ladder, NavTraverseType how, const Vector &approachPos, const Vector &departPos, float deltaT )
+bool CBotLocomotion::TraverseLadder(const CNavLadder *ladder, NavTraverseType how, const Vector &approachPos, const Vector &departPos, float deltaT)
 {
-    Vector vecStart;
-    Vector vecEnd;
-    Vector vecLookAt;
+	Vector vecStart;
+	Vector vecEnd;
+	Vector vecLookAt;
 
-    //
-    GetPathFollower()->m_stuckMonitor.Update( this );
+	//
+	GetPathFollower()->m_stuckMonitor.Update(this);
 
-    // Debug
-    if ( GetBot()->ShouldShowDebug() ) {
-        ladder->DrawLadder();
-    }
+	// Debug
+	if (GetBot()->ShouldShowDebug()) {
+		ladder->DrawLadder();
+	}
 
-    if ( how == GO_LADDER_UP ) {
-        vecStart = ladder->m_bottom;
-        vecEnd = ladder->m_top;
+	if (how == GO_LADDER_UP) {
+		vecStart = ladder->m_bottom;
+		vecEnd = ladder->m_top;
 
-        if ( ladder->m_topForwardArea ) {
-            vecLookAt = ladder->m_topForwardArea->GetCenter();
-        }
-        else if ( ladder->m_topLeftArea ) {
-            vecLookAt = ladder->m_topLeftArea->GetCenter();
-        }
-        else if ( ladder->m_topRightArea ) {
-            vecLookAt = ladder->m_topRightArea->GetCenter();
-        }
-        else {
-            Assert( 0 );
-        }
+		if (ladder->m_topForwardArea) {
+			vecLookAt = ladder->m_topForwardArea->GetCenter();
+		}
+		else if (ladder->m_topLeftArea) {
+			vecLookAt = ladder->m_topLeftArea->GetCenter();
+		}
+		else if (ladder->m_topRightArea) {
+			vecLookAt = ladder->m_topRightArea->GetCenter();
+		}
+		else {
+			Assert(0);
+		}
 
-        vecEnd.z += JumpHeight;
-    }
-    else if ( how == GO_LADDER_DOWN ) {
-        Assert( ladder->m_bottomArea );
+		vecEnd.z += JumpHeight;
+	}
+	else if (how == GO_LADDER_DOWN) {
+		Assert(ladder->m_bottomArea);
 
-        vecStart = ladder->m_top;
-        vecEnd = ladder->m_bottom;
-        vecLookAt = ladder->m_bottomArea->GetCenter();
-    }
-    else {
-        Assert( !"How the hell did I use this ladder??" );
-        return true;
-    }
+		vecStart = ladder->m_top;
+		vecEnd = ladder->m_bottom;
+		vecLookAt = ladder->m_bottomArea->GetCenter();
+	}
+	else {
+		Assert(!"How the hell did I use this ladder??");
+		return true;
+	}
 
-    // We got stuck on a ladder for more than 5 seconds... 
-    // We're not ashamed.
-    if ( IsStuck() && GetStuckDuration() > 5.0f ) {
-        OnMoveToFailure( vecEnd, FAIL_STUCK );
-        return true;
-    }
+	// We got stuck on a ladder for more than 5 seconds... 
+	// We're not ashamed.
+	if (IsStuck() && GetStuckDuration() > 5.0f) {
+		OnMoveToFailure(vecEnd, FAIL_STUCK);
+		return true;
+	}
 
-    vecLookAt.x = vecEnd.x;
-    vecLookAt.z += JumpCrouchHeight;
+	vecLookAt.x = vecEnd.x;
+	vecLookAt.z += JumpCrouchHeight;
 
-    if ( !IsUsingLadder() ) {
-        if ( departPos.IsValid() ) {
-            if ( how == GO_LADDER_UP ) {
-                if ( GetAbsOrigin().z >= departPos.z ) {
-                    return true;
-                }
-            }
-            else {
-                if ( GetAbsOrigin().z <= departPos.z ) {
-                    return true;
-                }
-            }
-        }
+	if (!IsUsingLadder()) {
+		if (departPos.IsValid()) {
+			if (how == GO_LADDER_UP) {
+				if (GetAbsOrigin().z >= departPos.z) {
+					return true;
+				}
+			}
+			else {
+				if (GetAbsOrigin().z <= departPos.z) {
+					return true;
+				}
+			}
+		}
 
-        // We move to the place where the ladder begins
-        TrackPath( vecStart, deltaT );
-        GetBot()->DebugAddMessage( "Going to ladder... %.2f", GetAbsOrigin().DistTo( vecStart ) );
-    }
-    else {
-        // We looked to the end of the stairs. (Up or down)
-        if ( GetVision() ) {
-            GetVision()->LookAt( "Look Ladder End", vecLookAt, PRIORITY_CRITICAL );
-        }
+		// We move to the place where the ladder begins
+		TrackPath(vecStart, deltaT);
+		GetBot()->DebugAddMessage("Going to ladder... %.2f", GetAbsOrigin().DistTo(vecStart));
+	}
+	else {
+		// We looked to the end of the stairs. (Up or down)
+		if (GetVision()) {
+			GetVision()->LookAt("Look Ladder End", vecLookAt, PRIORITY_CRITICAL);
+		}
 
-        float flDistance = GetAbsOrigin().DistTo( vecEnd );
+		float flDistance = GetAbsOrigin().DistTo(vecEnd);
 
-        // We move forward to cross the ladder
-        GetBot()->InjectMovement( FORWARD );
-        //GetBot()->DebugAddMessage( UTIL_VarArgs( "Moving through the ladder... %.2f \n", flDistance ) );
+		// We move forward to cross the ladder
+		GetBot()->InjectMovement(FORWARD);
+		//GetBot()->DebugAddMessage( UTIL_VarArgs( "Moving through the ladder... %.2f \n", flDistance ) );
 
-        // We are coming down and we almost reach the end of the ladder, 
-        // we jump to release!
-        if ( flDistance <= 80.0f && how == GO_LADDER_DOWN ) {
-            Jump();
-        }
-    }
+		// We are coming down and we almost reach the end of the ladder, 
+		// we jump to release!
+		if (flDistance <= 80.0f && how == GO_LADDER_DOWN) {
+			Jump();
+		}
+	}
 
-    if ( GetBot()->ShouldShowDebug() ) {
-        NDebugOverlay::Text( approachPos, "ApproachPos", false, 0.1f );
-        NDebugOverlay::Text( departPos, "DepartPos", false, 0.1f );
+	if (GetBot()->ShouldShowDebug()) {
+		NDebugOverlay::Text(approachPos, "ApproachPos", false, 0.1f);
+		NDebugOverlay::Text(departPos, "DepartPos", false, 0.1f);
 
-        NDebugOverlay::Text( ladder->m_top, "Top!", false, 0.1f );
-        NDebugOverlay::Text( ladder->m_bottom, "Bottom!", false, 0.1f );
-    }
+		NDebugOverlay::Text(ladder->m_top, "Top!", false, 0.1f);
+		NDebugOverlay::Text(ladder->m_bottom, "Bottom!", false, 0.1f);
+	}
 
-    return false;
+	return false;
 }
 
 //================================================================================
 //================================================================================
 bool CBotLocomotion::IsUsingLadder() const
 {
-    return (GetHost()->GetMoveType() == MOVETYPE_LADDER);
+	return (GetHost()->GetMoveType() == MOVETYPE_LADDER);
 }
 
 //================================================================================
 // This is called every frame while we are moving to a destination.
 // Michael S. Booth (linkedin.com/in/michaelbooth), 2003
 //================================================================================
-void CBotLocomotion::TrackPath( const Vector &pathGoal, float deltaT )
+void CBotLocomotion::TrackPath(const Vector &pathGoal, float deltaT)
 {
-    Vector myOrigin = GetCentroid();
-    m_vecNextSpot = pathGoal;
+	Vector myOrigin = GetCentroid();
+	m_vecNextSpot = pathGoal;
 
-    // compute our current forward and lateral vectors
-    float flAngle = GetHost()->EyeAngles().y;
+	// compute our current forward and lateral vectors
+	float flAngle = GetHost()->EyeAngles().y;
 
-    Vector2D dir( Utils::BotCOS( flAngle ), Utils::BotSIN( flAngle ) );
-    Vector2D lat( -dir.y, dir.x );
+	Vector2D dir(Utils::BotCOS(flAngle), Utils::BotSIN(flAngle));
+	Vector2D lat(-dir.y, dir.x);
 
-    // compute unit vector to goal position
-    Vector2D to( pathGoal.x - myOrigin.x, pathGoal.y - myOrigin.y );
-    to.NormalizeInPlace();
+	// compute unit vector to goal position
+	Vector2D to(pathGoal.x - myOrigin.x, pathGoal.y - myOrigin.y);
+	to.NormalizeInPlace();
 
-    // move towards the position independant of our view direction
-    float toProj = to.x * dir.x + to.y * dir.y;
-    float latProj = to.x * lat.x + to.y * lat.y;
+	// move towards the position independant of our view direction
+	float toProj = to.x * dir.x + to.y * dir.y;
+	float latProj = to.x * lat.x + to.y * lat.y;
 
-    const float c = 0.25f;    // 0.5
+	const float c = 0.25f;    // 0.5
 
-    if ( toProj > c ) {
-        GetBot()->InjectMovement( FORWARD );
-    }
-    else if ( toProj < -c ) {
-        GetBot()->InjectMovement( BACKWARD );
-    }
+	if (toProj > c) {
+		GetBot()->InjectMovement(FORWARD);
+	}
+	else if (toProj < -c) {
+		GetBot()->InjectMovement(BACKWARD);
+	}
 
-    if ( latProj >= c ) {
-        GetBot()->InjectMovement( LEFT );
-    }
-    else if ( latProj <= -c ) {
-        GetBot()->InjectMovement( RIGHT );
-    }
+	if (latProj >= c) {
+		GetBot()->InjectMovement(LEFT);
+	}
+	else if (latProj <= -c) {
+		GetBot()->InjectMovement(RIGHT);
+	}
 }
 
 //================================================================================
 // We have arrived at our destination
 //================================================================================
-void CBotLocomotion::OnMoveToSuccess( const Vector &goal )
+void CBotLocomotion::OnMoveToSuccess(const Vector &goal)
 {
-    StopDrive();
-    //GetBot()->DebugAddMessage( "Move Success" );
+	StopDrive();
+	//GetBot()->DebugAddMessage( "Move Success" );
 }
 
 //================================================================================
 // Something has prevented us from reaching our destination
 //================================================================================
-void CBotLocomotion::OnMoveToFailure( const Vector &goal, MoveToFailureType reason )
+void CBotLocomotion::OnMoveToFailure(const Vector &goal, MoveToFailureType reason)
 {
-    // We can teleport
-    if ( GetDecision()->ShouldTeleport( goal ) ) {
-        Vector theGoal = goal;
-        theGoal.z += 20.0f;
-        
-        GetHost()->Teleport( &theGoal, NULL, NULL );
-        StopDrive();
+	// We can teleport
+	if (GetDecision()->ShouldTeleport(goal)) {
+		Vector theGoal = goal;
+		theGoal.z += 20.0f;
 
-        // Debug
-        if ( reason == FAIL_STUCK )
-            GetBot()->DebugAddMessage( "FAIL_STUCK! Teleporting..." );
-        if ( reason == FAIL_INVALID_PATH )
-            GetBot()->DebugAddMessage( "FAIL_INVALID_PATH! Teleporting..." );
-        if ( reason == FAIL_FELL_OFF )
-            GetBot()->DebugAddMessage( "FAIL_FELL_OFF! Teleporting..." );
-    }
-    else {
-        // We invalidate the current route, 
-        // maybe we can calculate a valid new route.
-        // TODO: Detect if we have stayed in a loop or something...
-        GetPath()->Invalidate();
+		GetHost()->Teleport(&theGoal, NULL, NULL);
+		StopDrive();
 
-        // Debug
-        if ( reason == FAIL_STUCK )
-            GetBot()->DebugAddMessage( "FAIL_STUCK! I cant teleport!" );
-        if ( reason == FAIL_INVALID_PATH )
-            GetBot()->DebugAddMessage( "FAIL_INVALID_PATH! I cant teleport!" );
-        if ( reason == FAIL_FELL_OFF )
-            GetBot()->DebugAddMessage( "FAIL_FELL_OFF! I cant teleport!" );
-    }
+		// Debug
+		if (reason == FAIL_STUCK)
+			GetBot()->DebugAddMessage("FAIL_STUCK! Teleporting...");
+		if (reason == FAIL_INVALID_PATH)
+			GetBot()->DebugAddMessage("FAIL_INVALID_PATH! Teleporting...");
+		if (reason == FAIL_FELL_OFF)
+			GetBot()->DebugAddMessage("FAIL_FELL_OFF! Teleporting...");
+	}
+	else {
+		// We invalidate the current route, 
+		// maybe we can calculate a valid new route.
+		// TODO: Detect if we have stayed in a loop or something...
+		GetPath()->Invalidate();
+
+		// Debug
+		if (reason == FAIL_STUCK)
+			GetBot()->DebugAddMessage("FAIL_STUCK! I cant teleport!");
+		if (reason == FAIL_INVALID_PATH)
+			GetBot()->DebugAddMessage("FAIL_INVALID_PATH! I cant teleport!");
+		if (reason == FAIL_FELL_OFF)
+			GetBot()->DebugAddMessage("FAIL_FELL_OFF! I cant teleport!");
+	}
 }

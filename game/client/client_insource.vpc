@@ -10,7 +10,7 @@ $Include "$SRCDIR\game\client\client_base.vpc"
 
 //$Conditional USE_OPENAL "0" 		// Use OpenAL for the sound?
 //$Conditional USE_FMOD "0"         // Use FMOD for the sound?
-//$Conditional USE_STEAMAUDIO "0"   // Use Steam Audio for the sound?
+//$Conditional USE_PHONON
 //$Conditional USE_CEF "0" 			// Use Chromium Embedded Framework (CEF) for the user interface?
 //$Conditional USE_L4D2_HACKS "1" 	// Use hard coded hacks in the code to correct problems when using the L4D2 models?
 
@@ -21,14 +21,14 @@ $Configuration
         $AdditionalIncludeDirectories	"$BASE;.\hl2;$SRCDIR\game\shared\hl2;;.\sdk;$SRCDIR\game\shared\sdk;.\sdk\vgui;$SRCDIR\game\client\sdk\gameui;..\statemachine;$SRCDIR\game\shared\multiplayer;.\in;$SRCDIR\game\shared\in"
         $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\openal" [$USE_OPENAL]
         $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\fmod" [$USE_FMOD]
+        $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\phonon" [$USE_PHONON]
         $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\cef" [$USE_CEF]
-        $AdditionalIncludeDirectories 	"$BASE;$SRCDIR\public\steamaudio" [$USE_STEAMAUDIO]
 
         $PreprocessorDefinitions		"$BASE;GAMEUI_EMBEDDED;GAMEUI_EXPORTS;INSOURCE_DLL"
         $PreprocessorDefinitions 		"$BASE;USE_L4D2_HACKS" [$USE_L4D2_HACKS]
         $PreprocessorDefinitions 		"$BASE;USE_OPENAL" [$USE_OPENAL]
         $PreprocessorDefinitions 		"$BASE;USE_FMOD" [$USE_FMOD]
-        $PreprocessorDefinitions 		"$BASE;USE_STEAMAUDIO" [$USE_STEAMAUDIO]
+        $PreprocessorDefinitions 		"$BASE;USE_PHONON" [$USE_PHONON]
         $PreprocessorDefinitions 		"$BASE;GAMEUI_CEF" [$USE_CEF]
         $PreprocessorDefinitions 		"$BASE;GAMEUI_ENGINE" [!$USE_CEF]
     }
@@ -37,12 +37,12 @@ $Configuration
     {
         $AdditionalLibraryDirectories   "$BASE;$SRCDIR\lib\openal\." [$USE_OPENAL]
         $AdditionalLibraryDirectories   "$BASE;$SRCDIR\lib\fmod\." [$USE_FMOD]
-        $AdditionalLibraryDirectories   "$BASE;$SRCDIR\lib\steamaudio\." [$USE_STEAMAUDIO]
+        $AdditionalLibraryDirectories   "$BASE;$SRCDIR\lib\phonon\." [$USE_PHONON]
 
         $AdditionalDependencies			"$BASE sqlite3.lib"
         $AdditionalDependencies 		"$BASE EFX-Util.lib libFLAC_static.lib libFLAC++_static.lib libmad.lib libogg_static.lib libvorbis_static.lib libvorbisfile_static.lib OpenAL32.lib" [$USE_OPENAL]
-        $AdditionalDependencies 		"$BASE fmod_vc.lib" [$USE_FMOD]
-        $AdditionalDependencies 		"$BASE phonon.lib" [$USE_STEAMAUDIO]
+        $AdditionalDependencies 		"$BASE fmod_vc.lib fmodstudio_vc.lib" [$USE_FMOD]
+        $AdditionalDependencies 		"$BASE phonon.lib" [$USE_PHONON]
         $AdditionalDependencies 		"$BASE libcef.lib libcef_dll_wrapper.lib" [$USE_CEF]
     }
 }

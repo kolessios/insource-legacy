@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <GameDir>apocalypse</GameDir>
-    <DebugParams>-console -window -dev -override_vpk +cl_threaded_init 1 +sv_threaded_init 1</DebugParams>
+    <DebugParams>-console -window -dev -override_vpk +cl_threaded_init 1</DebugParams>
     <SourceDir>E:\Documentos\Proyectos\Woots\Juegos\Source\insource</SourceDir>
     <GameBaseDir>E:\Documentos\Proyectos\Woots\Juegos\Source\game</GameBaseDir>
     <EngineExeDir>E:\Steam\steamapps\common\Alien Swarm</EngineExeDir>

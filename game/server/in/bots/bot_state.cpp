@@ -26,41 +26,41 @@
 //================================================================================
 // Sets the level of difficulty
 //================================================================================
-void CBot::SetSkill( int level )
+void CBot::SetSkill(int level)
 {
-    // Random
-    if ( level == 0 ) {
-        level = RandomInt( SKILL_EASY, SKILL_HARDEST );
-    }
+	// Random
+	if (level == 0) {
+		level = RandomInt(SKILL_EASY, SKILL_HARDEST);
+	}
 
-    // Same game difficulty
-    if ( level == 99 ) {
-        level = TheGameRules->GetSkillLevel();
-    }
+	// Same game difficulty
+	if (level == 99) {
+		level = TheGameRules->GetSkillLevel();
+	}
 
-    GetProfile()->SetSkill( level );
+	GetProfile()->SetSkill(level);
 }
 
 //================================================================================
 // Sets the current Bot status
 //================================================================================
-void CBot::SetState( BotState state, float duration )
+void CBot::SetState(BotState state, float duration)
 {
-    // We avoid being panicked forever
-    if ( IsPanicked() && state == STATE_PANIC )
-        return;
+	// We avoid being panicked forever
+	if (IsPanicked() && state == STATE_PANIC)
+		return;
 
-    if ( state != m_iState && state != STATE_PANIC && state != STATE_COMBAT ) {
-        if ( m_iStateTimer.HasStarted() && !m_iStateTimer.IsElapsed() )
-            return;
-    }
+	if (state != m_iState && state != STATE_PANIC && state != STATE_COMBAT) {
+		if (m_iStateTimer.HasStarted() && !m_iStateTimer.IsElapsed())
+			return;
+	}
 
-    m_iState = state;
-    m_iStateTimer.Invalidate();
+	m_iState = state;
+	m_iStateTimer.Invalidate();
 
-    if ( duration > 0 ) {
-        m_iStateTimer.Start( duration );
-    }
+	if (duration > 0) {
+		m_iStateTimer.Start(duration);
+	}
 }
 
 //================================================================================
@@ -68,40 +68,40 @@ void CBot::SetState( BotState state, float duration )
 // If we were in combat/panic we put ourselves on alert.
 // If we were on alert, we put ourselves in idle.
 //================================================================================
-void CBot::CleanState() 
+void CBot::CleanState()
 {
-    if ( IsPanicked() || IsCombating() ) {
-        Alert();
-    }
-    else {
-        Idle();
-    }
+	if (IsPanicked() || IsCombating()) {
+		Alert();
+	}
+	else {
+		Idle();
+	}
 }
 
 //================================================================================
 // Put the bot in a state of panic where you can not do anything
 //================================================================================
-void CBot::Panic( float duration )
+void CBot::Panic(float duration)
 {
-    // Skill duration
-    if ( duration < 0 ) {
-        duration = GetProfile()->GetReactionDelay();
-    }
+	// Skill duration
+	if (duration < 0) {
+		duration = GetProfile()->GetReactionDelay();
+	}
 
-    SetState( STATE_PANIC, duration );
+	SetState(STATE_PANIC, duration);
 }
 
 //================================================================================
 // Put the bot on a state of alert
 //================================================================================
-void CBot::Alert( float duration )
+void CBot::Alert(float duration)
 {
-    // Skill duration
-    if ( duration < 0 ) {
-        duration = GetProfile()->GetAlertDuration();
-    }
+	// Skill duration
+	if (duration < 0) {
+		duration = GetProfile()->GetAlertDuration();
+	}
 
-    SetState( STATE_ALERT, duration );
+	SetState(STATE_ALERT, duration);
 }
 
 //================================================================================
@@ -109,11 +109,11 @@ void CBot::Alert( float duration )
 //================================================================================
 void CBot::Idle()
 {
-    SetState( STATE_IDLE, -1 );
+	SetState(STATE_IDLE, -1);
 
-    if ( GetLocomotion() ) {
-        GetLocomotion()->StandUp();
-    }
+	if (GetLocomotion()) {
+		GetLocomotion()->StandUp();
+	}
 }
 
 //================================================================================
@@ -121,5 +121,5 @@ void CBot::Idle()
 //================================================================================
 void CBot::Combat()
 {
-    SetState( STATE_COMBAT, 2.0f );
+	SetState(STATE_COMBAT, 2.0f);
 }

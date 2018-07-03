@@ -23,78 +23,78 @@ CSquadManager::CSquadManager() : CAutoGameSystemPerFrame("SquadManager")
 
 //================================================================================
 //================================================================================
-void CSquadManager::LevelShutdownPostEntity() 
+void CSquadManager::LevelShutdownPostEntity()
 {
-    // Eliminamos los escuadrones
-    m_nSquads.RemoveAll();
+	// Eliminamos los escuadrones
+	m_nSquads.RemoveAll();
 }
 
 //================================================================================
 //================================================================================
-void CSquadManager::FrameUpdatePostEntityThink() 
+void CSquadManager::FrameUpdatePostEntityThink()
 {
-    // No hay escuadrones todavía
-    if ( m_nSquads.Count() == 0 )
-        return;
+	// No hay escuadrones todavía
+	if (m_nSquads.Count() == 0)
+		return;
 
-    // Cada escuadron debe verificar a sus miembros
-    FOR_EACH_VEC( m_nSquads, it )
-    {
-        CSquad *pSquad = m_nSquads.Element(it);
-        pSquad->Think();
-    }
+	// Cada escuadron debe verificar a sus miembros
+	FOR_EACH_VEC(m_nSquads, it)
+	{
+		CSquad *pSquad = m_nSquads.Element(it);
+		pSquad->Think();
+	}
 }
 
 //================================================================================
 //================================================================================
-CSquad *CSquadManager::GetSquad( const char *name )
+CSquad *CSquadManager::GetSquad(const char *name)
 {
-    // No hay escuadrones todavía
-    if ( m_nSquads.Count() == 0 )
-        return NULL;
+	// No hay escuadrones todavía
+	if (m_nSquads.Count() == 0)
+		return NULL;
 
-    FOR_EACH_VEC( m_nSquads, it )
-    {
-        CSquad *pSquad = m_nSquads.Element(it);
+	FOR_EACH_VEC(m_nSquads, it)
+	{
+		CSquad *pSquad = m_nSquads.Element(it);
 
-        // No es el que buscamos
-        if ( !pSquad->IsNamed(name) )
-            continue;
+		// No es el que buscamos
+		if (!pSquad->IsNamed(name))
+			continue;
 
-        return pSquad;
-    }
+		return pSquad;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 //================================================================================
 //================================================================================
-CSquad *CSquadManager::GetOrCreateSquad( const char *name )
+CSquad *CSquadManager::GetOrCreateSquad(const char *name)
 {
-    // Verificamos si ya existe
-    CSquad *pSquad = GetSquad( name );
+	// Verificamos si ya existe
+	CSquad *pSquad = GetSquad(name);
 
-    // yep
-    if ( pSquad )
-        return pSquad;
+	// yep
+	if (pSquad)
+		return pSquad;
 
-    // Creamos el escuadron
-    pSquad = new CSquad();
-    pSquad->SetName( name );
+	// Creamos el escuadron
+	pSquad = new CSquad();
+	pSquad->SetName(name);
 
-    return pSquad;
+	return pSquad;
 }
 
 //================================================================================
 //================================================================================
-void CSquadManager::AddSquad( CSquad *pSquad )
+void CSquadManager::AddSquad(CSquad *pSquad)
 {
-    int index = m_nSquads.Find( pSquad );
+	int index = m_nSquads.Find(pSquad);
 
-    // Ya se encuentra en nuestra lista!
-    if ( index > -1 )
-        return;
+	// Ya se encuentra en nuestra lista!
+	if (index > -1)
+		return;
 
-    // Lo agregamos
-    m_nSquads.AddToTail( pSquad );
+	// Lo agregamos
+	m_nSquads.AddToTail(pSquad);
 }

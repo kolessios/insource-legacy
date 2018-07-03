@@ -38,6 +38,8 @@ public:
 public:
     virtual void Spawn();
     virtual void Update();
+
+    virtual void ResetCommand();
     virtual void PlayerMove( CUserCmd *cmd );
 
     virtual bool CanRunAI();
@@ -45,7 +47,7 @@ public:
     virtual void RunAI();
     virtual void RunCustomAI();
 
-    virtual void UpdateComponents( bool important = false );
+    virtual void UpdateComponents( bool upkeep = false );
 
     virtual void MimicThink( int );
     virtual void Kick();
@@ -131,7 +133,7 @@ public:
 
 	virtual bool ShouldShowDebug();
     virtual void DebugDisplay();
-    virtual void DebugScreenText( const char *pText, Color color = Color(255, 255, 255, 150), float yPosition = -1, float duration = 0.15f );
+    virtual void DebugScreenText( const char *pText, Color color = Color(255, 255, 255, 150), float yPosition = -1, float duration = 0.06f );
     virtual void DebugAddMessage( char *format, ... );
 
     virtual IBotVision *GetVision() const {
@@ -187,8 +189,7 @@ protected:
     float m_flDamageAccumulated;
 
     // Timer
-    CFastTimer m_RunTimer;
-    CFastTimer m_ScheduleTimer;
+    float m_flStartTime;
 
     friend class DirectorManager;
     friend class IBotSchedule;

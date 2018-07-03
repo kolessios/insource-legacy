@@ -18,31 +18,31 @@
 
 //================================================================================
 //================================================================================
-SET_SCHEDULE_TASKS( CReloadSchedule )
+SET_SCHEDULE_TASKS(CReloadSchedule)
 {
-    ADD_TASK( BTASK_RELOAD, NULL );
+	ADD_TASK(BTASK_RELOAD, NULL);
 }
 
-SET_SCHEDULE_INTERRUPTS( CReloadSchedule )
+SET_SCHEDULE_INTERRUPTS(CReloadSchedule)
 {
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE );
-    ADD_INTERRUPT( BCOND_EMPTY_PRIMARY_AMMO );
+	ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
+	ADD_INTERRUPT(BCOND_EMPTY_PRIMARY_AMMO);
 }
 
 //================================================================================
 //================================================================================
 float CReloadSchedule::GetDesire() const
 {
-    VPROF_BUDGET("CReloadSchedule", VPROF_BUDGETGROUP_BOTS);
+	VPROF_BUDGET("CReloadSchedule", VPROF_BUDGETGROUP_BOTS);
 
-	if ( GetDecision()->ShouldCover() )
+	if (GetDecision()->ShouldCover())
 		return BOT_DESIRE_NONE;
 
-    if ( HasCondition(BCOND_EMPTY_CLIP1_AMMO) )
+	if (HasCondition(BCOND_EMPTY_CLIP1_AMMO))
 		return 0.81f;
 
-    if ( HasCondition(BCOND_LOW_CLIP1_AMMO) && !IsCombating() )
-        return 0.43f;
+	if (HasCondition(BCOND_LOW_CLIP1_AMMO) && !IsCombating())
+		return 0.43f;
 
 	return BOT_DESIRE_NONE;
 }

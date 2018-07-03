@@ -39,6 +39,8 @@ public:
     }
 
     virtual void Update();
+
+    virtual void Upkeep();
     virtual void Process();
 
 public:
@@ -354,6 +356,7 @@ public:
     virtual bool IsSelf( CBaseEntity *pEntity ) const;
 
     virtual bool IsBetterEnemy( CBaseEntity *pEnemy, CBaseEntity *pPrevious ) const;
+    virtual bool IsBetterEnemy(CEntityMemory *pEnemy, CEntityMemory *pPrevious) const;
 
     virtual bool CanBeEnemy( CBaseEntity *pEnemy ) const {
         return true;
@@ -388,8 +391,8 @@ public:
     virtual bool IsInFieldOfView( CBaseEntity *entity );
     virtual bool IsInFieldOfView( const Vector &pos );
 
-    virtual bool IsLineOfSightClear( CBaseEntity *entity, CBaseEntity **hit = NULL ) const;
-    virtual bool IsLineOfSightClear( const Vector &pos, CBaseEntity *entityToIgnore = NULL, CBaseEntity **hit = NULL ) const;
+    virtual bool IsLineOfSightClear( CBaseEntity *entity ) const;
+    virtual bool IsLineOfSightClear( const Vector &pos, CBaseEntity *entityToIgnore = NULL ) const;
 
 public:
     CountdownTimer m_RandomAimTimer;

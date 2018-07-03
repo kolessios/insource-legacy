@@ -15,58 +15,58 @@
 abstract_class IBotFollow : public IBotComponent
 {
 public:
-    DECLARE_CLASS_GAMEROOT( IBotFollow, IBotComponent );
+	DECLARE_CLASS_GAMEROOT(IBotFollow, IBotComponent);
 
-    IBotFollow( IBot *bot ) : BaseClass( bot )
-    {
-    }
-
-public:
-    virtual void Start( CBaseEntity *pEntity, bool enabled = true ) = 0;
-    virtual void Start( const char *pEntityName, bool enabled = true ) = 0;
-    virtual void Stop() = 0;
-
-    virtual float GetTolerance() = 0;
-
-    virtual bool IsFollowingPlayer() = 0;
-    virtual bool IsFollowingBot() = 0;
-    virtual bool IsFollowingHuman() = 0;
+	IBotFollow(IBot *bot) : BaseClass(bot)
+	{
+	}
 
 public:
-    virtual CBaseEntity *GetEntity() {
-        return m_Entity.Get();
-    }
+	virtual void Start(CBaseEntity *pEntity, bool enabled = true) = 0;
+	virtual void Start(const char *pEntityName, bool enabled = true) = 0;
+	virtual void Stop() = 0;
 
-    virtual bool IsFollowing() {
-        return (GetEntity() != NULL);
-    }
+	virtual float GetTolerance() = 0;
 
-    virtual bool IsFollowingActive() {
-        return (IsFollowing() && IsEnabled());
-    }
+	virtual bool IsFollowingPlayer() = 0;
+	virtual bool IsFollowingBot() = 0;
+	virtual bool IsFollowingHuman() = 0;
 
-    virtual bool IsFollowingInactive()
-    {
-        return (IsFollowing() && !IsEnabled());
-    }
+public:
+	virtual CBaseEntity *GetEntity() {
+		return m_Entity.Get();
+	}
 
-    virtual bool IsEnabled() {
-        return m_bEnabled;
-    }
+	virtual bool IsFollowing() {
+		return (GetEntity() != NULL);
+	}
 
-    virtual void Enable()
-    {
-        m_bEnabled = true;
-    }
+	virtual bool IsFollowingActive() {
+		return (IsFollowing() && IsEnabled());
+	}
 
-    virtual void Disable()
-    {
-        m_bEnabled = false;
-    }
+	virtual bool IsFollowingInactive()
+	{
+		return (IsFollowing() && !IsEnabled());
+	}
+
+	virtual bool IsEnabled() {
+		return m_bEnabled;
+	}
+
+	virtual void Enable()
+	{
+		m_bEnabled = true;
+	}
+
+	virtual void Disable()
+	{
+		m_bEnabled = false;
+	}
 
 protected:
-    bool m_bEnabled;
-    EHANDLE m_Entity;
+	bool m_bEnabled;
+	EHANDLE m_Entity;
 };
 
 #endif

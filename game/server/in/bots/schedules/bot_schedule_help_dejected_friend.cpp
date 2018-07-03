@@ -22,132 +22,132 @@
 //================================================================================
 SET_SCHEDULE_TASKS(CHelpDejectedFriendSchedule)
 {
-    CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
-    Assert(memory);
+	CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
+	Assert(memory);
 
-    ADD_TASK(BTASK_SAVE_POSITION, NULL);
-    ADD_TASK(BTASK_RUN, NULL);
-    ADD_TASK(BTASK_SET_TOLERANCE, 40.0f);
-    ADD_TASK(BTASK_PAUSE_FOLLOW, NULL);
-    ADD_TASK(BTASK_MOVE_DESTINATION, memory->GetEntity());
-    ADD_TASK(BTASK_AIM, memory->GetEntity());
-    ADD_TASK(BTASK_HELP, NULL);
-    ADD_TASK(BTASK_RESTORE_POSITION, NULL);
+	ADD_TASK(BTASK_SAVE_POSITION, NULL);
+	ADD_TASK(BTASK_RUN, NULL);
+	ADD_TASK(BTASK_SET_TOLERANCE, 40.0f);
+	ADD_TASK(BTASK_PAUSE_FOLLOW, NULL);
+	ADD_TASK(BTASK_MOVE_DESTINATION, memory->GetEntity());
+	ADD_TASK(BTASK_AIM, memory->GetEntity());
+	ADD_TASK(BTASK_HELP, NULL);
+	ADD_TASK(BTASK_RESTORE_POSITION, NULL);
 }
 
 SET_SCHEDULE_INTERRUPTS(CHelpDejectedFriendSchedule)
 {
-    ADD_INTERRUPT(BCOND_REPEATED_DAMAGE);
-    ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
-    ADD_INTERRUPT(BCOND_LOW_HEALTH);
-    ADD_INTERRUPT(BCOND_DEJECTED);
+	ADD_INTERRUPT(BCOND_REPEATED_DAMAGE);
+	ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
+	ADD_INTERRUPT(BCOND_LOW_HEALTH);
+	ADD_INTERRUPT(BCOND_DEJECTED);
 }
 
 //================================================================================
 //================================================================================
 bool CHelpDejectedFriendSchedule::ShouldHelp()
 {
-    VPROF_BUDGET("CHelpDejectedFriendSchedule", VPROF_BUDGETGROUP_BOTS);
+	VPROF_BUDGET("CHelpDejectedFriendSchedule", VPROF_BUDGETGROUP_BOTS);
 
-    if ( !GetMemory() )
-        return false;
+	if (!GetMemory())
+		return false;
 
-    CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
+	CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
 
-    if ( !memory )
-        return false;
+	if (!memory)
+		return false;
 
-    CPlayer *pFriend = ToInPlayer(memory->GetEntity());
+	CPlayer *pFriend = ToInPlayer(memory->GetEntity());
 
-    if ( !pFriend )
-        return false;
+	if (!pFriend)
+		return false;
 
-    // Estamos en modo defensivo, si estamos en combate solo ayudarlo si esta cerca
-    if ( GetBot()->GetTacticalMode() == TACTICAL_MODE_DEFENSIVE ) {
-        float distance = GetAbsOrigin().DistTo(pFriend->GetAbsOrigin());
-        const float tolerance = 400.0f;
+	// Estamos en modo defensivo, si estamos en combate solo ayudarlo si esta cerca
+	if (GetBot()->GetTacticalMode() == TACTICAL_MODE_DEFENSIVE) {
+		float distance = GetAbsOrigin().DistTo(pFriend->GetAbsOrigin());
+		const float tolerance = 400.0f;
 
-        if ( !IsIdle() && distance >= tolerance )
-            return false;
-    }
+		if (!IsIdle() && distance >= tolerance)
+			return false;
+	}
 
-    return true;
+	return true;
 }
 
 //================================================================================
 //================================================================================
 float CHelpDejectedFriendSchedule::GetDesire() const
 {
-    if ( !GetMemory() )
-        return BOT_DESIRE_NONE;
+	if (!GetMemory())
+		return BOT_DESIRE_NONE;
 
-    CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
+	CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
 
-    if ( !memory )
-        return BOT_DESIRE_NONE;
+	if (!memory)
+		return BOT_DESIRE_NONE;
 
-    if ( !GetDecision()->CanMove() )
-        return BOT_DESIRE_NONE;
+	if (!GetDecision()->CanMove())
+		return BOT_DESIRE_NONE;
 
-    if ( !HasCondition(BCOND_SEE_DEJECTED_FRIEND) )
-        return BOT_DESIRE_NONE;
+	if (!HasCondition(BCOND_SEE_DEJECTED_FRIEND))
+		return BOT_DESIRE_NONE;
 
-    if ( GetBot()->IsCombating() )
-        return BOT_DESIRE_NONE;
+	if (GetBot()->IsCombating())
+		return BOT_DESIRE_NONE;
 
-    if ( !GetDecision()->ShouldHelpFriends() )
-        return BOT_DESIRE_NONE;
+	if (!GetDecision()->ShouldHelpFriends())
+		return BOT_DESIRE_NONE;
 
-    return 0.51f;
+	return 0.51f;
 }
 
 //================================================================================
 //================================================================================
 void CHelpDejectedFriendSchedule::TaskRun()
 {
-    CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
-    Assert(memory);
+	CDataMemory *memory = GetMemory()->GetDataMemory("DejectedFriend");
+	Assert(memory);
 
-    CPlayer *pFriend = ToInPlayer(memory->GetEntity());
+	CPlayer *pFriend = ToInPlayer(memory->GetEntity());
 
-    BotTaskInfo_t *pTask = GetActiveTask();
+	BotTaskInfo_t *pTask = GetActiveTask();
 
-    switch ( pTask->task ) {
-        // Recargamos
-        case BTASK_HELP:
-        {
-            // Miramos a nuestro amigo
-            if ( GetBot()->GetVision() ) {
-                GetBot()->GetVision()->LookAt("Dejected Friend", pFriend->GetAbsOrigin(), PRIORITY_CRITICAL, 1.0f);
+	switch (pTask->task) {
+		// Recargamos
+		case BTASK_HELP:
+		{
+			// Miramos a nuestro amigo
+			if (GetBot()->GetVision()) {
+				GetBot()->GetVision()->LookAt("Dejected Friend", pFriend->GetAbsOrigin(), PRIORITY_CRITICAL, 1.0f);
 
-                // Empezamos a ayudarlo
-                if ( GetBot()->GetVision()->IsAimReady() ) {
-                    InjectButton(IN_USE);
-                }
-            }
+				// Empezamos a ayudarlo
+				if (GetBot()->GetVision()->IsAimReady()) {
+					InjectButton(IN_USE);
+				}
+			}
 
-            // Ya no esta vivo o se ha levantado
-            if ( !pFriend || !pFriend->IsAlive() || !pFriend->IsDejected() ) {
-                TaskComplete();
-            }
+			// Ya no esta vivo o se ha levantado
+			if (!pFriend || !pFriend->IsAlive() || !pFriend->IsDejected()) {
+				TaskComplete();
+			}
 
-            break;
-        }
+			break;
+		}
 
-        default:
-        {
-            // Nuestro amigo ha muerto o 
-            // ya esta siendo ayudado
-            if ( !pFriend || !pFriend->IsAlive() || /*pFriend->IsBeingHelped() ||*/ !pFriend->IsDejected() ) {
-                GetMemory()->ForgetData("Dejected Friend");
-                Fail("The friend.");
-                return;
-            }
+		default:
+		{
+			// Nuestro amigo ha muerto o 
+			// ya esta siendo ayudado
+			if (!pFriend || !pFriend->IsAlive() || /*pFriend->IsBeingHelped() ||*/ !pFriend->IsDejected()) {
+				GetMemory()->ForgetData("Dejected Friend");
+				Fail("The friend.");
+				return;
+			}
 
-            BaseClass::TaskRun();
-            break;
-        }
-    }
+			BaseClass::TaskRun();
+			break;
+		}
+	}
 }
 
 #endif

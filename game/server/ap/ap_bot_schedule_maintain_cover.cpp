@@ -164,9 +164,12 @@ void CMaintainCoverSchedule::TaskRun()
                 }
 
                 Assert(vecGoal.IsValid());
+                GetLocomotion()->Run();
                 GetLocomotion()->DriveTo("Moving to Cover", vecGoal, PRIORITY_HIGH);
                 return;
             }
+
+            GetLocomotion()->Walk();
 
             // Crouched or standing?
             if ( GetLocomotion() ) {

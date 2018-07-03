@@ -49,7 +49,7 @@ void CFMODSoundEmitterSystem::PrecacheWave(const char *soundwave)
 void CFMODSoundEmitterSystem::EmitSoundByHandle(IRecipientFilter & filter, int entindex, const EmitSound_t & ep, HSOUNDSCRIPTHANDLE & handle)
 {
     // Disabled
-    if ( snd_fmod_disable.GetBool() ) {
+    if( snd_fmod_disable.GetBool() ) {
         BaseClass::EmitSoundByHandle(filter, entindex, ep, handle);
         return;
     }
@@ -61,23 +61,23 @@ void CFMODSoundEmitterSystem::EmitSoundByHandle(IRecipientFilter & filter, int e
     gender_t gender = GENDER_NONE;
     CBaseEntity *ent = CBaseEntity::Instance(entindex);
 
-    if ( ent ) {
+    if( ent ) {
         char const *actorModel = STRING(ent->GetModelName());
         gender = soundemitterbase->GetActorGender(actorModel);
     }
 
-    if ( !soundemitterbase->GetParametersForSoundEx(ep.m_pSoundName, handle, params, gender, true) ) {
+    if( !soundemitterbase->GetParametersForSoundEx(ep.m_pSoundName, handle, params, gender, true) ) {
         return;
     }
 
-    if ( !params.soundname[0] )
+    if( !params.soundname[0] )
         return;
 
-    if ( ep.m_nFlags & SND_CHANGE_PITCH ) {
+    if( ep.m_nFlags & SND_CHANGE_PITCH ) {
         params.pitch = ep.m_nPitch;
     }
 
-    if ( ep.m_nFlags & SND_CHANGE_VOL ) {
+    if( ep.m_nFlags & SND_CHANGE_VOL ) {
         params.volume = ep.m_flVolume;
     }
 

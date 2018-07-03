@@ -45,116 +45,137 @@ static int g_ScheduleID = 0;
 #define SET_SCHEDULE_INTERRUPTS( classname ) void classname::Install_Interruptions()
 
 //================================================================================
-// Base para crear un conjunto de tareas
+// Base Schedule
 //================================================================================
 abstract_class IBotSchedule : public IBotComponent
 {
 public:
-    DECLARE_CLASS_GAMEROOT( IBotSchedule, IBotComponent );
+	DECLARE_CLASS_GAMEROOT(IBotSchedule, IBotComponent);
 
-    IBotSchedule( IBot *bot ) : BaseClass( bot )
-    {
-        ++g_ScheduleID;
-        m_id = g_ScheduleID;
-    }
+	IBotSchedule(IBot *bot) : BaseClass(bot)
+	{
+		++g_ScheduleID;
+		m_id = g_ScheduleID;
 
-    virtual bool IsSchedule() const {
-        return true;
-    }
+		m_flComputedDesire = BOT_DESIRE_NONE;
+		m_iComputedDesireFrame = -1;
+	}
 
-public:
-    virtual int id()
-    {
-        return m_id;
-    }
-
-    virtual void Install_Tasks() = 0;
-    virtual void Install_Interruptions() = 0;
-
-    virtual float GetDesire() const = 0;
+	// Yep, its a schedule
+	virtual bool IsSchedule() const
+	{
+		return true;
+	}
 
 public:
-    virtual bool HasFinished() const {
-        return m_bFinished;
-    }
+	virtual int id()
+	{
+		return m_id;
+	}
 
-    virtual bool HasStarted() const {
-        return m_bStarted;
-    }
-
-    virtual bool HasFailed() const {
-        return m_bFailed;
-    }
-
-    virtual bool HasTasks() const {
-        return m_Tasks.Count() > 0;
-    }
-
-    // Indicates whether the schedule is important and should only stop with interruptions or when all tasks are completed.
-    // False = Will stop as soon as there is another Schedule with more desire.
-    virtual bool ItsImportant() const {
-        return false;
-    }
-
-    virtual float GetElapsedTime() const {
-        return m_StartTimer.GetElapsedTime();
-    }
-
-    virtual float GetElapsedTimeSinceFail() const {
-        return m_FailTimer.GetElapsedTime();
-    }
-
-    virtual bool IsWaitFinished() const {
-        return m_WaitTimer.IsElapsed();
-    }
-
-    virtual BotTaskInfo_t *GetActiveTask() const {
-        return m_nActiveTask;
-    }
+	virtual void Install_Tasks() = 0;
+	virtual void Install_Interruptions() = 0;
+	virtual float GetDesire() const = 0;
 
 public:
-    virtual void Reset();
-    virtual void Start();
-    virtual void Finish();
-    virtual void Fail( const char *pWhy );
+	virtual bool HasFinished() const
+	{
+		return m_bFinished;
+	}
 
-    virtual BCOND GetInterruption();
-    virtual bool ShouldInterrupted();
+	virtual bool HasStarted() const
+	{
+		return m_bStarted;
+	}
 
-    virtual bool ShouldRun();
-    virtual float GetInternalDesire();
+	virtual bool HasFailed() const
+	{
+		return m_bFailed;
+	}
 
-    virtual void Update();    
+	virtual bool HasTasks() const
+	{
+		return m_Tasks.Count() > 0;
+	}
 
-    virtual void Wait( float seconds );
+	// Indicates whether the schedule is important and should only stop with interruptions or when all tasks are completed.
+	// False = Will stop as soon as there is another Schedule with more desire.
+	virtual bool ItsImportant() const
+	{
+		return true;
+	}
 
-    virtual bool SavePosition( const Vector &position, float duration = -1.0f );
-    virtual const Vector &GetSavedPosition();
+	virtual float GetElapsedTime() const
+	{
+		return m_StartTimer.GetElapsedTime();
+	}
 
-    virtual const char *GetActiveTaskName() const;
+	virtual float GetElapsedTimeSinceFail() const
+	{
+		return m_FailTimer.GetElapsedTime();
+	}
 
-    virtual void TaskStart();
-    virtual void TaskRun();
-    virtual void TaskComplete();
+	virtual bool IsWaitFinished() const
+	{
+		return m_WaitTimer.IsElapsed();
+	}
+
+	virtual BotTaskInfo_t *GetActiveTask() const
+	{
+		return m_nActiveTask;
+	}
+
+	virtual float GetComputedDesire() const
+	{
+		return m_flComputedDesire;
+	}
+
+public:
+	virtual void Reset();
+	virtual void Start();
+	virtual void Finish();
+	virtual void Fail(const char *pWhy);
+
+	virtual BCOND GetInterruption();
+	virtual bool ShouldInterrupted();
+
+	virtual bool ShouldCalculateDesire();
+	virtual float GetInternalDesire();
+	virtual void ComputeDesire();
+
+	virtual void Update();
+
+	virtual void Wait(float seconds);
+
+	virtual bool SavePosition(const Vector &position, float duration = -1.0f);
+	virtual const Vector &GetSavedPosition();
+
+	virtual const char *GetActiveTaskName() const;
+
+	virtual void TaskStart();
+	virtual void TaskRun();
+	virtual void TaskComplete();
 
 protected:
-    int m_id;
+	int m_id;
 
-    bool m_bFailed;
-    bool m_bStarted;
-    bool m_bFinished;
+	bool m_bFailed;
+	bool m_bStarted;
+	bool m_bFinished;
 
-    int m_iScheduleOnFail;
+	int m_iScheduleOnFail;
 
-    BotTaskInfo_t *m_nActiveTask;
-    float m_flLastDesire;
+	BotTaskInfo_t *m_nActiveTask;
 
-    CUtlVector<BotTaskInfo_t *> m_Tasks;
-    CUtlVector<BCOND> m_Interrupts;
+	float m_flComputedDesire;
+	int m_iComputedDesireFrame;
 
-    CountdownTimer m_WaitTimer;
-    IntervalTimer m_StartTimer;
-    IntervalTimer m_FailTimer;
+	CUtlVector<BotTaskInfo_t *> m_Tasks;
+	CUtlVector<BCOND> m_Interrupts;
+
+	CountdownTimer m_WaitTimer;
+	IntervalTimer m_StartTimer;
+	IntervalTimer m_FailTimer;
 };
 
 #endif // IBOT_SCHEDULE_H

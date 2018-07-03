@@ -18,40 +18,40 @@
 
 //================================================================================
 //================================================================================
-SET_SCHEDULE_TASKS( CHideAndHealSchedule )
+SET_SCHEDULE_TASKS(CHideAndHealSchedule)
 {
-    ADD_TASK( BTASK_RUN, NULL );
-    ADD_TASK( BTASK_SAVE_POSITION, NULL );
-    ADD_TASK( BTASK_SAVE_COVER_SPOT, 1500.0f );
-    ADD_TASK( BTASK_MOVE_DESTINATION, NULL );
-    ADD_TASK( BTASK_CROUCH, NULL );
-    ADD_TASK( BTASK_HEAL, NULL );
-    ADD_TASK( BTASK_RELOAD_SAFE, NULL );
-    ADD_TASK( BTASK_WAIT, RandomFloat( 1.0f, 3.0f ) );
-    ADD_TASK( BTASK_RESTORE_POSITION, NULL );
+	ADD_TASK(BTASK_RUN, NULL);
+	ADD_TASK(BTASK_SAVE_POSITION, NULL);
+	ADD_TASK(BTASK_SAVE_COVER_SPOT, 1500.0f);
+	ADD_TASK(BTASK_MOVE_DESTINATION, NULL);
+	ADD_TASK(BTASK_CROUCH, NULL);
+	ADD_TASK(BTASK_HEAL, NULL);
+	ADD_TASK(BTASK_RELOAD_SAFE, NULL);
+	ADD_TASK(BTASK_WAIT, RandomFloat(1.0f, 3.0f));
+	ADD_TASK(BTASK_RESTORE_POSITION, NULL);
 }
 
-SET_SCHEDULE_INTERRUPTS( CHideAndHealSchedule )
+SET_SCHEDULE_INTERRUPTS(CHideAndHealSchedule)
 {
-    ADD_INTERRUPT( BCOND_DEJECTED );
-    ADD_INTERRUPT( BCOND_MOBBED_BY_ENEMIES );
-    ADD_INTERRUPT( BCOND_GOAL_UNREACHABLE );
+	ADD_INTERRUPT(BCOND_DEJECTED);
+	ADD_INTERRUPT(BCOND_MOBBED_BY_ENEMIES);
+	ADD_INTERRUPT(BCOND_GOAL_UNREACHABLE);
 }
 
 //================================================================================
 //================================================================================
 float CHideAndHealSchedule::GetDesire() const
 {
-    VPROF_BUDGET("CHideAndHealSchedule", VPROF_BUDGETGROUP_BOTS);
+	VPROF_BUDGET("CHideAndHealSchedule", VPROF_BUDGETGROUP_BOTS);
 
-    if ( !GetDecision()->CanMove() )
-        return BOT_DESIRE_NONE;
+	if (!GetDecision()->CanMove())
+		return BOT_DESIRE_NONE;
 
-    if ( !HasCondition( BCOND_LOW_HEALTH ) )
-        return BOT_DESIRE_NONE;
+	if (!HasCondition(BCOND_LOW_HEALTH))
+		return BOT_DESIRE_NONE;
 
-    if ( !GetDecision()->ShouldCover() )
-        return BOT_DESIRE_NONE;
+	if (!GetDecision()->ShouldCover())
+		return BOT_DESIRE_NONE;
 
-    return 0.95f;
+	return 0.95f;
 }

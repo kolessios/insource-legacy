@@ -18,84 +18,84 @@
 // Commands
 //================================================================================
 
-DECLARE_CHEAT_CMD( bot_follow_tolerance, "130.0", "" )
+DECLARE_CHEAT_CMD(bot_follow_tolerance, "130.0", "")
 
 //================================================================================
 //================================================================================
 void CBotFollow::Update()
 {
-    VPROF_BUDGET( "CBotFollow::Update", VPROF_BUDGETGROUP_BOTS );
+	VPROF_BUDGET("CBotFollow::Update", VPROF_BUDGETGROUP_BOTS);
 
-    if ( !GetLocomotion() )
-        return;
+	if (!GetLocomotion())
+		return;
 
-    if ( !GetDecision()->ShouldFollow() )
-        return;
+	if (!GetDecision()->ShouldFollow())
+		return;
 
-    CBaseEntity *pEntity = GetEntity();
+	CBaseEntity *pEntity = GetEntity();
 
-    if ( !pEntity || !pEntity->IsAlive() ) {
-        Stop();
-        return;
-    }
+	if (!pEntity || !pEntity->IsAlive()) {
+		Stop();
+		return;
+	}
 
-    if ( GetMemory() ) {
-        GetMemory()->UpdateEntityMemory(pEntity, pEntity->GetAbsOrigin());
-    }
+	if (GetMemory()) {
+		GetMemory()->UpdateEntityMemory(pEntity, pEntity->GetAbsOrigin());
+	}
 
-    GetLocomotion()->Approach( pEntity, GetTolerance(), PRIORITY_FOLLOWING );
+	GetLocomotion()->Approach(pEntity, GetTolerance(), PRIORITY_FOLLOWING);
 }
 
 //================================================================================
 //================================================================================
-void CBotFollow::Start( CBaseEntity *pEntity, bool enabled )
+void CBotFollow::Start(CBaseEntity *pEntity, bool enabled)
 {
-    if ( pEntity ) {
-        if ( !pEntity->IsAlive() )
-            return;
+	if (pEntity) {
+		if (!pEntity->IsAlive())
+			return;
 
-        // wut?
-        if ( pEntity == GetHost() ) {
-            Stop();
-            return;
-        }
-    }
+		// wut?
+		if (pEntity == GetHost()) {
+			Stop();
+			return;
+		}
+	}
 
-    m_Entity = pEntity;
+	m_Entity = pEntity;
 
-    if ( enabled ) {
-        Enable();
-    }
-    else {
-        Disable();
-    }
+	if (enabled) {
+		Enable();
+	}
+	else {
+		Disable();
+	}
 }
 
 //================================================================================
 //================================================================================
-void CBotFollow::Start( const char *pEntityName, bool enabled )
+void CBotFollow::Start(const char *pEntityName, bool enabled)
 {
-    CBaseEntity *pEntity = gEntList.FindEntityByName( NULL, pEntityName );
+	CBaseEntity *pEntity = gEntList.FindEntityByName(NULL, pEntityName);
 
-    if ( !pEntity )
-        return;
+	if (!pEntity)
+		return;
 
-    Start( pEntity, enabled );
+	Start(pEntity, enabled);
 }
 
 //================================================================================
 //================================================================================
 void CBotFollow::Stop()
 {
-    m_Entity = NULL;
-    m_bEnabled = false;
+	m_Entity = NULL;
+	m_bEnabled = false;
 }
 
 //================================================================================
 //================================================================================
 float CBotFollow::GetTolerance()
 {
-    return bot_follow_tolerance.GetFloat();
+	return bot_follow_tolerance.GetFloat();
 }
 
 //================================================================================
@@ -103,10 +103,10 @@ float CBotFollow::GetTolerance()
 //================================================================================
 bool CBotFollow::IsFollowingPlayer()
 {
-    if ( !GetEntity() )
-        return false;
+	if (!GetEntity())
+		return false;
 
-    return GetEntity()->IsPlayer();
+	return GetEntity()->IsPlayer();
 }
 
 //================================================================================
@@ -114,13 +114,13 @@ bool CBotFollow::IsFollowingPlayer()
 //================================================================================
 bool CBotFollow::IsFollowingBot()
 {
-    if ( !IsFollowingPlayer() )
-        return false;
+	if (!IsFollowingPlayer())
+		return false;
 
-    CPlayer *pPlayer = ToInPlayer( GetEntity() );
-    Assert( pPlayer );
+	CPlayer *pPlayer = ToInPlayer(GetEntity());
+	Assert(pPlayer);
 
-    return pPlayer->IsBot();
+	return pPlayer->IsBot();
 }
 
 //================================================================================
@@ -128,11 +128,11 @@ bool CBotFollow::IsFollowingBot()
 //================================================================================
 bool CBotFollow::IsFollowingHuman()
 {
-    if ( !IsFollowingPlayer() )
-        return false;
+	if (!IsFollowingPlayer())
+		return false;
 
-    CPlayer *pPlayer = ToInPlayer( GetEntity() );
-    Assert( pPlayer );
+	CPlayer *pPlayer = ToInPlayer(GetEntity());
+	Assert(pPlayer);
 
-    return !(pPlayer->IsBot());
+	return !(pPlayer->IsBot());
 }

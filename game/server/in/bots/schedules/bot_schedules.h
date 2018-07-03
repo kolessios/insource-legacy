@@ -31,16 +31,15 @@
 class CInvestigateLocationSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CInvestigateLocationSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_INVESTIGATE_LOCATION );
+	DECLARE_CLASS_GAMEROOT(CInvestigateLocationSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_INVESTIGATE_LOCATION);
 
-    CInvestigateLocationSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CInvestigateLocationSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
 
 public:
-	virtual bool ItsImportant() { return true; }
-    virtual float GetDesire() const;
+	virtual float GetDesire() const;
 };
 
 //================================================================================
@@ -49,15 +48,20 @@ public:
 class CHuntEnemySchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CHuntEnemySchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_HUNT_ENEMY );
+	DECLARE_CLASS_GAMEROOT(CHuntEnemySchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_HUNT_ENEMY);
 
-    CHuntEnemySchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CHuntEnemySchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
+
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
 
 public:
-    virtual float GetDesire() const;
+	virtual float GetDesire() const;
 };
 
 //================================================================================
@@ -66,15 +70,20 @@ public:
 class CReloadSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CReloadSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_RELOAD );
+	DECLARE_CLASS_GAMEROOT(CReloadSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_RELOAD);
 
-    CReloadSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CReloadSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
+
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
 
 public:
-    virtual float GetDesire() const;
+	virtual float GetDesire() const;
 };
 
 //================================================================================
@@ -83,16 +92,15 @@ public:
 class CCoverSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CCoverSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_COVER );
+	DECLARE_CLASS_GAMEROOT(CCoverSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_COVER);
 
-    CCoverSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CCoverSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
 
 public:
-    virtual float GetDesire() const;
-	virtual bool ItsImportant() { return true; }
+	virtual float GetDesire() const;
 };
 
 //================================================================================
@@ -101,16 +109,15 @@ public:
 class CHideSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CCoverSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_HIDE );
+	DECLARE_CLASS_GAMEROOT(CCoverSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_HIDE);
 
-    CHideSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CHideSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
 
 public:
-    virtual float GetDesire() const;
-	virtual bool ItsImportant() { return true; }
+	virtual float GetDesire() const;
 };
 
 //================================================================================
@@ -119,12 +126,17 @@ public:
 class CChangeWeaponSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CChangeWeaponSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_CHANGE_WEAPON );
+	DECLARE_CLASS_GAMEROOT(CChangeWeaponSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_CHANGE_WEAPON);
 
-    CChangeWeaponSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CChangeWeaponSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
+
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
 
 	enum
 	{
@@ -132,9 +144,9 @@ public:
 	};
 
 public:
-    virtual float GetDesire() const;
+	virtual float GetDesire() const;
 
-    virtual void TaskStart();
+	virtual void TaskStart();
 	virtual void TaskRun();
 };
 
@@ -144,16 +156,15 @@ public:
 class CHideAndHealSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CHideAndHealSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_HIDE_AND_HEAL );
+	DECLARE_CLASS_GAMEROOT(CHideAndHealSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_HIDE_AND_HEAL);
 
-    CHideAndHealSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CHideAndHealSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
 
 public:
-    virtual float GetDesire() const;
-	virtual bool ItsImportant() { return true; }
+	virtual float GetDesire() const;
 };
 
 //================================================================================
@@ -162,17 +173,15 @@ public:
 class CHideAndReloadSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CHideAndReloadSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_HIDE_AND_RELOAD );
+	DECLARE_CLASS_GAMEROOT(CHideAndReloadSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_HIDE_AND_RELOAD);
 
-    CHideAndReloadSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CHideAndReloadSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
 
 public:
-	virtual bool ItsImportant() { return true; }
-    virtual float GetDesire() const;
-
+	virtual float GetDesire() const;
 	virtual void TaskRun();
 };
 
@@ -183,23 +192,28 @@ public:
 class CHelpDejectedFriendSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CHelpDejectedFriendSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_HELP_DEJECTED_FRIEND );
+	DECLARE_CLASS_GAMEROOT(CHelpDejectedFriendSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_HELP_DEJECTED_FRIEND);
 
-    CHelpDejectedFriendSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CHelpDejectedFriendSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
 
-    enum
-    {
-        BTASK_HELP = BCUSTOM_TASK,
-    };
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
+
+	enum
+	{
+		BTASK_HELP = BCUSTOM_TASK,
+	};
 
 public:
 	virtual bool ShouldHelp();
 
-    virtual float GetDesire() const;
-    virtual void TaskRun();
+	virtual float GetDesire() const;
+	virtual void TaskRun();
 };
 #endif
 
@@ -209,15 +223,20 @@ public:
 class CMoveAsideSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CMoveAsideSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_MOVE_ASIDE );
+	DECLARE_CLASS_GAMEROOT(CMoveAsideSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_MOVE_ASIDE);
 
-    CMoveAsideSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CMoveAsideSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
+
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
 
 public:
-    virtual float GetDesire() const;
+	virtual float GetDesire() const;
 	virtual void Start();
 
 
@@ -231,17 +250,22 @@ protected:
 class CCallBackupSchedule : public IBotSchedule
 {
 public:
-	DECLARE_CLASS_GAMEROOT( CCallBackupSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_CALL_FOR_BACKUP );
+	DECLARE_CLASS_GAMEROOT(CCallBackupSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_CALL_FOR_BACKUP);
 
-    CCallBackupSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CCallBackupSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
+
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
 
 public:
-    virtual float GetDesire() const {
-        return BOT_DESIRE_NONE;
-    }
+	virtual float GetDesire() const {
+		return BOT_DESIRE_NONE;
+	}
 };
 
 //================================================================================
@@ -250,15 +274,20 @@ public:
 class CDefendSpawnSchedule : public IBotSchedule
 {
 public:
-    DECLARE_CLASS_GAMEROOT( CDefendSpawnSchedule, IBotSchedule );
-    DECLARE_SCHEDULE( SCHEDULE_DEFEND_SPAWN );
+	DECLARE_CLASS_GAMEROOT(CDefendSpawnSchedule, IBotSchedule);
+	DECLARE_SCHEDULE(SCHEDULE_DEFEND_SPAWN);
 
-    CDefendSpawnSchedule( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	CDefendSpawnSchedule(IBot *bot) : BaseClass(bot)
+	{
+	}
+
+	virtual bool ItsImportant() const
+	{
+		return false;
+	}
 
 public:
-    virtual float GetDesire() const;
+	virtual float GetDesire() const;
 };
 
 #endif // BOT_SCHEDULES_H

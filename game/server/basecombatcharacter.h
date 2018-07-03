@@ -482,7 +482,7 @@ public:
 private:
 	Hull_t		m_eHull;
 
-protected:
+public:
 	int			m_bloodColor;			// color of blood particless
 
 	// -------------------

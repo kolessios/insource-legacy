@@ -259,7 +259,7 @@ public:
 
     enum
     {
-        MAX_SPOTS = 256
+        MAX_SPOTS = 26
     };
 
     bool operator() (CNavArea *area)

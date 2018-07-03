@@ -45,7 +45,7 @@ bool CAP_BotDecision::ShouldOnlyFeelPlayers() const
 float CAP_BotDecision::GetUpdateCoverRate() const
 {
     if ( GetBot()->GetActiveScheduleID() == SCHEDULE_MAINTAIN_COVER )
-        return 5.0f;
+        return 8.0f;
 
     return 1.0f;
 }
@@ -57,7 +57,7 @@ void CAP_BotDecision::GetCoverCriteria(CSpotCriteria & criteria)
     BaseClass::GetCoverCriteria(criteria);
 
     if ( GetBot()->GetActiveScheduleID() == SCHEDULE_MAINTAIN_COVER ) {
-        criteria.SetMaxRange(2500.0f);
+        criteria.SetMaxRange(1800.0f);
         criteria.SetMinRangeFromAvoid(800.0f);
         criteria.SetOrigin(GetBot()->GetEnemy());
         criteria.ClearFlags(FLAG_USE_NEAREST);

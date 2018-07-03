@@ -23,19 +23,19 @@
 //================================================================================
 void CBotAttack::Update()
 {
-    VPROF_BUDGET( "CBotAttack::Update", VPROF_BUDGETGROUP_BOTS );
+	VPROF_BUDGET("CBotAttack::Update", VPROF_BUDGETGROUP_BOTS);
 
-    if (
-        HasCondition( BCOND_CAN_RANGE_ATTACK1 ) || HasCondition( BCOND_CAN_MELEE_ATTACK1 ) ||
-        HasCondition( BCOND_CAN_RANGE_ATTACK2 ) || HasCondition( BCOND_CAN_MELEE_ATTACK2 )
-        ) {
-        if ( GetDecision()->IsUsingFiregun() ) {
-            FiregunAttack();
-        }
-        else {
-            MeleeWeaponAttack();
-        }
-    }
+	if (
+		HasCondition(BCOND_CAN_RANGE_ATTACK1) || HasCondition(BCOND_CAN_MELEE_ATTACK1) ||
+		HasCondition(BCOND_CAN_RANGE_ATTACK2) || HasCondition(BCOND_CAN_MELEE_ATTACK2)
+		) {
+		if (GetDecision()->IsUsingFiregun()) {
+			FiregunAttack();
+		}
+		else {
+			MeleeWeaponAttack();
+		}
+	}
 }
 
 //================================================================================
@@ -43,43 +43,42 @@ void CBotAttack::Update()
 //================================================================================
 void CBotAttack::FiregunAttack()
 {
-    CBaseWeapon *pWeapon = GetHost()->GetActiveBaseWeapon();
-    Assert( pWeapon );
+	CBaseWeapon *pWeapon = GetHost()->GetActiveBaseWeapon();
+	Assert(pWeapon);
 
-    // Check to see if we can crouch for accuracy
-    if ( GetDecision()->CanCrouchAttack() ) {
-        if ( GetDecision()->ShouldCrouchAttack() ) {
-            GetLocomotion()->Crouch();
-        }
-        else {
-            GetLocomotion()->StandUp();
-        }
-    }
+	// Check to see if we can crouch for accuracy
+	if (GetDecision()->CanCrouchAttack()) {
+		if (GetDecision()->ShouldCrouchAttack()) {
+			GetLocomotion()->Crouch();
+		}
+		else {
+			GetLocomotion()->StandUp();
+		}
+	}
 
-    if ( HasCondition( BCOND_CAN_RANGE_ATTACK1 ) ) {
-        GetBot()->Combat();
-        InjectButton( IN_ATTACK );
-        
-    }
+	if (HasCondition(BCOND_CAN_RANGE_ATTACK1)) {
+		GetBot()->Combat();
+		InjectButton(IN_ATTACK);
+	}
 
-    // TODO
-    if ( HasCondition( BCOND_CAN_RANGE_ATTACK2 ) ) {
-        GetBot()->Combat();
-        InjectButton( IN_ATTACK2 );
-    }
+	// TODO
+	if (HasCondition(BCOND_CAN_RANGE_ATTACK2)) {
+		GetBot()->Combat();
+		InjectButton(IN_ATTACK2);
+	}
 }
 
 //================================================================================
 //================================================================================
 void CBotAttack::MeleeWeaponAttack()
 {
-    if ( HasCondition( BCOND_CAN_MELEE_ATTACK1 ) ) {
-        GetBot()->Combat();
-        InjectButton( IN_ATTACK );
-    }
+	if (HasCondition(BCOND_CAN_MELEE_ATTACK1)) {
+		GetBot()->Combat();
+		InjectButton(IN_ATTACK);
+	}
 
-    if ( HasCondition( BCOND_CAN_MELEE_ATTACK2 ) ) {
-        GetBot()->Combat();
-        InjectButton( IN_ATTACK2 );
-    }
+	if (HasCondition(BCOND_CAN_MELEE_ATTACK2)) {
+		GetBot()->Combat();
+		InjectButton(IN_ATTACK2);
+	}
 }

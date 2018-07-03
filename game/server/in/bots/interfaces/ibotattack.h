@@ -15,24 +15,24 @@
 abstract_class IBotAttack : public IBotComponent
 {
 public:
-    DECLARE_CLASS_GAMEROOT( IBotAttack, IBotComponent );
+	DECLARE_CLASS_GAMEROOT(IBotAttack, IBotComponent);
 
-    IBotAttack( IBot *bot ) : BaseClass( bot )
-    {
-    }
+	IBotAttack(IBot *bot) : BaseClass(bot)
+	{
+	}
 
-    enum
-    {
-        RANGE_PRIMARY_ATTACK = 1,
-        RANGE_SECONDARY_ATTACK,
-        MELEE_PRIMARY_ATTACK,
-        MELEE_SECONDARY_ATTACK
-    };
+	enum
+	{
+		RANGE_PRIMARY_ATTACK = 1,
+		RANGE_SECONDARY_ATTACK,
+		MELEE_PRIMARY_ATTACK,
+		MELEE_SECONDARY_ATTACK
+	};
 
 public:
-    virtual void FiregunAttack() = 0;
-    virtual void MeleeWeaponAttack() = 0;
-    //virtual void OnAttack( int type ) = 0;
+	virtual void FiregunAttack() = 0;
+	virtual void MeleeWeaponAttack() = 0;
+	//virtual void OnAttack( int type ) = 0;
 };
 
 #endif // IBOT_ATTACK_H

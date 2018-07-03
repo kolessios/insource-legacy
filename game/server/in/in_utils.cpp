@@ -427,7 +427,6 @@ bool Utils::AddAttributeModifier(const char *name, float radius, const Vector &v
 
 //================================================================================
 // Set [bones] with the Hitbox IDs of the entity.
-// TODO: Rename? (I think technically there are no "bones" here.)
 //================================================================================
 bool Utils::GetEntityBones(CBaseEntity *pEntity, HitboxBones &bones)
 {
@@ -436,7 +435,7 @@ bool Utils::GetEntityBones(CBaseEntity *pEntity, HitboxBones &bones)
     bones.chest = -1;
 
 #ifdef APOCALYPSE
-    if ( pEntity->ClassMatches("npc_infected") ) {
+    /*if ( pEntity->ClassMatches("npc_infected") ) {
         bones.head = 16;
         bones.chest = 10;
         return true;
@@ -446,7 +445,7 @@ bool Utils::GetEntityBones(CBaseEntity *pEntity, HitboxBones &bones)
         bones.head = 12;
         bones.chest = 9;
         return true;
-    }
+    }*/
 #elif HL2MP
     // TODO
 #endif
@@ -457,11 +456,11 @@ bool Utils::GetEntityBones(CBaseEntity *pEntity, HitboxBones &bones)
 //================================================================================
 // Fill in [positions] with the entity's hitbox positions
 // If we do not have the Hitbox IDs of the entity then it will return generic positions.
-// Use with care: this is often heavy for the engine.
+// Use with care: this is often expensive for the engine.
 //================================================================================
 bool Utils::ComputeHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positions)
 {
-    VPROF_BUDGET("Utils::ComputeHitboxPositions", VPROF_BUDGETGROUP_BOTS);
+    VPROF_BUDGET("Utils::ComputeHitboxPositions", VPROF_BUDGETGROUP_BOTS_EXPENSIVE);
 
     positions.Reset();
 
@@ -475,6 +474,12 @@ bool Utils::ComputeHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positi
     // It doesn't rely on bones
     positions.feet = pEntity->GetAbsOrigin();
     positions.feet.z += 5.0f;
+    positions.frame = gpGlobals->tickcount;
+
+    HitboxBones bones;
+
+    if ( !GetEntityBones(pEntity, bones) )
+        return false;
 
     CBaseAnimating *pModel = pEntity->GetBaseAnimating();
 
@@ -494,10 +499,6 @@ bool Utils::ComputeHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positi
 
     QAngle angles;
     mstudiobbox_t *box = NULL;
-    HitboxBones bones;
-
-    if ( !GetEntityBones(pEntity, bones) )
-        return false;
 
     if ( bones.head >= 0 ) {
         box = set->pHitbox(bones.head);
@@ -509,7 +510,7 @@ bool Utils::ComputeHitboxPositions(CBaseEntity *pEntity, HitboxPositions &positi
         pModel->GetBonePosition(box->bone, positions.chest, angles);
     }
 
-    positions.frame = gpGlobals->framecount;
+    positions.frame = gpGlobals->tickcount;
     return true;
 }
 
@@ -529,19 +530,15 @@ bool Utils::GetHitboxPositions(CBaseEntity * pEntity, HitboxPositions & position
         return true;
     }
 
-    // We compute... The engine screams in pain.
-    if ( ComputeHitboxPositions(pEntity, *info) ) {
-        positions = *info;
-        Assert(g_CacheHitboxPositions[pEntity->entindex()].IsValid());
-        return true;
-    }
+    // Compute... The engine screams in pain.
+    bool response = ComputeHitboxPositions(pEntity, *info);
+    positions = *info;
 
-    return false;
+    return response;
 }
 
 //================================================================================
-// Sets [vecPosition] to the desired hitbox position of the entity'
-// 
+// Sets [vecPosition] to the desired hitbox position of the entity
 //================================================================================
 bool Utils::GetHitboxPosition(CBaseEntity *pEntity, Vector &vecPosition, HitboxType type)
 {
@@ -908,6 +905,8 @@ int SortNearestHint(CAI_Hint * const *spot1, CAI_Hint * const *spot2)
 //================================================================================
 bool Utils::FindNavCoverSpot(const CSpotCriteria &criteria, SpotVector *outputList)
 {
+    VPROF_BUDGET("Utils::FindNavCoverSpot", VPROF_BUDGETGROUP_BOTS);
+
     CNavArea *pStartArea = TheNavMesh->GetNearestNavArea(criteria.GetOrigin());
 
     if ( !pStartArea )
@@ -1035,6 +1034,8 @@ bool Utils::FindNavCoverSpotInArea(Vector *vecResult, const Vector &vecOrigin, C
 //================================================================================
 CAI_Hint *Utils::FindHintSpot(const CHintCriteria &hintCriteria, const CSpotCriteria &criteria, SpotVector *outputList)
 {
+    VPROF_BUDGET("Utils::FindHintSpot", VPROF_BUDGETGROUP_BOTS);
+
     // We fill in a list of all the info_hints within the search criteria.
     CUtlVector<CAI_Hint *> collector;
     CAI_HintManager::FindAllHints(criteria.GetOrigin(), hintCriteria, &collector);
@@ -1090,6 +1091,8 @@ CAI_Hint *Utils::FindHintSpot(const CHintCriteria &hintCriteria, const CSpotCrit
 //================================================================================
 bool Utils::GetSpotCriteria(Vector * vecResult, CSpotCriteria & criteria, SpotVector *outputList)
 {
+    VPROF_BUDGET("Utils::GetSpotCriteria", VPROF_BUDGETGROUP_BOTS);
+
     if ( !criteria.HasValidOrigin() ) {
         Assert(!"This function requires a valid origin position");
         return false;
@@ -1152,6 +1155,8 @@ bool Utils::GetSpotCriteria(Vector * vecResult, CSpotCriteria & criteria, SpotVe
 
     // We sort the list, the first ones are the closest
     if ( outputList->Count() > 1 && criteria.HasFlags(FLAG_USE_NEAREST) ) {
+        VPROF_BUDGET("SortNearest", VPROF_BUDGETGROUP_BOTS);
+
         g_OriginSort = criteria.GetOrigin();
         outputList->Sort(SortNearestSpot);
     }

@@ -26,8 +26,17 @@ public:
     virtual void FrameUpdatePreEntityThink();
     virtual void FrameUpdatePostEntityThink();
 
+public:
+    virtual int GetCount()
+    {
+        return m_iCount;
+    }
+
     virtual bool IsSpotReserved(const Vector &vecSpot, CPlayer *pPlayer) const;
     virtual bool IsSpotReserved(const Vector &vecSpot, int team = TEAM_UNASSIGNED, CPlayer *pIgnore = NULL) const;
+
+public:
+    int m_iCount;
 };
 
 extern CBotManager *TheBots;

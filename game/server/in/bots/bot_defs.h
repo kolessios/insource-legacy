@@ -596,7 +596,7 @@ struct HitboxPositions
     }
 
     bool IsValid() {
-        return ((frame + 5) >= gpGlobals->framecount && head.IsValid() && chest.IsValid());
+        return (frame >= gpGlobals->tickcount && head.IsValid() && chest.IsValid());
     }
 
     Vector head;

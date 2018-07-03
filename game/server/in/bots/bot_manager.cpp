@@ -19,124 +19,117 @@
 CBotManager g_BotManager;
 CBotManager *TheBots = &g_BotManager;
 
-void Bot_RunAll() {
-    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex(it) );
+//================================================================================
+// Logging System
+// Only for the current file, this should never be in a header.
+//================================================================================
 
-        if ( !pPlayer )
-            continue;
-
-        if ( !pPlayer->GetBotController() )
-            continue;
-
-        pPlayer->GetBotController()->Update();
-    }
-}
+#define Msg(...) Log_Msg(LOG_BOTS, __VA_ARGS__)
+#define Warning(...) Log_Warning(LOG_BOTS, __VA_ARGS__)
 
 //================================================================================
 //================================================================================
 CBotManager::CBotManager() : CAutoGameSystemPerFrame("BotManager")
 {
+	m_iCount = 0;
 }
 
 //================================================================================
 //================================================================================
 bool CBotManager::Init()
 {
-    Utils::InitBotTrig();
-    return true;
+	Utils::InitBotTrig();
+	return true;
 }
 
 //================================================================================
 //================================================================================
 void CBotManager::LevelInitPostEntity()
 {
-    
+
 }
 
 //================================================================================
 //================================================================================
 void CBotManager::LevelShutdownPreEntity()
 {
-#ifdef INSOURCE_DLL
-    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer( UTIL_PlayerByIndex( it ) );
-
-        if ( !pPlayer )
-            continue;
-
-        if ( !pPlayer->IsBot() )
-            continue;
-
-        pPlayer->Kick();
-    }
-
-    engine->ServerExecute();
-#endif
 }
 
 //================================================================================
 //================================================================================
 void CBotManager::FrameUpdatePreEntityThink()
 {
-#ifdef INSOURCE_DLL
-    Bot_RunAll();
-#endif
+
 }
 
 //================================================================================
 //================================================================================
 void CBotManager::FrameUpdatePostEntityThink()
 {
+	m_iCount = 0;
 
+	for (int it = 1; it <= gpGlobals->maxClients; ++it) {
+		CPlayer *pPlayer = ToInPlayer(it);
+
+		if (!pPlayer)
+			continue;
+
+		IBot *bot = pPlayer->GetBotController();
+
+		if (!bot)
+			continue;
+
+		++m_iCount;
+		bot->Update();
+	}
 }
 
 //================================================================================
 //================================================================================
 bool CBotManager::IsSpotReserved(const Vector & vecSpot, CPlayer * pPlayer) const
 {
-    if ( !pPlayer ) {
-        return IsSpotReserved(vecSpot, TEAM_UNASSIGNED);
-    }
+	if (!pPlayer) {
+		return IsSpotReserved(vecSpot, TEAM_UNASSIGNED);
+	}
 
-    return IsSpotReserved(vecSpot, pPlayer->GetTeamNumber(), pPlayer);
+	return IsSpotReserved(vecSpot, pPlayer->GetTeamNumber(), pPlayer);
 }
 
 //================================================================================
 //================================================================================
 bool CBotManager::IsSpotReserved(const Vector & vecSpot, int team, CPlayer *pIgnore) const
 {
-    const float tolerance = 70.0f;
+	const float tolerance = 70.0f;
 
-    for ( int it = 0; it <= gpGlobals->maxClients; ++it ) {
-        CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(it));
+	for (int it = 0; it <= gpGlobals->maxClients; ++it) {
+		CPlayer *pPlayer = ToInPlayer(UTIL_PlayerByIndex(it));
 
-        if ( !pPlayer )
-            continue;
+		if (!pPlayer)
+			continue;
 
-        if ( pPlayer == pIgnore )
-            continue;
+		if (pPlayer == pIgnore)
+			continue;
 
-        if ( team != TEAM_UNASSIGNED && pPlayer->GetTeamNumber() != team )
-            continue;
+		if (team != TEAM_UNASSIGNED && pPlayer->GetTeamNumber() != team)
+			continue;
 
-        if ( !pPlayer->GetBotController() )
-            continue;
+		if (!pPlayer->GetBotController())
+			continue;
 
-        IBot *pBot = pPlayer->GetBotController();
+		IBot *pBot = pPlayer->GetBotController();
 
-        if ( !pBot->GetMemory() )
-            continue;
+		if (!pBot->GetMemory())
+			continue;
 
-        CDataMemory *memory = pBot->GetMemory()->GetDataMemory("ReservedSpot");
+		CDataMemory *memory = pBot->GetMemory()->GetDataMemory("ReservedSpot");
 
-        if ( !memory )
-            continue;
+		if (!memory)
+			continue;
 
-        if ( memory->GetVector() == vecSpot || memory->GetVector().DistTo(vecSpot) <= tolerance ) {
-            return true;
-        }
-    }
+		if (memory->GetVector() == vecSpot || memory->GetVector().DistTo(vecSpot) <= tolerance) {
+			return true;
+		}
+	}
 
-    return false;
+	return false;
 }

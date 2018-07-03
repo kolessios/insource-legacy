@@ -18,66 +18,66 @@
 
 //================================================================================
 //================================================================================
-SET_SCHEDULE_TASKS( CDefendSpawnSchedule )
+SET_SCHEDULE_TASKS(CDefendSpawnSchedule)
 {
-    ADD_TASK( BTASK_SET_FAIL_SCHEDULE, SCHEDULE_COVER );
-    ADD_TASK( BTASK_SAVE_SPAWN_POSITION, NULL );
-    ADD_TASK( BTASK_MOVE_DESTINATION, NULL );
+	ADD_TASK(BTASK_SET_FAIL_SCHEDULE, SCHEDULE_COVER);
+	ADD_TASK(BTASK_SAVE_SPAWN_POSITION, NULL);
+	ADD_TASK(BTASK_MOVE_DESTINATION, NULL);
 }
 
-SET_SCHEDULE_INTERRUPTS( CDefendSpawnSchedule )
+SET_SCHEDULE_INTERRUPTS(CDefendSpawnSchedule)
 {
-    ADD_INTERRUPT( BCOND_EMPTY_PRIMARY_AMMO );
-    ADD_INTERRUPT( BCOND_EMPTY_CLIP1_AMMO );
-    ADD_INTERRUPT( BCOND_HELPLESS );
-    ADD_INTERRUPT( BCOND_SEE_HATE );
-    ADD_INTERRUPT( BCOND_SEE_ENEMY );
-    ADD_INTERRUPT( BCOND_LIGHT_DAMAGE );
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE );
-    ADD_INTERRUPT( BCOND_REPEATED_DAMAGE );
-    ADD_INTERRUPT( BCOND_LOW_HEALTH );
-    ADD_INTERRUPT( BCOND_DEJECTED );
-    ADD_INTERRUPT( BCOND_CAN_RANGE_ATTACK1 );
-    ADD_INTERRUPT( BCOND_CAN_RANGE_ATTACK2 );
-    ADD_INTERRUPT( BCOND_CAN_MELEE_ATTACK1 );
-    ADD_INTERRUPT( BCOND_CAN_MELEE_ATTACK2 );
-    ADD_INTERRUPT( BCOND_BETTER_WEAPON_AVAILABLE );
-    ADD_INTERRUPT( BCOND_MOBBED_BY_ENEMIES );
-    ADD_INTERRUPT( BCOND_GOAL_UNREACHABLE );
+	ADD_INTERRUPT(BCOND_EMPTY_PRIMARY_AMMO);
+	ADD_INTERRUPT(BCOND_EMPTY_CLIP1_AMMO);
+	ADD_INTERRUPT(BCOND_HELPLESS);
+	ADD_INTERRUPT(BCOND_SEE_HATE);
+	ADD_INTERRUPT(BCOND_SEE_ENEMY);
+	ADD_INTERRUPT(BCOND_LIGHT_DAMAGE);
+	ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
+	ADD_INTERRUPT(BCOND_REPEATED_DAMAGE);
+	ADD_INTERRUPT(BCOND_LOW_HEALTH);
+	ADD_INTERRUPT(BCOND_DEJECTED);
+	ADD_INTERRUPT(BCOND_CAN_RANGE_ATTACK1);
+	ADD_INTERRUPT(BCOND_CAN_RANGE_ATTACK2);
+	ADD_INTERRUPT(BCOND_CAN_MELEE_ATTACK1);
+	ADD_INTERRUPT(BCOND_CAN_MELEE_ATTACK2);
+	ADD_INTERRUPT(BCOND_BETTER_WEAPON_AVAILABLE);
+	ADD_INTERRUPT(BCOND_MOBBED_BY_ENEMIES);
+	ADD_INTERRUPT(BCOND_GOAL_UNREACHABLE);
 
-        ADD_INTERRUPT( BCOND_SEE_DEJECTED_FRIEND );
+	ADD_INTERRUPT(BCOND_SEE_DEJECTED_FRIEND);
 }
 
 //================================================================================
 //================================================================================
 float CDefendSpawnSchedule::GetDesire() const
 {
-    VPROF_BUDGET("CDefendSpawnSchedule", VPROF_BUDGETGROUP_BOTS);
+	VPROF_BUDGET("CDefendSpawnSchedule", VPROF_BUDGETGROUP_BOTS);
 
-    if ( !GetMemory() )
-        return BOT_DESIRE_NONE;
+	if (!GetMemory())
+		return BOT_DESIRE_NONE;
 
-    CDataMemory *memory = GetMemory()->GetDataMemory( "SpawnPosition" );
+	CDataMemory *memory = GetMemory()->GetDataMemory("SpawnPosition");
 
-    if ( memory == NULL )
-        return BOT_DESIRE_NONE;
+	if (memory == NULL)
+		return BOT_DESIRE_NONE;
 
-    if ( !GetDecision()->CanMove() )
-        return BOT_DESIRE_NONE;
+	if (!GetDecision()->CanMove())
+		return BOT_DESIRE_NONE;
 
-    if ( !GetBot()->IsIdle() )
-        return BOT_DESIRE_NONE;
+	if (!GetBot()->IsIdle())
+		return BOT_DESIRE_NONE;
 
-    if ( GetBot()->GetTacticalMode() != TACTICAL_MODE_DEFENSIVE )
-        return BOT_DESIRE_NONE;
+	if (GetBot()->GetTacticalMode() != TACTICAL_MODE_DEFENSIVE)
+		return BOT_DESIRE_NONE;
 
-    if ( GetBot()->GetFollow() && GetBot()->GetFollow()->IsFollowingActive() )
-        return BOT_DESIRE_NONE;
+	if (GetBot()->GetFollow() && GetBot()->GetFollow()->IsFollowingActive())
+		return BOT_DESIRE_NONE;
 
-    float distance = GetHost()->GetAbsOrigin().DistTo( memory->GetVector() );
+	float distance = GetHost()->GetAbsOrigin().DistTo(memory->GetVector());
 
-    if ( distance < 130.0f )
-        return BOT_DESIRE_NONE;
+	if (distance < 130.0f)
+		return BOT_DESIRE_NONE;
 
-    return 0.05f;
+	return 0.05f;
 }

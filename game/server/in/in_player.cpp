@@ -1000,34 +1000,48 @@ CSound* CPlayer::GetBestScent()
 //================================================================================
 bool CPlayer::IsAbleToSee(const Vector & pos, FieldOfViewCheckType checkFOV)
 {
-    VPROF_BUDGET("CPlayer::IsAbleToSee::Position", VPROF_BUDGETGROUP_PLAYER);
-
-    if ( checkFOV == USE_FOV && !IsInFieldOfView(pos) ) {
-        return false;
-    }
+    VPROF_BUDGET("CPlayer::IsAbleToSee::Position", VPROF_BUDGETGROUP_BOTS);
 
     if ( IsHiddenByFog(pos) ) {
         return false;
     }
 
-    return FVisible(pos, MASK_BLOCKLOS);
+    if ( checkFOV == USE_FOV && !IsInFieldOfView(pos) ) {
+        return false;
+    }
+
+    return FVisible(pos, MASK_BLOCKLOS_AND_NPCS | CONTENTS_IGNORE_NODRAW_OPAQUE);
 }
 
 //================================================================================
 //================================================================================
 bool CPlayer::IsAbleToSee(CBaseEntity * entity, FieldOfViewCheckType checkFOV)
 {
-    VPROF_BUDGET("CPlayer::IsAbleToSee::Entity", VPROF_BUDGETGROUP_PLAYER);
-
-    if ( checkFOV == USE_FOV && !IsInFieldOfView(entity) ) {
-        return false;
-    }
+    VPROF_BUDGET("CPlayer::IsAbleToSee::Entity", VPROF_BUDGETGROUP_BOTS);
 
     if ( IsHiddenByFog(entity) ) {
         return false;
     }
 
-    return FVisible(entity, MASK_BLOCKLOS);
+    if ( checkFOV == USE_FOV && !IsInFieldOfView(entity) ) {
+        return false;
+    }
+
+    CBaseCombatCharacter *combat = entity->MyCombatCharacterPointer();
+
+    if ( combat ) {
+        CNavArea *subjectArea = combat->GetLastKnownArea();
+        CNavArea *myArea = GetLastKnownArea();
+
+        if ( myArea && subjectArea ) {
+            // subject is not potentially visible, skip the expensive raycast
+            if ( !myArea->IsPotentiallyVisible(subjectArea) ) {
+                return false;
+            }
+        }
+    }
+
+    return FVisible(entity, MASK_BLOCKLOS_AND_NPCS | CONTENTS_IGNORE_NODRAW_OPAQUE);
 }
 
 //================================================================================
@@ -1041,7 +1055,7 @@ bool CPlayer::IsAbleToSee(CBaseCombatCharacter * pBCC, FieldOfViewCheckType chec
 //================================================================================
 bool CPlayer::IsInFieldOfView(CBaseEntity * entity)
 {
-    VPROF_BUDGET("CPlayer::IsInFieldOfView::Entity", VPROF_BUDGETGROUP_PLAYER);
+    VPROF_BUDGET("CPlayer::IsInFieldOfView::Entity", VPROF_BUDGETGROUP_BOTS);
     return FInViewCone(entity);
 }
 
@@ -1049,7 +1063,7 @@ bool CPlayer::IsInFieldOfView(CBaseEntity * entity)
 //================================================================================
 bool CPlayer::IsInFieldOfView(const Vector & pos)
 {
-    VPROF_BUDGET("CPlayer::IsInFieldOfView::Position", VPROF_BUDGETGROUP_PLAYER);
+    VPROF_BUDGET("CPlayer::IsInFieldOfView::Position", VPROF_BUDGETGROUP_BOTS);
     return FInViewCone(pos);
 }
 

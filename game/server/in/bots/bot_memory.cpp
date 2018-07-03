@@ -27,43 +27,43 @@ extern ConVar bot_primary_attack;
 
 //================================================================================
 //================================================================================
-void CBot::SetPeaceful( bool enabled )
+void CBot::SetPeaceful(bool enabled)
 {
-    if ( !GetMemory() )
-        return;
+	if (!GetMemory())
+		return;
 
-    if ( enabled )
-        GetMemory()->Disable();
-    else
-        GetMemory()->Enable();
+	if (enabled)
+		GetMemory()->Disable();
+	else
+		GetMemory()->Enable();
 }
 
 //================================================================================
 //================================================================================
 CBaseEntity *CBot::GetEnemy() const
 {
-    if ( !GetMemory() )
-        return NULL;
+	if (!GetMemory())
+		return NULL;
 
-    return GetMemory()->GetEnemy();
+	return GetMemory()->GetEnemy();
 }
 
 //================================================================================
 //================================================================================
 CEntityMemory * CBot::GetPrimaryThreat() const
 {
-    if ( !GetMemory() )
-        return NULL;
+	if (!GetMemory())
+		return NULL;
 
-    return GetMemory()->GetPrimaryThreat();
+	return GetMemory()->GetPrimaryThreat();
 }
 
 //================================================================================
 //================================================================================
-void CBot::SetEnemy( CBaseEntity *pEnemy, bool bUpdate )
+void CBot::SetEnemy(CBaseEntity *pEnemy, bool bUpdate)
 {
-    if ( !GetMemory() )
-        return;
+	if (!GetMemory())
+		return;
 
-    return GetMemory()->SetEnemy( pEnemy, bUpdate );
+	return GetMemory()->SetEnemy(pEnemy, bUpdate);
 }

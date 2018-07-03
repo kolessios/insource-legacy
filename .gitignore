@@ -1,6 +1,11 @@
 .vs/
 ipch/
 obj/
+fmod_steamaudio/
+lib/phonon
+lib/fmod
+public/phonon
+public/fmod
 materialsystem/swarmshaders_original
 materialsystem/swarmshaders/Debug_dx9
 materialsystem/swarmshaders/Release_dx9

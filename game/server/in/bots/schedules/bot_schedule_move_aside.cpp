@@ -18,57 +18,57 @@
 
 //================================================================================
 //================================================================================
-SET_SCHEDULE_TASKS( CMoveAsideSchedule )
+SET_SCHEDULE_TASKS(CMoveAsideSchedule)
 {
-    ADD_TASK( BTASK_SAVE_ASIDE_SPOT, NULL );
-    ADD_TASK( BTASK_MOVE_DESTINATION, NULL );
+	ADD_TASK(BTASK_SAVE_ASIDE_SPOT, NULL);
+	ADD_TASK(BTASK_MOVE_DESTINATION, NULL);
 }
 
-SET_SCHEDULE_INTERRUPTS( CMoveAsideSchedule )
+SET_SCHEDULE_INTERRUPTS(CMoveAsideSchedule)
 {
-    ADD_INTERRUPT( BCOND_HELPLESS );
-    ADD_INTERRUPT( BCOND_HEAVY_DAMAGE );
-    ADD_INTERRUPT( BCOND_DEJECTED );
-    ADD_INTERRUPT( BCOND_GOAL_UNREACHABLE );
+	ADD_INTERRUPT(BCOND_HELPLESS);
+	ADD_INTERRUPT(BCOND_HEAVY_DAMAGE);
+	ADD_INTERRUPT(BCOND_DEJECTED);
+	ADD_INTERRUPT(BCOND_GOAL_UNREACHABLE);
 }
 
 //================================================================================
 //================================================================================
 float CMoveAsideSchedule::GetDesire() const
 {
-    VPROF_BUDGET("CMoveAsideSchedule", VPROF_BUDGETGROUP_BOTS);
+	VPROF_BUDGET("CMoveAsideSchedule", VPROF_BUDGETGROUP_BOTS);
 
-    if ( GetProfile()->IsEasiest() )
-        return BOT_DESIRE_NONE;
+	if (GetProfile()->IsEasiest())
+		return BOT_DESIRE_NONE;
 
-    if ( !GetDecision()->CanMove() )
-        return BOT_DESIRE_NONE;
+	if (!GetDecision()->CanMove())
+		return BOT_DESIRE_NONE;
 
-    if ( GetLocomotion()->HasDestination() )
-        return BOT_DESIRE_NONE;
+	if (GetLocomotion()->HasDestination())
+		return BOT_DESIRE_NONE;
 
-    if ( GetBot()->IsCombating() || GetBot()->IsAlerted() ) {
-        if ( HasCondition( BCOND_LIGHT_DAMAGE ) || HasCondition( BCOND_REPEATED_DAMAGE ) )
-            return 0.70f;
-    }
+	if (GetBot()->IsCombating() || GetBot()->IsAlerted()) {
+		if (HasCondition(BCOND_LIGHT_DAMAGE) || HasCondition(BCOND_REPEATED_DAMAGE))
+			return 0.70f;
+	}
 
-    //if ( HasCondition( BCOND_ENEMY_OCCLUDED_BY_FRIEND ) )
-        //return 0.91f;
+	//if ( HasCondition( BCOND_ENEMY_OCCLUDED_BY_FRIEND ) )
+		//return 0.91f;
 
-    if ( GetBot()->GetTacticalMode() == TACTICAL_MODE_DEFENSIVE && !GetBot()->IsCombating() ) {
-        if ( HasCondition( BCOND_ENEMY_LOST ) || HasCondition( BCOND_HEAR_COMBAT ) )
-            return 0.14f;
-    }
+	if (GetBot()->GetTacticalMode() == TACTICAL_MODE_DEFENSIVE && !GetBot()->IsCombating()) {
+		if (HasCondition(BCOND_ENEMY_LOST) || HasCondition(BCOND_HEAR_COMBAT))
+			return 0.14f;
+	}
 
-    if ( m_nMoveAsideTimer.IsElapsed() ) {
-        if ( !HasCondition( BCOND_WITHOUT_ENEMY ) )
-            return 0.14f;
+	if (m_nMoveAsideTimer.IsElapsed()) {
+		if (!HasCondition(BCOND_WITHOUT_ENEMY))
+			return 0.14f;
 
-        if ( GetBot()->IsIdle() )
-            return 0.13f;
-    }
+		if (GetBot()->IsIdle())
+			return 0.13f;
+	}
 
-    return BOT_DESIRE_NONE;
+	return BOT_DESIRE_NONE;
 }
 
 //================================================================================
@@ -76,5 +76,5 @@ float CMoveAsideSchedule::GetDesire() const
 void CMoveAsideSchedule::Start()
 {
 	BaseClass::Start();
-	m_nMoveAsideTimer.Start( RandomFloat(3.0f, 10.0f) );
+	m_nMoveAsideTimer.Start(RandomFloat(3.0f, 10.0f));
 }

@@ -21,6 +21,7 @@ DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_PLAYER, "Player", 0, LS_MESSAGE, {169, 169, 2
 DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_BOTS, "Bots", 0, LS_MESSAGE, {245, 169, 242, 255}); // Pink
 DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_DIRECTOR, "Director", 0, LS_MESSAGE, {46, 204, 250, 255}); // Light Blue
 DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_UI, "UI", 0, LS_MESSAGE, {255, 0, 128, 255}); // wow, much pink
+DEFINE_LOGGING_CHANNEL_NO_TAGS(LOG_FMOD, "FMOD", 0, LS_MESSAGE, {254, 100, 46, 255}); // Orange
 
 //================================================================================
 // Custom User Messages through the Network

@@ -15,19 +15,19 @@
 class CSquadManager : public CAutoGameSystemPerFrame
 {
 public:
-    CSquadManager();
+	CSquadManager();
 
 public:
-    virtual void LevelShutdownPostEntity();
-    virtual void FrameUpdatePostEntityThink();
+	virtual void LevelShutdownPostEntity();
+	virtual void FrameUpdatePostEntityThink();
 
 public:
-    virtual CSquad *GetSquad( const char *name );
-    virtual CSquad *GetOrCreateSquad( const char *name );
-    virtual void AddSquad( CSquad *pSquad );
+	virtual CSquad *GetSquad(const char *name);
+	virtual CSquad *GetOrCreateSquad(const char *name);
+	virtual void AddSquad(CSquad *pSquad);
 
 protected:
-    CUtlVector<CSquad *> m_nSquads;
+	CUtlVector<CSquad *> m_nSquads;
 };
 
 extern CSquadManager *TheSquads;

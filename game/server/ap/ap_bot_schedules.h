@@ -27,11 +27,6 @@ class CSearchResourcesSchedule : public IBotSchedule
 public:
 	CSearchResourcesSchedule(IBot *bot);
 
-    virtual bool ItsImportant() const
-    {
-        return true;
-    }
-
 	virtual float GetDesire() const;
 	virtual void Finish();
 
@@ -66,11 +61,6 @@ public:
     CCleanBuildingSchedule(IBot *bot);
 
 public:
-    virtual bool ItsImportant() const
-    {
-        return true;
-    }
-
     virtual float GetDesire() const;
 
     virtual void Start();
@@ -102,12 +92,12 @@ public:
 
     }
 
-public:
     virtual bool ItsImportant() const
     {
         return false;
     }
 
+public:
     virtual float GetDesire() const;
 
     virtual int GetSoldiersInCover() const;
