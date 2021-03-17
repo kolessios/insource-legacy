@@ -2,24 +2,25 @@
 
 Legacy version of InSource, a Source Engine (Alien Swarm branch) modification to fix several problems and implement new features.
 
-> ⚠️ Although the code works, it has several optimization problems. Not suitable for production use.
+> ⚠️ Although the code works, this project was the first C++ project of the developer and it has several optimization problems. **Not suitable for production use.**
+
+> 🌎 Most of the comments and debug messages are in Spanish.
 
 ## Most notable features
 
 > ⚠️ Some of these may be incomplete or unstable.
 
-- **Bots:** 
-AI system to create Bots (CPU controlled players) in a similar way to the AI for NPC's.
-
-*If you are only interested in this system I recommend you take a look at this [repository](https://github.com/kolessios/sourcebots).*
-- **Director:** 
-AI system to create NPC's or Bots on the map depending on various factors, also includes map entities to query their status or trigger events. 
+- [**Bots:**](https://github.com/kolessios/insource-legacy/tree/master/game/server/in/bots) 
+AI system to create Bots (CPU controlled players) in a similar way to the NPC's AI.
+*💡 If you are only interested in this system take a look at this [repository](https://github.com/kolessios/sourcebots).*
+- [**Director:**](https://github.com/kolessios/insource-legacy/blob/master/game/server/in/director.cpp) 
+AI system to create NPC's or Bots on the map depending on various factors, also includes [map entities](https://github.com/kolessios/insource-legacy/blob/master/game/server/in/info_director.cpp) to trigger events. 
 (Inspired by the [Director](https://youtu.be/WbHMxo11HcU) of Left 4 Dead)
-- **Channel Sound System:** 
+- [**Sound System:**](https://github.com/kolessios/insource-legacy/blob/master/game/shared/in/sound_instance.cpp) 
 System to easily control sounds programmatically in C++ and Squirrel. 
-- **Node Generator:** 
+- [**Node Generator:**](https://github.com/kolessios/insource-legacy/blob/master/game/server/in/nodes_generation.cpp) 
 System to create navigation nodes (info_node) based on the Navigation mesh. Generation and settings are controlled by commands.
-- **Support for AlienFX:** 
+- [**Support for AlienFX:**](https://github.com/kolessios/insource-legacy/blob/master/game/client/in/alienfx.cpp) 
 System to dynamically control the lights of a computer with [AlienFX](https://youtu.be/N4cr_jH_yus). (From client and server)
 
 Examples
@@ -36,4 +37,4 @@ Dependencies
 More information
 -----------------------
 
-To get more information about the project, tips, help or want to help me you can contact me by [email](mailto:kolessios@gmail.com) or [Steam](http://steamcommunity.com/profiles/76561198040059089).
+To get more information about the project you can contact me via [email](mailto:kolessios@gmail.com) or [Steam](http://steamcommunity.com/profiles/76561198040059089).
